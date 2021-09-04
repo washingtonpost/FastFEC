@@ -36,13 +36,13 @@ int main(int argc, char *argv[])
     return 2;
   }
 
-  size_t lineBufferSize = 100;
+  size_t lineBufferSize = 10;
   char *lineBuffer = malloc(sizeof(char) * lineBufferSize);
 
   int bytesRead;
   do
   {
-    bytesRead = getline(&lineBuffer, &lineBufferSize, handle->handle.file);
+    bytesRead = url_getline(&lineBuffer, &lineBufferSize, handle);
     if (bytesRead < 0)
     {
       perror("couldn't get line\n");

@@ -404,6 +404,70 @@ char *url_fgets(char *ptr, size_t size, URL_FILE *file)
   return ptr; /*success */
 }
 
+ssize_t url_getline(char **lineptr, size_t *n, URL_FILE *file)
+{
+  size_t want;
+  size_t loop;
+  int found = 0;
+
+  switch (file->type)
+  {
+  case CFTYPE_FILE:
+    return getline(lineptr, n, file->handle.file);
+
+  case CFTYPE_CURL:
+    do
+    {
+      want = *n - 1;
+      fill_buffer(file, want); /* always need to leave room for zero termination */
+
+      /* check if there's data in the buffer - if not fill either errored or
+     * EOF */
+      if (!file->buffer_pos)
+        return 0;
+
+      /* ensure only available data is considered */
+      if (file->buffer_pos < want)
+        want = file->buffer_pos;
+
+      /*buffer contains data */
+      /* look for newline or eof */
+      for (loop = 0; loop < want; loop++)
+      {
+        if (file->buffer[loop] == '\n')
+        {
+          found = 1;
+          want = loop + 1; /* include newline */
+          break;
+        }
+      }
+
+      if (!found)
+      {
+        // Reallocate buffer to store bigger line
+        *n = *n * 2;
+        *lineptr = realloc(*lineptr, *n);
+        if (!(*lineptr))
+        {
+          errno = ENOMEM;
+          return -1;
+        }
+      }
+    } while (!found);
+
+    /* xfer data to caller */
+    memcpy(*lineptr, file->buffer, want);
+    (*lineptr)[want] = 0; /* always null terminate */
+
+    use_buffer(file, want);
+    return want;
+
+  default: /* unknown or supported type - oh dear */
+    errno = EBADF;
+    return -1;
+  }
+}
+
 void url_rewind(URL_FILE *file)
 {
   switch (file->type)
