@@ -1,4 +1,5 @@
 #include "urlopen.h"
+#include "encoding.h"
 #include <stdlib.h>
 
 #define FREADFILE "fread.test"
@@ -16,9 +17,15 @@ int main(int argc, char *argv[])
   const char *url;
 
   if (argc < 2)
+  {
     url = "https://docquery.fec.gov/dcdev/posted/13360.fec";
+    // Test local files
+    // url = "1162172.fec";
+  }
   else
+  {
     url = argv[1]; /* use passed url */
+  }
 
   /* Copy from url with fread */
   outf = fopen(FREADFILE, "wb+");
@@ -37,26 +44,39 @@ int main(int argc, char *argv[])
   }
 
   size_t lineBufferSize = 10;
-  char *lineBuffer = malloc(sizeof(char) * lineBufferSize);
+  STRING *rawline = newString(lineBufferSize);
+  STRING *line = newString(lineBufferSize);
 
-  int bytesRead;
-  do
+  if (rawline == 0)
   {
-    bytesRead = url_getline(&lineBuffer, &lineBufferSize, handle);
-    if (bytesRead < 0)
+    perror("couldn't allocate line buffer\n");
+    return 3;
+  }
+
+  ssize_t bytesRead;
+  while (1)
+  {
+    bytesRead = url_getline(rawline, handle);
+    if (bytesRead <= 0)
     {
+      break;
       perror("couldn't get line\n");
-      return 3;
+      return 4;
     }
 
-    fwrite(lineBuffer, 1, bytesRead, outf);
-  } while (bytesRead);
+    // Decode the line
+    LINE_INFO info;
+    decodeLine(&info, rawline, line);
+
+    fputs(line->str, outf);
+  }
 
   url_fclose(handle);
 
   fclose(outf);
 
-  free(lineBuffer);
+  freeString(rawline);
+  freeString(line);
 
   return 0; /* all done */
 }

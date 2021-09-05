@@ -404,7 +404,7 @@ char *url_fgets(char *ptr, size_t size, URL_FILE *file)
   return ptr; /*success */
 }
 
-ssize_t url_getline(char **lineptr, size_t *n, URL_FILE *file)
+ssize_t url_getline(STRING *line, URL_FILE *file)
 {
   size_t want;
   size_t loop;
@@ -413,12 +413,12 @@ ssize_t url_getline(char **lineptr, size_t *n, URL_FILE *file)
   switch (file->type)
   {
   case CFTYPE_FILE:
-    return getline(lineptr, n, file->handle.file);
+    return getline(&(line->str), &(line->n), file->handle.file);
 
   case CFTYPE_CURL:
     do
     {
-      want = *n - 1;
+      want = line->n - 1;
       fill_buffer(file, want); /* always need to leave room for zero termination */
 
       /* check if there's data in the buffer - if not fill either errored or
@@ -445,9 +445,7 @@ ssize_t url_getline(char **lineptr, size_t *n, URL_FILE *file)
       if (!found)
       {
         // Reallocate buffer to store bigger line
-        *n = *n * 2;
-        *lineptr = realloc(*lineptr, *n);
-        if (!(*lineptr))
+        if (!growString(line))
         {
           errno = ENOMEM;
           return -1;
@@ -456,8 +454,8 @@ ssize_t url_getline(char **lineptr, size_t *n, URL_FILE *file)
     } while (!found);
 
     /* xfer data to caller */
-    memcpy(*lineptr, file->buffer, want);
-    (*lineptr)[want] = 0; /* always null terminate */
+    memcpy(line->str, file->buffer, want);
+    (line->str)[want] = 0; /* always null terminate */
 
     use_buffer(file, want);
     return want;
