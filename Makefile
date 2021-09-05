@@ -1,6 +1,6 @@
 OUTPUT_DIR=bin
 COMPILE=gcc
-COMPILE_ARGS=src/urlopen.c src/memory.c src/encoding.c src/main.c -l curl -o ${OUTPUT_DIR}/fastfec
+COMPILE_ARGS=src/urlopen.c src/memory.c src/encoding.c src/fec.c src/main.c -l curl -o ${OUTPUT_DIR}/fastfec
 
 outputdir:
 	mkdir -p ${OUTPUT_DIR}

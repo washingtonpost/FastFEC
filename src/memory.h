@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+const size_t DEFAULT_STRING_SIZE;
+
 struct string_type
 {
   char *str;
@@ -22,3 +24,14 @@ int growString(STRING *str);
 int growStringTo(STRING *str, size_t newSize);
 
 void copyString(STRING *src, STRING *dst);
+
+struct persistent_memory_context
+{
+  STRING *rawLine;
+  STRING *line;
+};
+typedef struct persistent_memory_context PERSISTENT_MEMORY_CONTEXT;
+
+PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext();
+
+void freePersistentMemoryContext(PERSISTENT_MEMORY_CONTEXT *context);

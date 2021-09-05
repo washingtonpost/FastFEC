@@ -1,5 +1,6 @@
 #include "urlopen.h"
 #include "encoding.h"
+#include "fec.h"
 #include <stdlib.h>
 
 #define FREADFILE "fread.test"
@@ -18,9 +19,10 @@ int main(int argc, char *argv[])
 
   if (argc < 2)
   {
-    url = "https://docquery.fec.gov/dcdev/posted/13360.fec";
+    // url = "https://docquery.fec.gov/dcdev/posted/13360.fec";
     // Test local files
-    // url = "1162172.fec";
+    url = "1162172.fec";
+    // url = "1533121.fec";
   }
   else
   {
@@ -43,40 +45,24 @@ int main(int argc, char *argv[])
     return 2;
   }
 
-  size_t lineBufferSize = 10;
-  STRING *rawline = newString(lineBufferSize);
-  STRING *line = newString(lineBufferSize);
+  // Initialize persistent memory context
+  PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
+  // Initialize FEC context
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((GetLine)(&url_getline)), handle, ((PutLine)(&fputs)), outf);
 
-  if (rawline == 0)
+  // Parse the fec file
+  if (!parseFec(fec))
   {
-    perror("couldn't allocate line buffer\n");
+    perror("Parsing FEC failed\n");
     return 3;
   }
 
-  ssize_t bytesRead;
-  while (1)
-  {
-    bytesRead = url_getline(rawline, handle);
-    if (bytesRead <= 0)
-    {
-      break;
-      perror("couldn't get line\n");
-      return 4;
-    }
-
-    // Decode the line
-    LINE_INFO info;
-    decodeLine(&info, rawline, line);
-
-    fputs(line->str, outf);
-  }
-
+  // Close file handles
   url_fclose(handle);
-
   fclose(outf);
 
-  freeString(rawline);
-  freeString(line);
+  // Free up persistent memory
+  freePersistentMemoryContext(persistentMemory);
 
   return 0; /* all done */
 }
