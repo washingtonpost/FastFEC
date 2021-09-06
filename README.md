@@ -1,5 +1,7 @@
 # fastfec
 
+[in-progress / not working yet fully]
+
 A C program to stream and parse FEC filings, writing output to CSV.
 
 ## Dependencies
