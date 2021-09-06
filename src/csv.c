@@ -1,0 +1,161 @@
+
+#include "memory.h"
+#include "csv.h"
+#include "writer.h"
+
+void processFieldChar(char c, FIELD_INFO *info)
+{
+  if (c == '"')
+  {
+    info->num_quotes++;
+  }
+  else if (c == ',')
+  {
+    info->num_commas++;
+  }
+}
+
+void writeDelimeter(WRITE_CONTEXT *context, char *filename)
+{
+  writeChar(context, filename, ',');
+}
+
+void writeNewline(WRITE_CONTEXT *context, char *filename)
+{
+  writeChar(context, filename, '\n');
+}
+
+static inline int endOfField(char c)
+{
+  return (c == ',') || (c == '\n') || (c == 0);
+}
+
+void readAscii28Field(STRING *line, int *position, int *start, int *end, FIELD_INFO *field)
+{
+  *start = *position;
+  char c = line->str[*position];
+  processFieldChar(c, field);
+  char startChar = c;
+  char endChar = 0;
+  while (c != 0 && c != 28 && c != '\n')
+  {
+    endChar = c;
+    (*position) += 1;
+    c = line->str[*position];
+    processFieldChar(c, field);
+  }
+  *end = *position;
+  if (startChar == '"' && endChar == '"')
+  {
+    // Bump the field positions to avoid the quotes
+    (*start)++;
+    (*end)--;
+    (field->num_quotes) -= 2;
+  }
+}
+
+void readCsvField(STRING *line, int *position, int *start, int *end, FIELD_INFO *field)
+{
+  char c = line->str[*position];
+  if (endOfField(c))
+  {
+    // Empty field
+    *start = *position;
+    *end = *position;
+    return;
+  }
+
+  processFieldChar(c, field);
+
+  // If quoted, field is escaped
+  int escaped = c == '"';
+  int offset = 0;
+  if (escaped)
+  {
+    (*position)++;
+  }
+  *start = *position;
+  while (1)
+  {
+    if (offset != 0)
+    {
+      // If the offset is non-zero, we need to shift characters
+      line->str[(*position) - offset] = line->str[*position];
+    }
+
+    c = line->str[*position];
+    if (c == 0)
+    {
+      // End of line
+      *end = (*position) - offset;
+      return;
+    }
+    if (!escaped && ((c == ',') || (c == '\n')))
+    {
+      // If not in escaped mode and the end of field is encountered
+      // then we're done.
+      *end = (*position) - offset;
+      return;
+    }
+    processFieldChar(c, field);
+    if (escaped && c == '"')
+    {
+      // If in escaped mode and a quote is encountered, then we need
+      // to check if the quote is escaped.
+      if (line->str[(*position) + 1] == '"')
+      {
+        // If the quote is escaped, then we need to skip it.
+        (*position)++;
+        offset++;
+      }
+      else
+      {
+        // If the quote is not escaped, then we're done.
+        *end = (*position) - offset;
+        (*position)++;
+        return;
+      }
+    }
+    (*position)++;
+  }
+}
+
+void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start, int end, FIELD_INFO *info)
+{
+  int escaped = info->num_commas || info->num_quotes;
+  int copyDirectly = !info->num_quotes;
+
+  if (escaped)
+  {
+    // Start of escape quote
+    writeChar(context, filename, '"');
+  }
+  if (copyDirectly)
+  {
+    // No need for char-by-char writing
+    writeN(context, filename, line->str + start, end - start);
+  }
+  else
+  {
+    // Copy string in char-by-char
+    for (int i = start; i < end; i++)
+    {
+      char c = line->str[i];
+      if (c == '"')
+      {
+        // Double quotes
+        write(context, filename, "\"\"");
+      }
+      else
+      {
+        // Normal character
+        writeChar(context, filename, c);
+      }
+    }
+  }
+  if (escaped)
+  {
+    // End of escape quote
+    writeChar(context, filename, '"');
+  }
+}

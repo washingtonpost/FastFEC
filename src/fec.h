@@ -2,6 +2,7 @@
 
 #include "memory.h"
 #include "urlopen.h"
+#include "writer.h"
 
 typedef ssize_t (*GetLine)(STRING *line, void *file);
 typedef int (*PutLine)(char *line, void *file);
@@ -12,8 +13,7 @@ struct fec_context
   GetLine getLine;
   void *file;
 
-  PutLine putLine;
-  void *outFile;
+  WRITE_CONTEXT *writeContext;
 
   STRING *version; // default null
   int summary;     // default false
@@ -24,7 +24,7 @@ struct fec_context
 };
 typedef struct fec_context FEC_CONTEXT;
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, PutLine putLine, void *outFile);
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory);
 
 void freeFecContext(FEC_CONTEXT *context);
 

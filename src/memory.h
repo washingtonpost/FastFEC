@@ -14,6 +14,10 @@ typedef struct string_type STRING;
 
 STRING *newString(size_t size);
 
+STRING *fromString(const char *);
+
+void setString(STRING *s, const char *str);
+
 void freeString(STRING *s);
 
 // Double the size of the string

@@ -1,15 +1,16 @@
 #include "fec.h"
 #include "encoding.h"
+#include "writer.h"
+#include "csv.h"
 #include <string.h>
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, PutLine putLine, void *outFile)
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
   ctx->persistentMemory = persistentMemory;
   ctx->getLine = getLine;
   ctx->file = file;
-  ctx->putLine = putLine;
-  ctx->outFile = outFile;
+  ctx->writeContext = newWriteContext(outputDirectory, filingId);
   ctx->version = 0;
   ctx->summary = 0;
   ctx->f99Text = 0;
@@ -26,7 +27,13 @@ void freeFecContext(FEC_CONTEXT *ctx)
   {
     free(ctx->f99Text);
   }
+  freeWriteContext(ctx->writeContext);
   free(ctx);
+}
+
+void writeSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+{
+  writeField(ctx->writeContext, filename, ctx->persistentMemory->line, start, end, field);
 }
 
 // Grab a line from the input file.
@@ -121,15 +128,15 @@ int consumeUntil(FEC_CONTEXT *ctx, int *position, char c)
   {
     // Grab the current character
     char current = ctx->persistentMemory->line->str[*position];
-    if ((current == c) || (current = 0))
+    if ((current == c) || (current == 0))
     {
       // If the character is the one we're looking for, break
       break;
     }
-    else if ((current != ' ') && (current == '\t'))
+    else if ((current != ' ') && (current != '\t'))
     {
       // If the character is not whitespace, advance finalNonwhitespace
-      finalNonwhitespace = *position;
+      finalNonwhitespace = (*position) + 1;
     }
     (*position)++;
   }
@@ -143,11 +150,20 @@ void parseHeader(FEC_CONTEXT *ctx)
   {
     // Parse legacy header
     int scheduleCounts = 0; // init scheduleCounts to be false
+    int firstField = 1;
 
     // Until the line starts with "/*" again, read lines
-    do
+    while (1)
     {
-      grabLine(ctx);
+      if (grabLine(ctx) == 0)
+      {
+        break;
+      }
+      if (lineStartsWithLegacyHeader(ctx))
+      {
+        break;
+      }
+
       // Turn the line into lowercase
       lineToLowerCase(ctx);
 
@@ -160,9 +176,31 @@ void parseHeader(FEC_CONTEXT *ctx)
       {
         // Grab key value from "key=value" (strip whitespace)
         int i = 0;
-      }
+        consumeWhitespace(ctx, &i);
+        int keyStart = i;
+        int keyEnd = consumeUntil(ctx, &i, '=');
+        // Jump over '='
+        i++;
+        consumeWhitespace(ctx, &i);
+        int valueStart = i;
+        int valueEnd = consumeUntil(ctx, &i, 0);
 
-    } while (!lineStartsWithLegacyHeader(ctx));
+        FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
+        for (int i = keyStart; i < keyEnd; i++)
+        {
+          processFieldChar(ctx->persistentMemory->line->str[i], &field);
+        }
+
+        if (!firstField)
+        {
+          // Only write commas before fields that aren't first
+          writeDelimeter(ctx->writeContext, "header");
+        }
+        firstField = 0;
+        writeSubstr(ctx, "header", keyStart, keyEnd, &field);
+      }
+    }
+    writeNewline(ctx->writeContext, "header");
   }
 }
 
@@ -177,8 +215,39 @@ int parseFec(FEC_CONTEXT *ctx)
       break;
     }
 
-    // Write the line out to file
-    ctx->putLine(ctx->persistentMemory->line->str, ctx->outFile);
+    // If version is none, parse the header
+    parseHeader(ctx);
+
+    // Write the entire file out as tabular data
+    // TEMP code for perf testing
+    while (1)
+    {
+      if (grabLine(ctx) == 0)
+      {
+        break;
+      }
+
+      int position = 0;
+      int start = 0;
+      int end = 0;
+      int first = 1;
+
+      while (position < ctx->persistentMemory->line->n && ctx->persistentMemory->line->str[position] != 0)
+      {
+        if (!first)
+        {
+          // Only write commas before fields that aren't first
+          writeDelimeter(ctx->writeContext, "data");
+        }
+        first = 0;
+
+        FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
+        readAscii28Field(ctx->persistentMemory->line, &position, &start, &end, &field);
+        writeSubstr(ctx, "data", start, end, &field);
+        position++;
+      }
+      writeNewline(ctx->writeContext, "data");
+    }
   }
   return 1;
 }

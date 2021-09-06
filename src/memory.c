@@ -11,6 +11,19 @@ STRING *newString(size_t size)
   return s;
 }
 
+STRING *fromString(const char *str)
+{
+  STRING *s = newString(strlen(str) + 1);
+  strcpy(s->str, str);
+  return s;
+}
+
+void setString(STRING *s, const char *str)
+{
+  growStringTo(s, strlen(str) + 1);
+  strcpy(s->str, str);
+}
+
 void freeString(STRING *s)
 {
   free(s->str);
