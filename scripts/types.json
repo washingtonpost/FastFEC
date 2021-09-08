@@ -1,0 +1,483 @@
+{
+  "^f1[an]": {
+    ".*": {
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^effective_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^(f1m$|f1m[a|n])": {
+    ".*": {
+      ".*_date$": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f13[an]": {
+    ".*": {
+      ".*_date$": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "(^f132)|(^f133)": {
+    ".*": {
+      ".*_date$": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      ".*_amount$": {
+        "type": "float"
+      }
+    }
+  },
+  "(^f2$)|(^f2[^4])": {
+    ".*": {
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "(^f24$)|(^f24[an])": {
+    ".*": {
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^(f3[ant]|f3p$|(f3p[^s|3])|f3x$|f3x[ant]|f3z)": {
+    ".*": {
+      "^col_": {
+        "type": "float"
+      },
+      "^coverage_from_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^coverage_through_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^election_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f3s": {
+    ".*": {
+      "^date_general_election": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_day_after_general_election": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^[abcde]_": {
+        "type": "float"
+      },
+      "^(transfers|offsets|other|total)": {
+        "type": "float"
+      }
+    }
+  },
+  "^f4.*": {
+    ".*": {
+      "^col_": {
+        "type": "float"
+      },
+      "^coverage_from_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^coverage_through_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f5[na]": {
+    ".*": {
+      "^coverage_from_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^coverage_through_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^total_contribution": {
+        "type": "float"
+      },
+      "^total_independent_expenditure": {
+        "type": "float"
+      }
+    }
+  },
+  "^f57": {
+    ".*": {
+      "^calendar_y_t_d_per_election_office": {
+        "type": "float"
+      },
+      "^dissemination_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^expenditure_amount": {
+        "type": "float"
+      }
+    }
+  },
+  "(^f6$)|(^f6[an])": {
+    ".*": {
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f65": {
+    ".*": {
+      "^contribution_amount": {
+        "type": "float"
+      },
+      "^contribution_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "(^f8$)|(^f8[an])": {
+    ".*": {
+      "^cash_on_hand$": {
+        "type": "float"
+      },
+      "^cash_on_hand_as_of_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^total_assets": {
+        "type": "float"
+      },
+      "^receipts_ytd": {
+        "type": "float"
+      },
+      "^disbursements_ytd": {
+        "type": "float"
+      },
+      "^total_debts_owed": {
+        "type": "float"
+      },
+      "^total_num_creditors_owed": {
+        "type": "float"
+      },
+      "^num_creditors_part_ii": {
+        "type": "float"
+      },
+      "^total_debts_owed_part_ii": {
+        "type": "float"
+      },
+      "^total_to_be_paid_to_creditors": {
+        "type": "float"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f8ii$": {
+    ".*": {
+      "^date_incurred": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^amount_owed_to": {
+        "type": "float"
+      },
+      "^amount_offered_in": {
+        "type": "float"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f8iii$": {
+    ".*": {
+      "^date_incurred": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^amount_owed_to": {
+        "type": "float"
+      },
+      "^amount_expected_to_pay": {
+        "type": "float"
+      }
+    }
+  },
+  "(^f9$)|(^f9[an])": {
+    ".*": {
+      "^original_amendment_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^coverage_from_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^coverage_through_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_public_distribution": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^total_donations": {
+        "type": "float"
+      },
+      "^total_disbursements": {
+        "type": "float"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f92": {
+    ".*": {
+      "^contribution_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^contribution_amount": {
+        "type": "float"
+      }
+    }
+  },
+  "^f93": {
+    ".*": {
+      "^expenditure_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^expenditure_amount": {
+        "type": "float"
+      },
+      "^communication_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f99": {
+    ".*": {
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f10$": {
+    ".*": {
+      "^expenditure_total_": {
+        "type": "float"
+      },
+      "^previous_expenditure_aggregate": {
+        "type": "float"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^f105$": {
+    ".*": {
+      "^expenditure_amount": {
+        "type": "float"
+      },
+      "^expenditure_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^sa": {
+    ".*": {
+      "^contribution_aggregate": {
+        "type": "float"
+      },
+      "^contribution_amount": {
+        "type": "float"
+      },
+      "^contribution_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^sb": {
+    ".*": {
+      "^expenditure_amount": {
+        "type": "float"
+      },
+      "^semi_annual_refunded_bundled_amt": {
+        "type": "float"
+      },
+      "^expenditure_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^sc": {
+    ".*": {
+      "^authorized_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^deposit_acct_auth_date_presidential": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^established_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^loan_amount_original": {
+        "type": "float"
+      },
+      "^loan_balance": {
+        "type": "float"
+      },
+      "^loan_incurred_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^loan_payment_to_date": {
+        "type": "float"
+      }
+    }
+  },
+  "^sd": {
+    ".*": {
+      "^balance_at_close_this_period": {
+        "type": "float"
+      },
+      "^beginning_balance_this_period": {
+        "type": "float"
+      },
+      "^incurred_amount_this_period": {
+        "type": "float"
+      },
+      "^payment_amount_this_period": {
+        "type": "float"
+      }
+    }
+  },
+  "^se": {
+    ".*": {
+      "^calendar_y_t_d_per_election_office": {
+        "type": "float"
+      },
+      "^date_signed": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^disbursement_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^dissemination_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^expenditure_amount": {
+        "type": "float"
+      }
+    }
+  },
+  "^sf": {
+    ".*": {
+      "^expenditure_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^expenditure_amount": {
+        "type": "float"
+      },
+      "^aggregate_general_elec_expended": {
+        "type": "float"
+      }
+    }
+  },
+  "^si": {
+    ".*": {
+      "^col_": {
+        "type": "float"
+      },
+      "^coverage_from_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^coverage_through_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  },
+  "^sl": {
+    ".*": {
+      "^col_": {
+        "type": "float"
+      },
+      "^coverage_from_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      },
+      "^coverage_through_date": {
+        "type": "date",
+        "format": "%Y%m%d"
+      }
+    }
+  }
+}
