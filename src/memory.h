@@ -33,6 +33,7 @@ struct persistent_memory_context
 {
   STRING *rawLine;
   STRING *line;
+  STRING *bufferLine;
 };
 typedef struct persistent_memory_context PERSISTENT_MEMORY_CONTEXT;
 

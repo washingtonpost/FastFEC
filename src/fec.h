@@ -15,9 +15,9 @@ struct fec_context
 
   WRITE_CONTEXT *writeContext;
 
-  STRING *version; // default null
-  int summary;     // default false
-  STRING *f99Text;
+  char *version; // default null
+  int summary;   // default false
+  char *f99Text;
 
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;

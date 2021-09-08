@@ -13,10 +13,15 @@ struct write_context
   int nfiles;
   char *lastname;
   FILE *lastfile;
+  int local;
+  STRING *localBuffer;
+  int localBufferPosition;
 };
 typedef struct write_context WRITE_CONTEXT;
 
 WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId);
+
+void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line);
 
 void writeN(WRITE_CONTEXT *context, char *filename, char *string, int nchars);
 

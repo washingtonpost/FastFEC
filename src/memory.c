@@ -63,7 +63,7 @@ int growString(STRING *str)
 void copyString(STRING *src, STRING *dst)
 {
   // Check if dst has enough space
-  growStringTo(dst, src->n);
+  growStringTo(dst, src->n + 1);
   // Copy the strings
   strcpy(dst->str, src->str);
 }
@@ -73,6 +73,7 @@ PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext()
   PERSISTENT_MEMORY_CONTEXT *ctx = malloc(sizeof(PERSISTENT_MEMORY_CONTEXT));
   ctx->rawLine = newString(DEFAULT_STRING_SIZE);
   ctx->line = newString(DEFAULT_STRING_SIZE);
+  ctx->bufferLine = newString(DEFAULT_STRING_SIZE);
   return ctx;
 }
 
@@ -80,5 +81,6 @@ void freePersistentMemoryContext(PERSISTENT_MEMORY_CONTEXT *context)
 {
   freeString(context->rawLine);
   freeString(context->line);
+  freeString(context->bufferLine);
   free(context);
 }

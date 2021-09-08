@@ -4,6 +4,10 @@
 #include "csv.h"
 #include <string.h>
 
+char *HEADER = "header";
+char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
+char *FEC_VERSION_NUMBER = "fec_ver_#";
+
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
@@ -31,9 +35,14 @@ void freeFecContext(FEC_CONTEXT *ctx)
   free(ctx);
 }
 
+void writeSubstrToWriter(FEC_CONTEXT *ctx, WRITE_CONTEXT *writeContext, char *filename, int start, int end, FIELD_INFO *field)
+{
+  writeField(writeContext, filename, ctx->persistentMemory->line, start, end, field);
+}
+
 void writeSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
 {
-  writeField(ctx->writeContext, filename, ctx->persistentMemory->line, start, end, field);
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, start, end, field);
 }
 
 // Grab a line from the input file.
@@ -133,7 +142,7 @@ int consumeUntil(FEC_CONTEXT *ctx, int *position, char c)
       // If the character is the one we're looking for, break
       break;
     }
-    else if ((current != ' ') && (current != '\t'))
+    else if ((current != ' ') && (current != '\t') && (current != '\n'))
     {
       // If the character is not whitespace, advance finalNonwhitespace
       finalNonwhitespace = (*position) + 1;
@@ -151,6 +160,10 @@ void parseHeader(FEC_CONTEXT *ctx)
     // Parse legacy header
     int scheduleCounts = 0; // init scheduleCounts to be false
     int firstField = 1;
+
+    // Use a local buffer to store header values
+    WRITE_CONTEXT bufferWriteContext;
+    initializeLocalWriteContext(&bufferWriteContext, ctx->persistentMemory->bufferLine);
 
     // Until the line starts with "/*" again, read lines
     while (1)
@@ -185,69 +198,85 @@ void parseHeader(FEC_CONTEXT *ctx)
         int valueStart = i;
         int valueEnd = consumeUntil(ctx, &i, 0);
 
-        FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
+        // Gather field metrics for CSV writing
+        FIELD_INFO headerField = {.num_quotes = 0, .num_commas = 0};
         for (int i = keyStart; i < keyEnd; i++)
         {
-          processFieldChar(ctx->persistentMemory->line->str[i], &field);
+          processFieldChar(ctx->persistentMemory->line->str[i], &headerField);
+        }
+        FIELD_INFO valueField = {.num_quotes = 0, .num_commas = 0};
+        for (int i = valueStart; i < valueEnd; i++)
+        {
+          processFieldChar(ctx->persistentMemory->line->str[i], &valueField);
         }
 
+        // Write commas as needed (only before fields that aren't first)
         if (!firstField)
         {
-          // Only write commas before fields that aren't first
-          writeDelimeter(ctx->writeContext, "header");
+          writeDelimeter(ctx->writeContext, HEADER);
+          writeDelimeter(&bufferWriteContext, NULL);
         }
         firstField = 0;
-        writeSubstr(ctx, "header", keyStart, keyEnd, &field);
+
+        // Write schedule counts prefix if set
+        if (scheduleCounts)
+        {
+          write(ctx->writeContext, HEADER, SCHEDULE_COUNTS);
+        }
+
+        if (strncmp(ctx->persistentMemory->line->str + keyStart, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
+        {
+          ctx->version = malloc(valueEnd - valueStart + 1);
+          memcpy(ctx->version, ctx->persistentMemory->line->str + valueStart, valueEnd - valueStart);
+          // Add null terminator
+          ctx->version[valueEnd - valueStart] = 0;
+        }
+
+        // Write the key/value pair
+        writeSubstr(ctx, HEADER, keyStart, keyEnd, &headerField);
+        writeSubstrToWriter(ctx, &bufferWriteContext, NULL, valueStart, valueEnd, &valueField);
       }
     }
-    writeNewline(ctx->writeContext, "header");
+    writeNewline(ctx->writeContext, HEADER);
+    write(ctx->writeContext, HEADER, bufferWriteContext.localBuffer->str);
+    writeNewline(ctx->writeContext, HEADER); // end with newline
   }
 }
 
 int parseFec(FEC_CONTEXT *ctx)
 {
+  // Parse the header
+  parseHeader(ctx);
+
+  // Write the entire file out as tabular data
+  // TEMP code for perf testing
   while (1)
   {
-    // Grab a line from the input file
-    if (!grabLine(ctx))
+    if (grabLine(ctx) == 0)
     {
-      // EOF
       break;
     }
 
-    // If version is none, parse the header
-    parseHeader(ctx);
+    int position = 0;
+    int start = 0;
+    int end = 0;
+    int first = 1;
 
-    // Write the entire file out as tabular data
-    // TEMP code for perf testing
-    while (1)
+    while (position < ctx->persistentMemory->line->n && ctx->persistentMemory->line->str[position] != 0)
     {
-      if (grabLine(ctx) == 0)
+      if (!first)
       {
-        break;
+        // Only write commas before fields that aren't first
+        writeDelimeter(ctx->writeContext, "data");
       }
+      first = 0;
 
-      int position = 0;
-      int start = 0;
-      int end = 0;
-      int first = 1;
-
-      while (position < ctx->persistentMemory->line->n && ctx->persistentMemory->line->str[position] != 0)
-      {
-        if (!first)
-        {
-          // Only write commas before fields that aren't first
-          writeDelimeter(ctx->writeContext, "data");
-        }
-        first = 0;
-
-        FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
-        readAscii28Field(ctx->persistentMemory->line, &position, &start, &end, &field);
-        writeSubstr(ctx, "data", start, end, &field);
-        position++;
-      }
-      writeNewline(ctx->writeContext, "data");
+      FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
+      readAscii28Field(ctx->persistentMemory->line, &position, &start, &end, &field);
+      writeSubstr(ctx, "data", start, end, &field);
+      position++;
     }
+    writeNewline(ctx->writeContext, "data");
   }
   return 1;
 }

@@ -60,7 +60,18 @@ WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId)
   context->nfiles = 0;
   context->lastname = NULL;
   context->lastfile = NULL;
+  context->local = 0;
+  context->localBuffer = NULL;
   return context;
+}
+
+void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line)
+{
+  writeContext->local = 1;
+  writeContext->localBuffer = line;
+  writeContext->localBufferPosition = 0;
+  // Ensure the line is empty
+  writeContext->localBuffer->str[0] = 0;
 }
 
 void getFile(WRITE_CONTEXT *context, char *filename)
@@ -121,8 +132,25 @@ void getFile(WRITE_CONTEXT *context, char *filename)
 
 void writeN(WRITE_CONTEXT *context, char *filename, char *string, int nchars)
 {
-  getFile(context, filename);
-  fwrite(string, sizeof(char), nchars, context->lastfile);
+  if (context->local == 0)
+  {
+    // Write to file
+    getFile(context, filename);
+    fwrite(string, sizeof(char), nchars, context->lastfile);
+  }
+  else
+  {
+    // Write to local buffer
+    int newPosition = context->localBufferPosition + nchars;
+    if (newPosition + 1 > context->localBuffer->n)
+    {
+      growStringTo(context->localBuffer, newPosition + 1);
+    }
+    memcpy(context->localBuffer->str + context->localBufferPosition, string, nchars);
+    context->localBufferPosition = newPosition;
+    // Add null terminator
+    context->localBuffer->str[context->localBufferPosition] = 0;
+  }
 }
 
 void write(WRITE_CONTEXT *context, char *filename, char *string)
@@ -132,8 +160,18 @@ void write(WRITE_CONTEXT *context, char *filename, char *string)
 
 void writeChar(WRITE_CONTEXT *context, char *filename, char c)
 {
-  getFile(context, filename);
-  fputc(c, context->lastfile);
+  if (context->local == 0)
+  {
+    // Write to file
+    getFile(context, filename);
+    fputc(c, context->lastfile);
+  }
+  else
+  {
+    // Write to local buffer
+    char str[] = {c};
+    writeN(context, filename, str, 1);
+  }
 }
 
 void freeWriteContext(WRITE_CONTEXT *context)
