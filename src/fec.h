@@ -16,11 +16,13 @@ struct fec_context
   WRITE_CONTEXT *writeContext;
 
   char *version; // default null
-  int summary;   // default false
+  int useAscii28;
+  int summary; // default false
   char *f99Text;
 
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;
+  int currentLineHasAscii28;
 };
 typedef struct fec_context FEC_CONTEXT;
 

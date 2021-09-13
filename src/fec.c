@@ -7,6 +7,10 @@
 char *HEADER = "header";
 char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
 char *FEC_VERSION_NUMBER = "fec_ver_#";
+char *FEC = "FEC";
+
+char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
+int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
 
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory)
 {
@@ -16,8 +20,10 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine 
   ctx->file = file;
   ctx->writeContext = newWriteContext(outputDirectory, filingId);
   ctx->version = 0;
+  ctx->useAscii28 = 0; // default to using comma parsing unless a version is set
   ctx->summary = 0;
   ctx->f99Text = 0;
+  ctx->currentLineHasAscii28 = 0;
   return ctx;
 }
 
@@ -60,6 +66,9 @@ int grabLine(FEC_CONTEXT *ctx)
   // Decode the line
   LINE_INFO info;
   decodeLine(&info, ctx->persistentMemory->rawLine, ctx->persistentMemory->line);
+  // Store whether the current line has ascii separators
+  // (determines whether we use CSV or ascii28 split line parsing)
+  ctx->currentLineHasAscii28 = info.ascii28;
   return 1;
 }
 
@@ -152,6 +161,112 @@ int consumeUntil(FEC_CONTEXT *ctx, int *position, char c)
   return finalNonwhitespace;
 }
 
+void initParseContext(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, FIELD_INFO *fieldInfo)
+{
+  parseContext->line = ctx->persistentMemory->line;
+  parseContext->fieldInfo = fieldInfo;
+  parseContext->position = 0;
+  parseContext->start = 0;
+  parseContext->end = 0;
+  parseContext->columnIndex = 0;
+}
+
+void readField(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext)
+{
+  // Reset field info
+  parseContext->fieldInfo->num_quotes = 0;
+  parseContext->fieldInfo->num_commas = 0;
+
+  if (ctx->currentLineHasAscii28)
+  {
+    readAscii28Field(parseContext);
+  }
+  else
+  {
+    readCsvField(parseContext);
+  }
+}
+
+int isParseDone(PARSE_CONTEXT *parseContext)
+{
+  // The parse is done if a newline is encountered or EOF
+  char c = parseContext->line->str[parseContext->position];
+  return (c == 0) || (c == '\n');
+}
+
+// Parse a line from a filing, using FEC and form version
+//  information to map fields to headers and types.
+// Return 1 if successful, or 0 if the line is not fully
+// specified.
+int parseLine(FEC_CONTEXT *ctx, char *filename)
+{
+  // Parse fields
+  PARSE_CONTEXT parseContext;
+  FIELD_INFO fieldInfo;
+  initParseContext(ctx, &parseContext, &fieldInfo);
+
+  // Log the indices on the line where the form version is specified
+  int formStart;
+  int formEnd;
+
+  // Iterate through fields
+  while (!isParseDone(&parseContext))
+  {
+    readField(ctx, &parseContext);
+    if (parseContext.columnIndex == 0)
+    {
+      // Set the form version to the first column
+      // (with whitespace removed)
+      stripWhitespace(&parseContext);
+      formStart = parseContext.start;
+      formEnd = parseContext.end;
+    }
+    else
+    {
+      // Grab the field mapping given the form version
+      printf("%d\n", )
+    }
+
+    advanceField(&parseContext);
+  }
+  if (parseContext.columnIndex < 2)
+  {
+    // Fewer than two fields? The line isn't fully specified
+    return 0;
+  }
+  // Parsing successful
+  return 1;
+}
+
+// Set the FEC context version based on a substring of the current line
+void setVersion(FEC_CONTEXT *ctx, int start, int end)
+{
+  ctx->version = malloc(end - start + 1);
+  strncpy(ctx->version, ctx->persistentMemory->line->str + start, end - start);
+  // Add null terminator
+  ctx->version[end - start] = 0;
+
+  // Calculate whether to use ascii28 or not based on version
+  char *dot = strchr(ctx->version, '.');
+  int useCommaVersion = 0;
+  if (dot != NULL)
+  {
+    // Check text of left of the dot to get main version
+    int dotIndex = (int)(dot - ctx->version);
+
+    for (int i = 0; i < NUM_COMMA_FEC_VERSIONS; i++)
+    {
+      if (strncmp(ctx->version, COMMA_FEC_VERSIONS[i], dotIndex) == 0)
+      {
+        useCommaVersion = 1;
+        break;
+      }
+    }
+  }
+
+  ctx->useAscii28 = !useCommaVersion;
+}
+
 void parseHeader(FEC_CONTEXT *ctx)
 {
   // Check if the line starts with "/*"
@@ -224,12 +339,10 @@ void parseHeader(FEC_CONTEXT *ctx)
           write(ctx->writeContext, HEADER, SCHEDULE_COUNTS);
         }
 
+        // If we match the FEC version column, set the version
         if (strncmp(ctx->persistentMemory->line->str + keyStart, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
         {
-          ctx->version = malloc(valueEnd - valueStart + 1);
-          memcpy(ctx->version, ctx->persistentMemory->line->str + valueStart, valueEnd - valueStart);
-          // Add null terminator
-          ctx->version[valueEnd - valueStart] = 0;
+          setVersion(ctx, valueStart, valueEnd);
         }
 
         // Write the key/value pair
@@ -241,42 +354,92 @@ void parseHeader(FEC_CONTEXT *ctx)
     write(ctx->writeContext, HEADER, bufferWriteContext.localBuffer->str);
     writeNewline(ctx->writeContext, HEADER); // end with newline
   }
+  else
+  {
+    // Not a multiline legacy header — must be using a more recent version
+
+    // Parse fields
+    PARSE_CONTEXT parseContext;
+    FIELD_INFO fieldInfo;
+    initParseContext(ctx, &parseContext, &fieldInfo);
+
+    int isFecSecondColumn = 0;
+
+    // Iterate through fields
+    while (!isParseDone(&parseContext))
+    {
+      readField(ctx, &parseContext);
+
+      if (parseContext.columnIndex == 1)
+      {
+        // Check if the second column is "FEC"
+        if (strncmp(ctx->persistentMemory->line->str + parseContext.start, FEC, strlen(FEC)) == 0)
+        {
+          isFecSecondColumn = 1;
+        }
+        else
+        {
+          // If not, the second column is the version
+          setVersion(ctx, parseContext.start, parseContext.end);
+
+          // Parse the header now that version is known
+          parseLine(ctx, HEADER);
+        }
+      }
+      if (parseContext.columnIndex == 2 && isFecSecondColumn)
+      {
+        // Set the version
+        setVersion(ctx, parseContext.start, parseContext.end);
+
+        // Parse the header now that version is known
+        parseLine(ctx, HEADER);
+        return;
+      }
+
+      advanceField(&parseContext);
+    }
+  }
 }
 
 int parseFec(FEC_CONTEXT *ctx)
 {
+  if (grabLine(ctx) == 0)
+  {
+    return 0;
+  }
+
   // Parse the header
   parseHeader(ctx);
 
   // Write the entire file out as tabular data
   // TEMP code for perf testing
-  while (1)
-  {
-    if (grabLine(ctx) == 0)
-    {
-      break;
-    }
+  // while (1)
+  // {
+  //   if (grabLine(ctx) == 0)
+  //   {
+  //     break;
+  //   }
 
-    int position = 0;
-    int start = 0;
-    int end = 0;
-    int first = 1;
+  //   int position = 0;
+  //   int start = 0;
+  //   int end = 0;
+  //   int first = 1;
 
-    while (position < ctx->persistentMemory->line->n && ctx->persistentMemory->line->str[position] != 0)
-    {
-      if (!first)
-      {
-        // Only write commas before fields that aren't first
-        writeDelimeter(ctx->writeContext, "data");
-      }
-      first = 0;
+  //   while (position < ctx->persistentMemory->line->n && ctx->persistentMemory->line->str[position] != 0)
+  //   {
+  //     if (!first)
+  //     {
+  //       // Only write commas before fields that aren't first
+  //       writeDelimeter(ctx->writeContext, "data");
+  //     }
+  //     first = 0;
 
-      FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
-      readAscii28Field(ctx->persistentMemory->line, &position, &start, &end, &field);
-      writeSubstr(ctx, "data", start, end, &field);
-      position++;
-    }
-    writeNewline(ctx->writeContext, "data");
-  }
+  //     FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
+  //     readAscii28Field(ctx->persistentMemory->line, &position, &start, &end, &field);
+  //     writeSubstr(ctx, "data", start, end, &field);
+  //     position++;
+  //   }
+  //   writeNewline(ctx->writeContext, "data");
+  // }
   return 1;
 }

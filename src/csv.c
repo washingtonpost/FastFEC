@@ -5,13 +5,16 @@
 
 void processFieldChar(char c, FIELD_INFO *info)
 {
-  if (c == '"')
+  if (info)
   {
-    info->num_quotes++;
-  }
-  else if (c == ',')
-  {
-    info->num_commas++;
+    if (c == '"')
+    {
+      info->num_quotes++;
+    }
+    else if (c == ',')
+    {
+      info->num_commas++;
+    }
   }
 }
 
@@ -30,94 +33,103 @@ static inline int endOfField(char c)
   return (c == ',') || (c == '\n') || (c == 0);
 }
 
-void readAscii28Field(STRING *line, int *position, int *start, int *end, FIELD_INFO *field)
+void readAscii28Field(PARSE_CONTEXT *parseContext)
 {
-  *start = *position;
-  char c = line->str[*position];
-  processFieldChar(c, field);
+  parseContext->start = parseContext->position;
+  char c = parseContext->line->str[parseContext->position];
+  processFieldChar(c, parseContext->fieldInfo);
   char startChar = c;
   char endChar = 0;
   while (c != 0 && c != 28 && c != '\n')
   {
     endChar = c;
-    (*position) += 1;
-    c = line->str[*position];
-    processFieldChar(c, field);
+    parseContext->position += 1;
+    c = parseContext->line->str[parseContext->position];
+    processFieldChar(c, parseContext->fieldInfo);
   }
-  *end = *position;
+  parseContext->end = parseContext->position;
   if (startChar == '"' && endChar == '"')
   {
     // Bump the field positions to avoid the quotes
-    (*start)++;
-    (*end)--;
-    (field->num_quotes) -= 2;
+    (parseContext->start)++;
+    (parseContext->end)--;
+    if (parseContext->fieldInfo)
+    {
+      (parseContext->fieldInfo->num_quotes) -= 2;
+    }
   }
 }
 
-void readCsvField(STRING *line, int *position, int *start, int *end, FIELD_INFO *field)
+void readCsvField(PARSE_CONTEXT *parseContext)
 {
-  char c = line->str[*position];
+  char c = parseContext->line->str[parseContext->position];
   if (endOfField(c))
   {
     // Empty field
-    *start = *position;
-    *end = *position;
+    parseContext->start = parseContext->position;
+    parseContext->end = parseContext->position;
     return;
   }
 
-  processFieldChar(c, field);
+  processFieldChar(c, parseContext->fieldInfo);
 
   // If quoted, field is escaped
   int escaped = c == '"';
   int offset = 0;
   if (escaped)
   {
-    (*position)++;
+    (parseContext->position)++;
   }
-  *start = *position;
+  parseContext->start = parseContext->position;
   while (1)
   {
     if (offset != 0)
     {
       // If the offset is non-zero, we need to shift characters
-      line->str[(*position) - offset] = line->str[*position];
+      parseContext->line->str[(parseContext->position) - offset] = parseContext->line->str[parseContext->position];
     }
 
-    c = line->str[*position];
+    c = parseContext->line->str[parseContext->position];
     if (c == 0)
     {
       // End of line
-      *end = (*position) - offset;
+      parseContext->end = parseContext->position - offset;
       return;
     }
     if (!escaped && ((c == ',') || (c == '\n')))
     {
       // If not in escaped mode and the end of field is encountered
       // then we're done.
-      *end = (*position) - offset;
+      parseContext->end = parseContext->position - offset;
       return;
     }
-    processFieldChar(c, field);
+    processFieldChar(c, parseContext->fieldInfo);
     if (escaped && c == '"')
     {
       // If in escaped mode and a quote is encountered, then we need
       // to check if the quote is escaped.
-      if (line->str[(*position) + 1] == '"')
+      if (parseContext->line->str[parseContext->position + 1] == '"')
       {
         // If the quote is escaped, then we need to skip it.
-        (*position)++;
+        (parseContext->position)++;
         offset++;
       }
       else
       {
         // If the quote is not escaped, then we're done.
-        *end = (*position) - offset;
-        (*position)++;
+        parseContext->end = parseContext->position - offset;
+        (parseContext->position)++;
         return;
       }
     }
-    (*position)++;
+    (parseContext->position)++;
   }
+}
+
+void advanceField(PARSE_CONTEXT *context)
+{
+  context->columnIndex++;
+  context->position++;
 }
 
 void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start, int end, FIELD_INFO *info)
@@ -157,5 +169,26 @@ void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start,
   {
     // End of escape quote
     writeChar(context, filename, '"');
+  }
+}
+
+int isWhitespace(PARSE_CONTEXT *context, int position)
+{
+  char c = context->line->str[position];
+  return (c == ' ') || (c == '\t') || (c == '\n');
+}
+
+void stripWhitespace(PARSE_CONTEXT *context)
+{
+  // Strip leading whitespace
+  while (isWhitespace(context, context->start) && (context->start < context->end))
+  {
+    (context->start)++;
+  }
+
+  // Strip trailing whitespace
+  while (isWhitespace(context, context->end - 1) && (context->end > context->start))
+  {
+    (context->end)--;
   }
 }

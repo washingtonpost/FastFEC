@@ -5,41 +5,51 @@
 
 int tests_run = 0;
 
+// Quick helper method to init parse contexts for testing
+void initParseContextWithLine(PARSE_CONTEXT *parseContext, STRING *line)
+{
+  parseContext->line = line;
+  parseContext->fieldInfo = NULL;
+  parseContext->position = 0;
+  parseContext->columnIndex = 0;
+}
+
 static char *testCsvReading()
 {
-  int start, end, position;
+  PARSE_CONTEXT parseContext;
 
   // Basic test
   STRING *csv = fromString("abc");
-  position = 0;
-  readCsvField(csv, &position, &start, &end);
-  mu_assert("error, start != 0", start == 0);
-  mu_assert("error, end != 3", end == 3);
-  mu_assert("error, position != 3", position == 3);
+  initParseContextWithLine(&parseContext, csv);
+  readCsvField(&parseContext);
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 3", parseContext.end == 3);
+  mu_assert("error, position != 3", parseContext.position == 3);
 
   // Quoted field
   setString(csv, "\"abc\"");
-  position = 0;
-  readCsvField(csv, &position, &start, &end);
-  mu_assert("error, start != 1", start == 1);
-  mu_assert("error, end != 4", end == 4);
-  mu_assert("error, position != 5", position == 5);
+  initParseContextWithLine(&parseContext, csv);
+  readCsvField(&parseContext);
+  mu_assert("error, start != 1", parseContext.start == 1);
+  mu_assert("error, end != 4", parseContext.end == 4);
+  mu_assert("error, position != 5", parseContext.position == 5);
 
   // Quoted field with escaped quote
   setString(csv, "\"a\"\",a\"\"b,\"\"c,\"\"\"\"\",\"\"");
-  position = 3;
-  readCsvField(csv, &position, &start, &end);
-  mu_assert("error, start != 4", start == 4);
-  mu_assert("error, end != 14", end == 14);
-  mu_assert("error, position != 19", position == 19);
+  initParseContextWithLine(&parseContext, csv);
+  parseContext.position = 3;
+  readCsvField(&parseContext);
+  mu_assert("error, start != 4", parseContext.start == 4);
+  mu_assert("error, end != 14", parseContext.end == 14);
+  mu_assert("error, position != 19", parseContext.position == 19);
 
   // Empty quoted field
   setString(csv, "\"\"");
-  position = 0;
-  readCsvField(csv, &position, &start, &end);
-  mu_assert("error, start != 1", start == 1);
-  mu_assert("error, end != 1", end == 1);
-  mu_assert("error, position != 2", position == 2);
+  initParseContextWithLine(&parseContext, csv);
+  readCsvField(&parseContext);
+  mu_assert("error, start != 1", parseContext.start == 1);
+  mu_assert("error, end != 1", parseContext.end == 1);
+  mu_assert("error, position != 2", parseContext.position == 2);
 
   freeString(csv);
   return 0;
@@ -47,55 +57,87 @@ static char *testCsvReading()
 
 static char *testAscii28Reading()
 {
-  int start, end, position;
+  PARSE_CONTEXT parseContext;
 
   // Basic test
   STRING *line = fromString("abc");
-  position = 0;
-  readAscii28Field(line, &position, &start, &end);
-  mu_assert("error, start != 0", start == 0);
-  mu_assert("error, end != 3", end == 3);
-  mu_assert("error, position != 3", position == 3);
+  initParseContextWithLine(&parseContext, line);
+  readAscii28Field(&parseContext);
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 3", parseContext.end == 3);
+  mu_assert("error, position != 3", parseContext.position == 3);
 
   // Quoted field
   setString(line, "\"abc\"");
-  position = 0;
-  readAscii28Field(line, &position, &start, &end);
-  mu_assert("error, start != 1", start == 1);
-  mu_assert("error, end != 4", end == 4);
-  mu_assert("error, position != 5", position == 5);
+  initParseContextWithLine(&parseContext, line);
+  readAscii28Field(&parseContext);
+  mu_assert("error, start != 1", parseContext.start == 1);
+  mu_assert("error, end != 4", parseContext.end == 4);
+  mu_assert("error, position != 5", parseContext.position == 5);
 
   // Quote at beginning but not end
   setString(line, "\"abc");
-  position = 0;
-  readAscii28Field(line, &position, &start, &end);
-  mu_assert("error, start != 0", start == 0);
-  mu_assert("error, end != 4", end == 4);
-  mu_assert("error, position != 4", position == 4);
+  initParseContextWithLine(&parseContext, line);
+  readAscii28Field(&parseContext);
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 4", parseContext.end == 4);
+  mu_assert("error, position != 4", parseContext.position == 4);
 
   // Quote in middle
   setString(line, "ab\"c");
-  position = 0;
-  readAscii28Field(line, &position, &start, &end);
-  mu_assert("error, start != 0", start == 0);
-  mu_assert("error, end != 4", end == 4);
-  mu_assert("error, position != 4", position == 4);
+  initParseContextWithLine(&parseContext, line);
+  readAscii28Field(&parseContext);
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 4", parseContext.end == 4);
+  mu_assert("error, position != 4", parseContext.position == 4);
 
   // Quote at end
   setString(line, "abc\"");
-  position = 0;
-  readAscii28Field(line, &position, &start, &end);
-  mu_assert("error, start != 0", start == 0);
-  mu_assert("error, end != 4", end == 4);
-  mu_assert("error, position != 4", position == 4);
+  initParseContextWithLine(&parseContext, line);
+  readAscii28Field(&parseContext);
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 4", parseContext.end == 4);
+  mu_assert("error, position != 4", parseContext.position == 4);
 
   // Ascii 28 delimiter
   setString(line, "\"ab\034c\"");
-  position = 0;
-  readAscii28Field(line, &position, &start, &end);
-  mu_assert("error, start != 0", start == 0);
-  mu_assert("error, end != 3", end == 3);
-  mu_assert("error, position != 3", position == 3);
+  initParseContextWithLine(&parseContext, line);
+  readAscii28Field(&parseContext);
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 3", parseContext.end == 3);
+  mu_assert("error, position != 3", parseContext.position == 3);
+
+  // Empty string
+  setString(line, ",,");
+  initParseContextWithLine(&parseContext, line);
+  readCsvField(&parseContext);
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 0", parseContext.end == 0);
+  mu_assert("error, position != 0", parseContext.position == 0);
+
+  freeString(line);
+  return 0;
+}
+
+static char *testStripWhitespace()
+{
+  PARSE_CONTEXT parseContext;
+
+  // Basic test
+  STRING *line = fromString("   abc    ");
+  initParseContextWithLine(&parseContext, line);
+  readAscii28Field(&parseContext);
+
+  mu_assert("error, start != 0", parseContext.start == 0);
+  mu_assert("error, end != 10", parseContext.end == 10);
+  mu_assert("error, position != 10", parseContext.position == 10);
+
+  stripWhitespace(&parseContext);
+
+  mu_assert("error, start != 3", parseContext.start == 3);
+  printf("%d\n", parseContext.end);
+  mu_assert("error, end != 6", parseContext.end == 6);
+  mu_assert("error, position != 10", parseContext.position == 10);
 
   freeString(line);
   return 0;
@@ -105,6 +147,7 @@ static char *all_tests()
 {
   mu_run_test(testCsvReading);
   mu_run_test(testAscii28Reading);
+  mu_run_test(testStripWhitespace);
   return 0;
 }
 

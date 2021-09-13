@@ -91,5 +91,5 @@ if __name__ == '__main__':
     result += '\n'
     result += with_comment('Mapping of FEC filing version, form type, and column name to type\nThe first three columns are the version, form type, and column name\nspecified as regexes. The last column is a single-letter code, where\nd is YYYYMMDD date and f is float. If nothing matches, the type is\nassumed to be s (string).', type_table)
 
-    with open(os.path.join(script_dir, '../src/mappings.h'), 'w') as f:
+    with open(os.path.join(script_dir, '../src/mappings_generated.h'), 'w') as f:
         f.write(result)
