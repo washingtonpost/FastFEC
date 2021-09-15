@@ -33,22 +33,9 @@ static inline int endOfField(char c)
   return (c == ',') || (c == '\n') || (c == 0);
 }
 
-void readAscii28Field(PARSE_CONTEXT *parseContext)
+void stripQuotes(PARSE_CONTEXT *parseContext)
 {
-  parseContext->start = parseContext->position;
-  char c = parseContext->line->str[parseContext->position];
-  processFieldChar(c, parseContext->fieldInfo);
-  char startChar = c;
-  char endChar = 0;
-  while (c != 0 && c != 28 && c != '\n')
-  {
-    endChar = c;
-    parseContext->position += 1;
-    c = parseContext->line->str[parseContext->position];
-    processFieldChar(c, parseContext->fieldInfo);
-  }
-  parseContext->end = parseContext->position;
-  if (startChar == '"' && endChar == '"')
+  if ((parseContext->start != parseContext->end) && (parseContext->line->str[parseContext->start] == '"') && (parseContext->line->str[parseContext->end - 1] == '"'))
   {
     // Bump the field positions to avoid the quotes
     (parseContext->start)++;
@@ -60,7 +47,22 @@ void readAscii28Field(PARSE_CONTEXT *parseContext)
   }
 }
 
-void readCsvField(PARSE_CONTEXT *parseContext)
+void readAscii28Field(PARSE_CONTEXT *parseContext)
+{
+  parseContext->start = parseContext->position;
+  char c = parseContext->line->str[parseContext->position];
+  processFieldChar(c, parseContext->fieldInfo);
+  while (c != 0 && c != 28 && c != '\n')
+  {
+    parseContext->position += 1;
+    c = parseContext->line->str[parseContext->position];
+    processFieldChar(c, parseContext->fieldInfo);
+  }
+  parseContext->end = parseContext->position;
+  stripQuotes(parseContext);
+}
+
+void readCsvSubfield(PARSE_CONTEXT *parseContext)
 {
   char c = parseContext->line->str[parseContext->position];
   if (endOfField(c))
@@ -70,8 +72,6 @@ void readCsvField(PARSE_CONTEXT *parseContext)
     parseContext->end = parseContext->position;
     return;
   }
-
-  processFieldChar(c, parseContext->fieldInfo);
 
   // If quoted, field is escaped
   int escaped = c == '"';
@@ -119,11 +119,19 @@ void readCsvField(PARSE_CONTEXT *parseContext)
         // If the quote is not escaped, then we're done.
         parseContext->end = parseContext->position - offset;
         (parseContext->position)++;
+        // Don't count trailing quote
+        parseContext->fieldInfo->num_quotes--;
         return;
       }
     }
     (parseContext->position)++;
   }
+}
+
+void readCsvField(PARSE_CONTEXT *parseContext)
+{
+  readCsvSubfield(parseContext);
+  stripQuotes(parseContext);
 }
 
 void advanceField(PARSE_CONTEXT *context)
@@ -134,8 +142,8 @@ void advanceField(PARSE_CONTEXT *context)
 
 void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start, int end, FIELD_INFO *info)
 {
-  int escaped = info->num_commas || info->num_quotes;
-  int copyDirectly = !info->num_quotes;
+  int escaped = (info->num_commas > 0) || (info->num_quotes > 0);
+  int copyDirectly = !(info->num_quotes > 0);
 
   if (escaped)
   {
