@@ -10,17 +10,14 @@ Then run: `make buildrun` to run the program. See installation steps below.
 
 ## Dependencies
 
-libcurl
+* libcurl (should be installed already)
+* pcre (`brew install pcre`)
 
 #### Time benchmarks
 
 Using massive `1533121.fec` (5.8gb)
 
 * 148.24 seconds
-
-#### Installation steps
-
-* `brew install pcre`
 
 #### Testing
 
