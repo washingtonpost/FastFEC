@@ -1,6 +1,6 @@
 # fastfec
 
-[in-progress / not working yet fully]
+[working pretty much fully; needs some documentation]
 
 A C program to stream and parse FEC filings, writing output to CSV.
 
