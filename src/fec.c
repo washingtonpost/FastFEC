@@ -6,6 +6,7 @@
 #include <string.h>
 
 char *HEADER = "header";
+char *F99TEXT = "f99text";
 char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
 char *FEC_VERSION_NUMBER = "fec_ver_#";
 char *FEC = "FEC";
@@ -26,10 +27,29 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine 
   ctx->summary = 0;
   ctx->f99Text = 0;
   ctx->currentLineHasAscii28 = 0;
+  ctx->currentLineLength = 0;
   ctx->formType = NULL;
   ctx->numFields = 0;
   ctx->headers = NULL;
   ctx->types = NULL;
+
+  // Compile regexes
+  const char *error;
+  int errorOffset;
+
+  ctx->f99TextStart = pcre_compile("^\\s*\\[BEGIN ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
+  if (ctx->f99TextStart == NULL)
+  {
+    printf("PCRE f99 text start compilation failed at offset %d: %s\n", errorOffset, error);
+    exit(1);
+  }
+  ctx->f99TextEnd = pcre_compile("^\\s*\\[END ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
+  if (ctx->f99TextEnd == NULL)
+  {
+    printf("PCRE f99 text end compilation failed at offset %d: %s\n", errorOffset, error);
+    exit(1);
+  }
+
   return ctx;
 }
 
@@ -51,6 +71,8 @@ void freeFecContext(FEC_CONTEXT *ctx)
   {
     free(ctx->types);
   }
+  pcre_free(ctx->f99TextStart);
+  pcre_free(ctx->f99TextEnd);
   freeWriteContext(ctx->writeContext);
   free(ctx);
 }
@@ -166,32 +188,32 @@ void lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart
   exit(1);
 }
 
-void writeSubstrToWriter(FEC_CONTEXT *ctx, WRITE_CONTEXT *writeContext, char *filename, int start, int end, FIELD_INFO *field)
+void writeSubstrToWriter(FEC_CONTEXT *ctx, WRITE_CONTEXT *writeContext, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
-  writeField(writeContext, filename, ctx->persistentMemory->line, start, end, field);
+  writeField(writeContext, filename, extension, ctx->persistentMemory->line, start, end, field);
 }
 
-void writeSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+void writeSubstr(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, start, end, field);
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, end, field);
 }
 
 // Write a date field by separating the output with dashes
-void writeDateField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
   if (end - start != 8)
   {
     printf("Error: Date fields must be exactly 8 chars long, not %d\n", end - start);
   }
 
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, start, start + 4, field);
-  writeChar(ctx->writeContext, filename, '-');
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, start + 4, start + 6, field);
-  writeChar(ctx->writeContext, filename, '-');
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, start + 6, start + 8, field);
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, start + 4, field);
+  writeChar(ctx->writeContext, filename, extension, '-');
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start + 4, start + 6, field);
+  writeChar(ctx->writeContext, filename, extension, '-');
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start + 6, start + 8, field);
 }
 
-void writeFloatField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
   char *doubleStr;
   char *conversionFloat = ctx->persistentMemory->line->str + start;
@@ -200,11 +222,11 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD
   if (doubleStr == conversionFloat)
   {
     // Could not convert to a float, write null
-    write(ctx->writeContext, filename, "null");
+    write(ctx->writeContext, filename, extension, "null");
   }
 
   // Write the value
-  writeDouble(ctx->writeContext, filename, value);
+  writeDouble(ctx->writeContext, filename, extension, value);
 }
 
 // Grab a line from the input file.
@@ -221,7 +243,7 @@ int grabLine(FEC_CONTEXT *ctx)
 
   // Decode the line
   LINE_INFO info;
-  decodeLine(&info, ctx->persistentMemory->rawLine, ctx->persistentMemory->line);
+  ctx->currentLineLength = decodeLine(&info, ctx->persistentMemory->rawLine, ctx->persistentMemory->line);
   // Store whether the current line has ascii separators
   // (determines whether we use CSV or ascii28 split line parsing)
   ctx->currentLineHasAscii28 = info.ascii28;
@@ -384,19 +406,19 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
       if (parseContext.columnIndex == 1)
       {
         // Write header if necessary
-        if (getFile(ctx->writeContext, filename) == 1)
+        if (getFile(ctx->writeContext, filename, csvExtension) == 1)
         {
           // File is newly opened, write headers
-          write(ctx->writeContext, filename, ctx->headers);
-          writeNewline(ctx->writeContext, filename);
+          write(ctx->writeContext, filename, csvExtension, ctx->headers);
+          writeNewline(ctx->writeContext, filename, csvExtension);
         }
 
         // Write form type
-        write(ctx->writeContext, filename, ctx->formType);
+        write(ctx->writeContext, filename, csvExtension, ctx->formType);
       }
 
       // Write delimeter
-      writeDelimeter(ctx->writeContext, filename);
+      writeDelimeter(ctx->writeContext, filename, csvExtension);
 
       // Get the type of the current field
       if (parseContext.columnIndex < ctx->numFields)
@@ -408,17 +430,17 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
         if (type == 's')
         {
           // String
-          writeSubstr(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+          writeSubstr(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
         }
         else if (type == 'd')
         {
           // Date
-          writeDateField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+          writeDateField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
         }
         else if (type == 'f')
         {
           // Float
-          writeFloatField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+          writeFloatField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
         }
         else
         {
@@ -443,7 +465,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
   }
 
   // Parsing successful
-  writeNewline(ctx->writeContext, filename);
+  writeNewline(ctx->writeContext, filename, csvExtension);
   return 1;
 }
 
@@ -538,15 +560,15 @@ void parseHeader(FEC_CONTEXT *ctx)
         // Write commas as needed (only before fields that aren't first)
         if (!firstField)
         {
-          writeDelimeter(ctx->writeContext, HEADER);
-          writeDelimeter(&bufferWriteContext, NULL);
+          writeDelimeter(ctx->writeContext, HEADER, csvExtension);
+          writeDelimeter(&bufferWriteContext, NULL, NULL);
         }
         firstField = 0;
 
         // Write schedule counts prefix if set
         if (scheduleCounts)
         {
-          write(ctx->writeContext, HEADER, SCHEDULE_COUNTS);
+          write(ctx->writeContext, HEADER, csvExtension, SCHEDULE_COUNTS);
         }
 
         // If we match the FEC version column, set the version
@@ -556,14 +578,14 @@ void parseHeader(FEC_CONTEXT *ctx)
         }
 
         // Write the key/value pair
-        writeSubstr(ctx, HEADER, keyStart, keyEnd, &headerField);
+        writeSubstr(ctx, HEADER, csvExtension, keyStart, keyEnd, &headerField);
         // Write the value to a buffer to be written later
-        writeSubstrToWriter(ctx, &bufferWriteContext, NULL, valueStart, valueEnd, &valueField);
+        writeSubstrToWriter(ctx, &bufferWriteContext, NULL, NULL, valueStart, valueEnd, &valueField);
       }
     }
-    writeNewline(ctx->writeContext, HEADER);
-    write(ctx->writeContext, HEADER, bufferWriteContext.localBuffer->str);
-    writeNewline(ctx->writeContext, HEADER); // end with newline
+    writeNewline(ctx->writeContext, HEADER, csvExtension);
+    write(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
+    writeNewline(ctx->writeContext, HEADER, csvExtension); // end with newline
   }
   else
   {
@@ -618,6 +640,8 @@ void parseHeader(FEC_CONTEXT *ctx)
 
 int parseFec(FEC_CONTEXT *ctx)
 {
+  int f99Mode = 0;
+
   if (grabLine(ctx) == 0)
   {
     return 0;
@@ -635,29 +659,30 @@ int parseFec(FEC_CONTEXT *ctx)
       break;
     }
 
+    if (f99Mode)
+    {
+      // See if we have reached the end boundary
+      if (pcre_exec(ctx->f99TextEnd, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      {
+        f99Mode = 0;
+        continue;
+      }
+
+      // Otherwise, write f99 information to a text file
+      writeN(ctx->writeContext, F99TEXT, txtExtension, ctx->persistentMemory->line->str, ctx->currentLineLength);
+      continue;
+    }
+
+    // See if line begins with f99 text boundary
+    if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+    {
+      // Set f99 mode
+      f99Mode = 1;
+      continue;
+    }
+
     parseLine(ctx, NULL);
   }
 
-  //   int position = 0;
-  //   int start = 0;
-  //   int end = 0;
-  //   int first = 1;
-
-  //   while (position < ctx->persistentMemory->line->n && ctx->persistentMemory->line->str[position] != 0)
-  //   {
-  //     if (!first)
-  //     {
-  //       // Only write commas before fields that aren't first
-  //       writeDelimeter(ctx->writeContext, "data");
-  //     }
-  //     first = 0;
-
-  //     FIELD_INFO field = {.num_quotes = 0, .num_commas = 0};
-  //     readAscii28Field(ctx->persistentMemory->line, &position, &start, &end, &field);
-  //     writeSubstr(ctx, "data", start, end, &field);
-  //     position++;
-  //   }
-  //   writeNewline(ctx->writeContext, "data");
-  // }
   return 1;
 }

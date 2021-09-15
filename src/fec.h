@@ -24,12 +24,17 @@ struct fec_context
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;
   int currentLineHasAscii28;
+  int currentLineLength;
 
   // Parse cache
   char *formType;
   int numFields;
   char *headers; // pointer to static CSV header row info
   char *types;   // dynamically allocated string where each char indicates types
+
+  // Special regex
+  pcre *f99TextStart;
+  pcre *f99TextEnd;
 };
 typedef struct fec_context FEC_CONTEXT;
 

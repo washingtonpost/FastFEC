@@ -74,7 +74,7 @@ void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line)
   writeContext->localBuffer->str[0] = 0;
 }
 
-int getFile(WRITE_CONTEXT *context, char *filename)
+int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
 {
   if ((context->lastname != NULL) && (strcmp(context->lastname, filename) == 0))
   {
@@ -132,12 +132,12 @@ int getFile(WRITE_CONTEXT *context, char *filename)
   return 1;
 }
 
-void writeN(WRITE_CONTEXT *context, char *filename, char *string, int nchars)
+void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char *string, int nchars)
 {
   if (context->local == 0)
   {
     // Write to file
-    getFile(context, filename);
+    getFile(context, filename, extension);
     fwrite(string, sizeof(char), nchars, context->lastfile);
   }
   else
@@ -155,33 +155,33 @@ void writeN(WRITE_CONTEXT *context, char *filename, char *string, int nchars)
   }
 }
 
-void write(WRITE_CONTEXT *context, char *filename, char *string)
+void write(WRITE_CONTEXT *context, char *filename, const char *extension, char *string)
 {
-  writeN(context, filename, string, strlen(string));
+  writeN(context, filename, extension, string, strlen(string));
 }
 
-void writeChar(WRITE_CONTEXT *context, char *filename, char c)
+void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, char c)
 {
   if (context->local == 0)
   {
     // Write to file
-    getFile(context, filename);
+    getFile(context, filename, extension);
     fputc(c, context->lastfile);
   }
   else
   {
     // Write to local buffer
     char str[] = {c};
-    writeN(context, filename, str, 1);
+    writeN(context, filename, extension, str, 1);
   }
 }
 
-void writeDouble(WRITE_CONTEXT *context, char *filename, double d)
+void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, double d)
 {
   if (context->local == 0)
   {
     // Write to file
-    getFile(context, filename);
+    getFile(context, filename, extension);
     fprintf(context->lastfile, "%f", d);
   }
   else
@@ -189,7 +189,7 @@ void writeDouble(WRITE_CONTEXT *context, char *filename, double d)
     // Write to local buffer
     char str[100]; // should be able to fit any double
     sprintf(str, "%f", d);
-    write(context, filename, str);
+    write(context, filename, extension, str);
   }
 }
 

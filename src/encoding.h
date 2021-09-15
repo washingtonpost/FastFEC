@@ -6,6 +6,7 @@ struct lineInfo
   int ascii28;   // default false
   int asciiOnly; // default true
   int validUtf8; // default true
+  int length;
 };
 typedef struct lineInfo LINE_INFO;
 
@@ -15,5 +16,6 @@ void collectLineInfo(STRING *line, LINE_INFO *info);
 
 // Ensure the passed in line is encoded in UTF-8 by transforming
 // it to UTF-8 if necessary. The only other possible encodings
-// are ASCII (no transformation necessary) and ISO-8859-1
-void decodeLine(LINE_INFO *info, STRING *in, STRING *output);
+// are ASCII (no transformation necessary) and ISO-8859-1.
+// Return the length of the resulting line.
+int decodeLine(LINE_INFO *info, STRING *in, STRING *output);

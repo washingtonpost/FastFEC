@@ -23,9 +23,9 @@ typedef struct parse_context PARSE_CONTEXT;
 
 void processFieldChar(char c, FIELD_INFO *info);
 
-void writeDelimeter(WRITE_CONTEXT *context, char *filename);
+void writeDelimeter(WRITE_CONTEXT *context, char *filename, const char *extension);
 
-void writeNewline(WRITE_CONTEXT *context, char *filename);
+void writeNewline(WRITE_CONTEXT *context, char *filename, const char *extension);
 
 static inline int endOfField(char c);
 
@@ -42,7 +42,7 @@ void readCsvField(PARSE_CONTEXT *parseContext);
 // Advance past the delimeter and increase the column index
 void advanceField(PARSE_CONTEXT *parseContext);
 
-void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start, int end, FIELD_INFO *info);
+void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info);
 
 // Trim whitespace by adjusting start and end pointers in
 // write context

@@ -31,6 +31,7 @@ void collectLineInfo(STRING *line, LINE_INFO *info)
   info->ascii28 = 0;
   info->asciiOnly = 1;
   info->validUtf8 = 1;
+  info->length = 0;
   uint32_t state = UTF8_ACCEPT;
   uint32_t type;
 
@@ -40,7 +41,10 @@ void collectLineInfo(STRING *line, LINE_INFO *info)
     char c = line->str[i];
     i++;
     if (c == 0)
+    {
       break;
+    }
+    info->length++;
     if (c == 28)
     {
       // Has char 28 (separator)
@@ -64,12 +68,13 @@ void collectLineInfo(STRING *line, LINE_INFO *info)
 
 // Adapted from https://stackoverflow.com/a/4059934
 // Ensure the output buffer is twice as long as the input
-void iso_8859_1_to_utf_8(STRING *in, STRING *output)
+int iso_8859_1_to_utf_8(STRING *in, STRING *output)
 {
   growStringTo(output, in->n * 2 + 1);
 
   uint8_t *line = (uint8_t *)in->str;
   uint8_t *out = (uint8_t *)output->str;
+  int length = 0;
   while (*line)
   {
     if (*line < 128)
@@ -79,22 +84,25 @@ void iso_8859_1_to_utf_8(STRING *in, STRING *output)
     else
     {
       *out++ = 0xc2 + (*line > 0xbf), *out++ = (*line++ & 0x3f) + 0x80;
+      length += 2;
     }
   }
+  return length;
 }
 
-void decodeLine(LINE_INFO *info, STRING *in, STRING *output)
+int decodeLine(LINE_INFO *info, STRING *in, STRING *output)
 {
   // Check line info
   collectLineInfo(in, info);
 
   if (!info->validUtf8)
   {
-    iso_8859_1_to_utf_8(in, output);
+    return iso_8859_1_to_utf_8(in, output);
   }
   else
   {
     // Copy memory buffer over
     copyString(in, output);
+    return info->length;
   }
 }

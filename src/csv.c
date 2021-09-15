@@ -18,14 +18,14 @@ void processFieldChar(char c, FIELD_INFO *info)
   }
 }
 
-void writeDelimeter(WRITE_CONTEXT *context, char *filename)
+void writeDelimeter(WRITE_CONTEXT *context, char *filename, const char *extension)
 {
-  writeChar(context, filename, ',');
+  writeChar(context, filename, extension, ',');
 }
 
-void writeNewline(WRITE_CONTEXT *context, char *filename)
+void writeNewline(WRITE_CONTEXT *context, char *filename, const char *extension)
 {
-  writeChar(context, filename, '\n');
+  writeChar(context, filename, extension, '\n');
 }
 
 static inline int endOfField(char c)
@@ -140,7 +140,7 @@ void advanceField(PARSE_CONTEXT *context)
   context->position++;
 }
 
-void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start, int end, FIELD_INFO *info)
+void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info)
 {
   int escaped = (info->num_commas > 0) || (info->num_quotes > 0);
   int copyDirectly = !(info->num_quotes > 0);
@@ -148,12 +148,12 @@ void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start,
   if (escaped)
   {
     // Start of escape quote
-    writeChar(context, filename, '"');
+    writeChar(context, filename, extension, '"');
   }
   if (copyDirectly)
   {
     // No need for char-by-char writing
-    writeN(context, filename, line->str + start, end - start);
+    writeN(context, filename, extension, line->str + start, end - start);
   }
   else
   {
@@ -164,19 +164,19 @@ void writeField(WRITE_CONTEXT *context, char *filename, STRING *line, int start,
       if (c == '"')
       {
         // Double quotes
-        write(context, filename, "\"\"");
+        write(context, filename, extension, "\"\"");
       }
       else
       {
         // Normal character
-        writeChar(context, filename, c);
+        writeChar(context, filename, extension, c);
       }
     }
   }
   if (escaped)
   {
     // End of escape quote
-    writeChar(context, filename, '"');
+    writeChar(context, filename, extension, '"');
   }
 }
 
