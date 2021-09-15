@@ -68,12 +68,65 @@ void copyString(STRING *src, STRING *dst)
   strcpy(dst->str, src->str);
 }
 
+#include <sys/time.h>
+
 PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext()
 {
   PERSISTENT_MEMORY_CONTEXT *ctx = malloc(sizeof(PERSISTENT_MEMORY_CONTEXT));
   ctx->rawLine = newString(DEFAULT_STRING_SIZE);
   ctx->line = newString(DEFAULT_STRING_SIZE);
   ctx->bufferLine = newString(DEFAULT_STRING_SIZE);
+
+  // Initialize all regular expressions
+  ctx->headerVersions = malloc(sizeof(pcre *) * numHeaders);
+  ctx->headerFormTypes = malloc(sizeof(pcre *) * numHeaders);
+  ctx->typeVersions = malloc(sizeof(pcre *) * numTypes);
+  ctx->typeFormTypes = malloc(sizeof(pcre *) * numTypes);
+  ctx->typeHeaders = malloc(sizeof(pcre *) * numTypes);
+
+  // Iterate and initialize all header regexes
+  const char *error;
+  int errorOffset;
+
+  for (int i = 0; i < numHeaders; i++)
+  {
+    ctx->headerVersions[i] = pcre_compile(headers[i][0], PCRE_CASELESS, &error, &errorOffset, NULL);
+    if (ctx->headerVersions[i] == NULL)
+    {
+      printf("PCRE header version compilation for \"%s\" failed at offset %d: %s\n", headers[i][0], errorOffset, error);
+      exit(1);
+    }
+    ctx->headerFormTypes[i] = pcre_compile(headers[i][1], PCRE_CASELESS, &error, &errorOffset, NULL);
+    if (ctx->headerFormTypes[i] == NULL)
+    {
+      printf("PCRE header form type compilation for \"%s\" failed at offset %d: %s\n", headers[i][1], errorOffset, error);
+      exit(1);
+    }
+  }
+
+  // Iterate and initialize all type regexes
+  for (int i = 0; i < numTypes; i++)
+  {
+    ctx->typeVersions[i] = pcre_compile(types[i][0], PCRE_CASELESS, &error, &errorOffset, NULL);
+    if (ctx->typeVersions[i] == NULL)
+    {
+      printf("PCRE type version compilation for \"%s\" failed at offset %d: %s\n", types[i][0], errorOffset, error);
+      exit(1);
+    }
+    ctx->typeFormTypes[i] = pcre_compile(types[i][1], PCRE_CASELESS, &error, &errorOffset, NULL);
+    if (ctx->typeFormTypes[i] == NULL)
+    {
+      printf("PCRE type form type compilation for \"%s\" failed at offset %d: %s\n", types[i][1], errorOffset, error);
+      exit(1);
+    }
+    ctx->typeHeaders[i] = pcre_compile(types[i][2], PCRE_CASELESS, &error, &errorOffset, NULL);
+    if (ctx->typeHeaders[i] == NULL)
+    {
+      printf("PCRE type header compilation for \"%s\" failed at offset %d: %s\n", types[i][2], errorOffset, error);
+      exit(1);
+    }
+  }
+
   return ctx;
 }
 
@@ -82,5 +135,24 @@ void freePersistentMemoryContext(PERSISTENT_MEMORY_CONTEXT *context)
   freeString(context->rawLine);
   freeString(context->line);
   freeString(context->bufferLine);
+
+  // Free all regexes
+  for (int i = 0; i < numHeaders; i++)
+  {
+    pcre_free(context->headerVersions[i]);
+    pcre_free(context->headerFormTypes[i]);
+  }
+  for (int i = 0; i < numTypes; i++)
+  {
+    pcre_free(context->typeVersions[i]);
+    pcre_free(context->typeFormTypes[i]);
+    pcre_free(context->typeHeaders[i]);
+  }
+  free(context->headerVersions);
+  free(context->headerFormTypes);
+  free(context->typeVersions);
+  free(context->typeFormTypes);
+  free(context->typeHeaders);
+
   free(context);
 }

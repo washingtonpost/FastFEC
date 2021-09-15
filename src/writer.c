@@ -74,12 +74,12 @@ void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line)
   writeContext->localBuffer->str[0] = 0;
 }
 
-void getFile(WRITE_CONTEXT *context, char *filename)
+int getFile(WRITE_CONTEXT *context, char *filename)
 {
-  if (context->lastname != NULL && strcmp(context->lastname, filename) == 0)
+  if ((context->lastname != NULL) && (strcmp(context->lastname, filename) == 0))
   {
     // Same file as last time, just write to it
-    return;
+    return 0;
   }
 
   // Different file than last time, open it
@@ -97,9 +97,9 @@ void getFile(WRITE_CONTEXT *context, char *filename)
       if (strcmp(context->filenames[i], filename) == 0)
       {
         // Write to existing file
-        context->lastname = filename;
+        context->lastname = context->filenames[i];
         context->lastfile = context->files[i];
-        return;
+        return 0;
       }
     }
 
@@ -108,26 +108,28 @@ void getFile(WRITE_CONTEXT *context, char *filename)
     context->files = (FILE **)realloc(context->files, sizeof(FILE *) * (context->nfiles + 1));
   }
   // Open and write to file
-  context->filenames[context->nfiles] = filename;
+  context->filenames[context->nfiles] = malloc(strlen(filename + 1));
+  strcpy(context->filenames[context->nfiles], filename);
   // Derive the full path to the file
   char *fullpath = (char *)malloc(sizeof(char) * (strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1));
   strcpy(fullpath, context->outputDirectory);
-  strcat(fullpath, filename);
+  strcat(fullpath, context->filingId);
 
   // Ensure the directory exists (will silently fail if it does)
   mkdir_p(fullpath);
 
   // Add filename to path
   strcat(fullpath, "/");
-  strcat(fullpath, context->filingId);
+  strcat(fullpath, filename);
   strcat(fullpath, extension);
 
   context->files[context->nfiles] = fopen(fullpath, "w");
   // Free the derived full path to the file
   free(fullpath);
-  context->lastname = filename;
+  context->lastname = context->filenames[context->nfiles];
   context->lastfile = context->files[context->nfiles];
   context->nfiles++;
+  return 1;
 }
 
 void writeN(WRITE_CONTEXT *context, char *filename, char *string, int nchars)
@@ -171,6 +173,23 @@ void writeChar(WRITE_CONTEXT *context, char *filename, char c)
     // Write to local buffer
     char str[] = {c};
     writeN(context, filename, str, 1);
+  }
+}
+
+void writeDouble(WRITE_CONTEXT *context, char *filename, double d)
+{
+  if (context->local == 0)
+  {
+    // Write to file
+    getFile(context, filename);
+    fprintf(context->lastfile, "%f", d);
+  }
+  else
+  {
+    // Write to local buffer
+    char str[100]; // should be able to fit any double
+    sprintf(str, "%f", d);
+    write(context, filename, str);
   }
 }
 

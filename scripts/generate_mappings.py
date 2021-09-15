@@ -10,12 +10,12 @@ def c_escape(str):
 
 
 def generate_c_array(variable_name, col_width, list_of_lists):
-    result = f"\nconst char *{variable_name}[][{col_width}] = {{\n  "
+    result = f"\nstatic const char *{variable_name}[][{col_width}] = {{\n    "
 
     first_row = True
     for row in list_of_lists:
         if not first_row:
-            result += ",\n  "
+            result += ",\n    "
         first_row = False
 
         # Start array
@@ -59,10 +59,10 @@ if __name__ == '__main__':
         types_json = json.load(f)
 
     headers = []
-    for version in mappings_json:
-        for form_type in mappings_json[version]:
+    for form_type in mappings_json:
+        for version in mappings_json[form_type]:
             headers.append(
-                [version, form_type, list_to_csv(mappings_json[version][form_type])])
+                [version, form_type, list_to_csv(mappings_json[form_type][version])])
     header_table = generate_c_array("headers", 3, headers)
 
     types = []

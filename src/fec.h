@@ -16,6 +16,7 @@ struct fec_context
   WRITE_CONTEXT *writeContext;
 
   char *version; // default null
+  int versionLength;
   int useAscii28;
   int summary; // default false
   char *f99Text;
@@ -23,6 +24,12 @@ struct fec_context
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;
   int currentLineHasAscii28;
+
+  // Parse cache
+  char *formType;
+  int numFields;
+  char *headers; // pointer to static CSV header row info
+  char *types;   // dynamically allocated string where each char indicates types
 };
 typedef struct fec_context FEC_CONTEXT;
 

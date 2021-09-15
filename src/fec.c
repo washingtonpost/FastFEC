@@ -2,6 +2,7 @@
 #include "encoding.h"
 #include "writer.h"
 #include "csv.h"
+#include "mappings.h"
 #include <string.h>
 
 char *HEADER = "header";
@@ -20,10 +21,15 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine 
   ctx->file = file;
   ctx->writeContext = newWriteContext(outputDirectory, filingId);
   ctx->version = 0;
+  ctx->versionLength = 0;
   ctx->useAscii28 = 0; // default to using comma parsing unless a version is set
   ctx->summary = 0;
   ctx->f99Text = 0;
   ctx->currentLineHasAscii28 = 0;
+  ctx->formType = NULL;
+  ctx->numFields = 0;
+  ctx->headers = NULL;
+  ctx->types = NULL;
   return ctx;
 }
 
@@ -37,8 +43,127 @@ void freeFecContext(FEC_CONTEXT *ctx)
   {
     free(ctx->f99Text);
   }
+  if (ctx->formType != NULL)
+  {
+    free(ctx->formType);
+  }
+  if (ctx->types != NULL)
+  {
+    free(ctx->types);
+  }
   freeWriteContext(ctx->writeContext);
   free(ctx);
+}
+
+int isParseDone(PARSE_CONTEXT *parseContext)
+{
+  // The parse is done if a newline is encountered or EOF
+  char c = parseContext->line->str[parseContext->position];
+  return (c == 0) || (c == '\n');
+}
+
+void lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart, int formEnd)
+{
+  if ((ctx->formType != NULL) && (strncmp(ctx->formType, parseContext->line->str + formStart, formEnd - formStart) == 0))
+  {
+    // Type mappings are unchanged from before; can return early
+    return;
+  }
+
+  // Clear last form type information if present
+  if (ctx->formType != NULL)
+  {
+    free(ctx->formType);
+  }
+  // Set last form type to store it for later
+  ctx->formType = malloc(formEnd - formStart + 1);
+  strncpy(ctx->formType, parseContext->line->str + formStart, formEnd - formStart);
+  ctx->formType[formEnd - formStart] = 0;
+
+  // Grab the field mapping given the form version
+  for (int i = 0; i < numHeaders; i++)
+  {
+    // Try to match the regex to version
+    if (pcre_exec(ctx->persistentMemory->headerVersions[i], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
+    {
+      // Match! Test regex against form type
+      if (pcre_exec(ctx->persistentMemory->headerFormTypes[i], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
+      {
+        // Matched form type
+        ctx->headers = (char *)(headers[i][2]);
+        STRING *headersCsv = fromString(ctx->headers);
+        if (ctx->types != NULL)
+        {
+          free(ctx->types);
+        }
+        ctx->numFields = 0;
+        ctx->types = malloc(strlen(ctx->headers) + 1); // at least as big as it needs to be
+
+        // Initialize a parse context for reading each header field
+        PARSE_CONTEXT headerFields;
+        headerFields.line = headersCsv;
+        headerFields.fieldInfo = NULL;
+        headerFields.position = 0;
+        headerFields.start = 0;
+        headerFields.end = 0;
+        headerFields.columnIndex = 0;
+
+        // Iterate each field and build up the type info
+        while (!isParseDone(&headerFields))
+        {
+          readCsvField(&headerFields);
+
+          // Match type info
+          int matched = 0;
+          for (int j = 0; j < numTypes; j++)
+          {
+            // Try to match the type regex to version
+            if (pcre_exec(ctx->persistentMemory->typeVersions[j], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
+            {
+              // Try to match type regex to form type
+              if (pcre_exec(ctx->persistentMemory->typeFormTypes[j], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
+              {
+                // Try to match type regex to header
+                if (pcre_exec(ctx->persistentMemory->typeHeaders[j], NULL, headerFields.line->str + headerFields.start, headerFields.end - headerFields.start, 0, 0, NULL, 0) >= 0)
+                {
+                  // Match! Print out type information
+                  ctx->types[headerFields.columnIndex] = types[j][3][0];
+                  matched = 1;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!matched)
+          {
+            // Unmatched type — default to 's' for string type
+            ctx->types[headerFields.columnIndex] = 's';
+          }
+
+          if (isParseDone(&headerFields))
+          {
+            break;
+          }
+          advanceField(&headerFields);
+        }
+
+        // Add null terminator
+        ctx->types[headerFields.columnIndex] = 0;
+        ctx->numFields = headerFields.columnIndex;
+
+        // Free up unnecessary line memory
+        freeString(headersCsv);
+
+        // Done; return
+        return;
+      }
+    }
+  }
+
+  // Unmatched — error
+  printf("Error: Unmatched for version %s and form type %s\n", ctx->version, ctx->formType);
+  exit(1);
 }
 
 void writeSubstrToWriter(FEC_CONTEXT *ctx, WRITE_CONTEXT *writeContext, char *filename, int start, int end, FIELD_INFO *field)
@@ -49,6 +174,37 @@ void writeSubstrToWriter(FEC_CONTEXT *ctx, WRITE_CONTEXT *writeContext, char *fi
 void writeSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
 {
   writeSubstrToWriter(ctx, ctx->writeContext, filename, start, end, field);
+}
+
+// Write a date field by separating the output with dashes
+void writeDateField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+{
+  if (end - start != 8)
+  {
+    printf("Error: Date fields must be exactly 8 chars long, not %d\n", end - start);
+  }
+
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, start, start + 4, field);
+  writeChar(ctx->writeContext, filename, '-');
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, start + 4, start + 6, field);
+  writeChar(ctx->writeContext, filename, '-');
+  writeSubstrToWriter(ctx, ctx->writeContext, filename, start + 6, start + 8, field);
+}
+
+void writeFloatField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+{
+  char *doubleStr;
+  char *conversionFloat = ctx->persistentMemory->line->str + start;
+  double value = strtod(conversionFloat, &doubleStr);
+
+  if (doubleStr == conversionFloat)
+  {
+    // Could not convert to a float, write null
+    write(ctx->writeContext, filename, "null");
+  }
+
+  // Write the value
+  writeDouble(ctx->writeContext, filename, value);
 }
 
 // Grab a line from the input file.
@@ -187,15 +343,8 @@ void readField(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext)
   }
 }
 
-int isParseDone(PARSE_CONTEXT *parseContext)
-{
-  // The parse is done if a newline is encountered or EOF
-  char c = parseContext->line->str[parseContext->position];
-  return (c == 0) || (c == '\n');
-}
-
 // Parse a line from a filing, using FEC and form version
-//  information to map fields to headers and types.
+// information to map fields to headers and types.
 // Return 1 if successful, or 0 if the line is not fully
 // specified.
 int parseLine(FEC_CONTEXT *ctx, char *filename)
@@ -220,21 +369,81 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
       stripWhitespace(&parseContext);
       formStart = parseContext.start;
       formEnd = parseContext.end;
+      lookupMappings(ctx, &parseContext, formStart, formEnd);
+
+      // Set filename if null to form type
+      if (filename == NULL)
+      {
+        filename = ctx->formType;
+      }
     }
     else
     {
-      // Grab the field mapping given the form version
-      printf("%d\n", )
+      // If column index is 1, then there are at least two columns
+      // and the line is fully specified, so write header info
+      if (parseContext.columnIndex == 1)
+      {
+        // Write header if necessary
+        if (getFile(ctx->writeContext, filename) == 1)
+        {
+          // File is newly opened, write headers
+          write(ctx->writeContext, filename, ctx->headers);
+          writeNewline(ctx->writeContext, filename);
+        }
+
+        // Write form type
+        write(ctx->writeContext, filename, ctx->formType);
+      }
+
+      // Write delimeter
+      writeDelimeter(ctx->writeContext, filename);
+
+      // Get the type of the current field
+      if (parseContext.columnIndex < ctx->numFields)
+      {
+        // Ensure the column index is in bounds
+        char type = ctx->types[parseContext.columnIndex];
+
+        // Iterate possible types
+        if (type == 's')
+        {
+          // String
+          writeSubstr(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        }
+        else if (type == 'd')
+        {
+          // Date
+          writeDateField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        }
+        else if (type == 'f')
+        {
+          // Float
+          writeFloatField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        }
+        else
+        {
+          // Unknown type
+          printf("Unknown type %c\n", type);
+          exit(1);
+        }
+      }
     }
 
+    if (isParseDone(&parseContext))
+    {
+      break;
+    }
     advanceField(&parseContext);
   }
+
   if (parseContext.columnIndex < 2)
   {
     // Fewer than two fields? The line isn't fully specified
     return 0;
   }
+
   // Parsing successful
+  writeNewline(ctx->writeContext, filename);
   return 1;
 }
 
@@ -245,6 +454,7 @@ void setVersion(FEC_CONTEXT *ctx, int start, int end)
   strncpy(ctx->version, ctx->persistentMemory->line->str + start, end - start);
   // Add null terminator
   ctx->version[end - start] = 0;
+  ctx->versionLength = end - start;
 
   // Calculate whether to use ascii28 or not based on version
   char *dot = strchr(ctx->version, '.');
@@ -347,6 +557,7 @@ void parseHeader(FEC_CONTEXT *ctx)
 
         // Write the key/value pair
         writeSubstr(ctx, HEADER, keyStart, keyEnd, &headerField);
+        // Write the value to a buffer to be written later
         writeSubstrToWriter(ctx, &bufferWriteContext, NULL, valueStart, valueEnd, &valueField);
       }
     }
@@ -396,6 +607,10 @@ void parseHeader(FEC_CONTEXT *ctx)
         return;
       }
 
+      if (isParseDone(&parseContext))
+      {
+        break;
+      }
       advanceField(&parseContext);
     }
   }
@@ -413,12 +628,15 @@ int parseFec(FEC_CONTEXT *ctx)
 
   // Write the entire file out as tabular data
   // TEMP code for perf testing
-  // while (1)
-  // {
-  //   if (grabLine(ctx) == 0)
-  //   {
-  //     break;
-  //   }
+  while (1)
+  {
+    if (grabLine(ctx) == 0)
+    {
+      break;
+    }
+
+    parseLine(ctx, NULL);
+  }
 
   //   int position = 0;
   //   int start = 0;
