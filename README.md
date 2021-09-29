@@ -1,4 +1,4 @@
-# fastfec
+# fastFEC
 
 An experimental C program to stream and parse FEC filings, writing output to CSV. This project is in early stages and will benefit from rigorous testing.
 
@@ -20,10 +20,6 @@ This will output a binary in `bin/fastfec`. The usage of that binary is as follo
 
 The CLI will download or read from disk the specified filing and then write output CSVs for each form type in the output directory. The paths of the outputted files are:
 * `{output directory}/{filing id}/{form type}.csv`
-
-To run, open `src/main.c` and set the url on line ~19 to the desired filing (todo: CLI).
-Also set the output filing ID on line ~40 to correspond.
-Then run: `make buildrun` to run the program. See installation steps below.
 
 ## Dependencies
 
