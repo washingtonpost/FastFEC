@@ -180,10 +180,14 @@ void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, S
   }
 }
 
+int isWhitespaceChar(char c)
+{
+  return (c == ' ') || (c == '\t') || (c == '\n');
+}
+
 int isWhitespace(PARSE_CONTEXT *context, int position)
 {
-  char c = context->line->str[position];
-  return (c == ' ') || (c == '\t') || (c == '\n');
+  return isWhitespaceChar(context->line->str[position]);
 }
 
 void stripWhitespace(PARSE_CONTEXT *context)

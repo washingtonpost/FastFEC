@@ -222,7 +222,7 @@ URL_FILE *url_fopen(const char *url, const char *operation)
 
   file->handle.file = fopen(url, operation);
   if (file->handle.file)
-    file->type = CFTYPE_FILE; /* marked as URL */
+    file->type = CFTYPE_FILE; /* marked as file */
 
   else
   {
@@ -232,6 +232,7 @@ URL_FILE *url_fopen(const char *url, const char *operation)
     curl_easy_setopt(file->handle.curl, CURLOPT_URL, url);
     curl_easy_setopt(file->handle.curl, CURLOPT_WRITEDATA, file);
     curl_easy_setopt(file->handle.curl, CURLOPT_VERBOSE, 0L);
+    curl_easy_setopt(file->handle.curl, CURLOPT_FAILONERROR, 1L);
     curl_easy_setopt(file->handle.curl, CURLOPT_WRITEFUNCTION, write_callback);
 
     if (!multi_handle)
@@ -245,6 +246,25 @@ URL_FILE *url_fopen(const char *url, const char *operation)
     if ((file->buffer_pos == 0) && (!file->still_running))
     {
       /* if still_running is 0 now, we should return NULL */
+
+      /* make sure the easy handle is not in the multi handle anymore */
+      curl_multi_remove_handle(multi_handle, file->handle.curl);
+
+      /* cleanup */
+      curl_easy_cleanup(file->handle.curl);
+
+      free(file);
+
+      file = NULL;
+    }
+
+    fill_buffer(file, 1);
+    // Check that we don't have a 400 error
+    long response_code;
+    curl_easy_getinfo(file->handle.curl, CURLINFO_RESPONSE_CODE, &response_code);
+    if (response_code >= 400)
+    {
+      // Some kind of not found error
 
       /* make sure the easy handle is not in the multi handle anymore */
       curl_multi_remove_handle(multi_handle, file->handle.curl);

@@ -44,6 +44,8 @@ void advanceField(PARSE_CONTEXT *parseContext);
 
 void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info);
 
+int isWhitespaceChar(char c);
+
 // Trim whitespace by adjusting start and end pointers in
 // write context
 void stripWhitespace(PARSE_CONTEXT *context);

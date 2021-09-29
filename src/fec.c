@@ -205,6 +205,7 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
   {
     printf("Error: Date fields must be exactly 8 chars long, not %d\n", end - start);
   }
+  // TODO: update this to write to string if it doesn't parse right
 
   writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, start + 4, field);
   writeChar(ctx->writeContext, filename, extension, '-');
@@ -223,6 +224,7 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, in
   {
     // Could not convert to a float, write null
     write(ctx->writeContext, filename, extension, "null");
+    return;
   }
 
   // Write the value
@@ -295,6 +297,17 @@ int lineStartsWithLegacyHeader(FEC_CONTEXT *ctx)
 int lineStartsWithScheduleCounts(FEC_CONTEXT *ctx)
 {
   return lineStartsWith(ctx, "schedule_counts", 15);
+}
+
+// Return whether the line starts with the '[' character (ignoring whitespace)
+int lineMightStartWithF99(FEC_CONTEXT *ctx)
+{
+  int i = 0;
+  while (i < ctx->persistentMemory->line->n && isWhitespaceChar(ctx->persistentMemory->line->str[i]))
+  {
+    i++;
+  }
+  return ctx->persistentMemory->line->str[i] == '[';
 }
 
 // Consume whitespace, advancing a position pointer at the same time
@@ -673,12 +686,16 @@ int parseFec(FEC_CONTEXT *ctx)
       continue;
     }
 
-    // See if line begins with f99 text boundary
-    if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+    // See if line begins with f99 text boundary by first seeing if it starts with "["
+    if (lineMightStartWithF99(ctx))
     {
-      // Set f99 mode
-      f99Mode = 1;
-      continue;
+      // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
+      if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      {
+        // Set f99 mode
+        f99Mode = 1;
+        continue;
+      }
     }
 
     parseLine(ctx, NULL);
