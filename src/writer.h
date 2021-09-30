@@ -29,7 +29,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension);
 
 void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char *string, int nchars);
 
-void write(WRITE_CONTEXT *context, char *filename, const char *extension, char *string);
+void writeString(WRITE_CONTEXT *context, char *filename, const char *extension, char *string);
 
 void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, char c);
 

@@ -9,7 +9,9 @@ Ensure you have dependencies listed below installed, and then compile with
 
 This will output a binary in `bin/fastfec`. The usage of that binary is as follows:
 
-`Usage: ./bin/fastfec <id, file, or url> [output directory=output] [override id]`
+```
+Usage: ./bin/fastfec <id, file, or url> [output directory=output] [override id]
+```
 
 * `<id, file, or url>` is either
   * a numeric ID, in which case the filing is streamed from the FEC website
@@ -21,9 +23,11 @@ This will output a binary in `bin/fastfec`. The usage of that binary is as follo
 The CLI will download or read from disk the specified filing and then write output CSVs for each form type in the output directory. The paths of the outputted files are:
 * `{output directory}/{filing id}/{form type}.csv`
 
-To run, open `src/main.c` and set the url on line ~19 to the desired filing (todo: CLI).
-Also set the output filing ID on line ~40 to correspond.
-Then run: `make buildrun` to run the program. See installation steps below.
+You can also pipe the output of another command in by following this usage:
+
+```
+[some command] | ./bin/fastfec <id> [output directory=output]
+```
 
 ## Dependencies
 

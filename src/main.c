@@ -4,10 +4,11 @@
 #include <stdlib.h>
 #include <pcre.h>
 #include <string.h>
+#include <unistd.h>
 
 void printUsage(char *argv[])
 {
-  printf("Usage: %s <id, file, or url> [output directory=output] [override id]\n", argv[0]);
+  printf("Usage: %s <id, file, or url> [output directory=output] [override id]\n   or: [some command] | %s <id> [output directory=output]\n", argv[0], argv[0]);
 }
 
 /* Small main program to retrieve from a url using fgets and fread saving the
@@ -15,6 +16,8 @@ void printUsage(char *argv[])
  * they contain 0 chars */
 int main(int argc, char *argv[])
 {
+  int piped = !isatty(fileno(stdin));
+
   URL_FILE *handle;
   const char *url;
 
@@ -43,18 +46,20 @@ int main(int argc, char *argv[])
   const char *docqueryUrl = "https://docquery.fec.gov/dcdev/posted/";
   const char *docqueryUrlAlt = "https://docquery.fec.gov/paper/posted/";
 
-  url = argv[1];
+  url = piped ? NULL : argv[1];
 
   // Strings that will carry the decoded values for the filing URL and ID,
   // where URL can be a local file or a remote URL
   char *fecUrl = NULL;
   char *fecBackupUrl = NULL;
   char *fecId = NULL;
-  char *outputDirectory = "output/";
+  char *outputDirectory = malloc(8);
+  strcpy(outputDirectory, "output/");
   char *fecExtension = ".fec";
   if (argc > 2)
   {
-    outputDirectory = argv[2];
+    outputDirectory = realloc(outputDirectory, strlen(argv[2]) + 1);
+    strcpy(outputDirectory, argv[2]);
 
     // Ensure output directory ends with a trailing slash
     if (outputDirectory[strlen(outputDirectory) - 1] != '/')
@@ -63,14 +68,33 @@ int main(int argc, char *argv[])
       strcat(outputDirectory, "/");
     }
   }
-  if (argc > 3)
+
+  // Pull out ID/override ID parameter, depending on how input is piped
+  if (piped)
   {
-    fecId = argv[3];
+    if (argc > 1)
+    {
+      fecId = malloc(strlen(argv[1]) + 1);
+      strcpy(fecId, argv[1]);
+    }
+    else
+    {
+      printUsage(argv);
+      exit(1);
+    }
+  }
+  else
+  {
+    if (argc > 3)
+    {
+      fecId = malloc(strlen(argv[3]) + 1);
+      strcpy(fecId, argv[3]);
+    }
   }
 
   // Check URL format and grab matching ID
   int matches[6];
-  if (pcre_exec(filingIdOnly, NULL, url, strlen(url), 0, 0, matches, 3) >= 0)
+  if (!piped && (pcre_exec(filingIdOnly, NULL, url, strlen(url), 0, 0, matches, 3) >= 0))
   {
     // URL is a purely numeric filing ID
     int start = matches[0];
@@ -92,7 +116,7 @@ int main(int argc, char *argv[])
     strcat(fecBackupUrl, fecId);
     strcat(fecBackupUrl, fecExtension);
   }
-  else
+  else if (!piped)
   {
     // URL is a local file or a remote URL
     fecUrl = malloc(strlen(url) + 1);
@@ -114,10 +138,11 @@ int main(int argc, char *argv[])
 
   if (fecId == NULL)
   {
-    printf("Could not extract ID from URL. Please specify an ID manually\n");
+    printf("Please specify a filing ID manually\n");
     printUsage(argv);
 
     // Clear associated memory
+    free(outputDirectory);
     if (fecUrl != NULL)
     {
       free(fecUrl);
@@ -133,9 +158,16 @@ int main(int argc, char *argv[])
   }
 
   printf("About to parse filing ID %s\n", fecId);
-  printf("Trying URL: %s\n", fecUrl);
+  if (piped)
+  {
+    printf("Using stdin\n");
+  }
+  else
+  {
+    printf("Trying URL: %s\n", fecUrl);
+  }
 
-  handle = url_fopen(fecUrl, "r");
+  handle = url_fopen(piped ? NULL : fecUrl, "r", piped ? stdin : NULL);
   if (!handle)
   {
     printf("couldn't open url %s\n", fecUrl);
@@ -143,7 +175,7 @@ int main(int argc, char *argv[])
     if (fecBackupUrl != NULL)
     {
       printf("Trying backup URL: %s\n", fecBackupUrl);
-      handle = url_fopen(fecBackupUrl, "r");
+      handle = url_fopen(fecBackupUrl, "r", NULL);
 
       if (!handle)
       {
@@ -166,6 +198,7 @@ int main(int argc, char *argv[])
   freePersistentMemoryContext(persistentMemory);
   pcre_free(filingIdOnly);
   pcre_free(extractNumber);
+  free(outputDirectory);
   if (fecUrl != NULL)
   {
     free(fecUrl);

@@ -223,7 +223,7 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, in
   if (doubleStr == conversionFloat)
   {
     // Could not convert to a float, write null
-    write(ctx->writeContext, filename, extension, "null");
+    writeString(ctx->writeContext, filename, extension, "null");
     return;
   }
 
@@ -422,12 +422,12 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
         if (getFile(ctx->writeContext, filename, csvExtension) == 1)
         {
           // File is newly opened, write headers
-          write(ctx->writeContext, filename, csvExtension, ctx->headers);
+          writeString(ctx->writeContext, filename, csvExtension, ctx->headers);
           writeNewline(ctx->writeContext, filename, csvExtension);
         }
 
         // Write form type
-        write(ctx->writeContext, filename, csvExtension, ctx->formType);
+        writeString(ctx->writeContext, filename, csvExtension, ctx->formType);
       }
 
       // Write delimeter
@@ -581,7 +581,7 @@ void parseHeader(FEC_CONTEXT *ctx)
         // Write schedule counts prefix if set
         if (scheduleCounts)
         {
-          write(ctx->writeContext, HEADER, csvExtension, SCHEDULE_COUNTS);
+          writeString(ctx->writeContext, HEADER, csvExtension, SCHEDULE_COUNTS);
         }
 
         // If we match the FEC version column, set the version
@@ -597,7 +597,7 @@ void parseHeader(FEC_CONTEXT *ctx)
       }
     }
     writeNewline(ctx->writeContext, HEADER, csvExtension);
-    write(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
+    writeString(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
     writeNewline(ctx->writeContext, HEADER, csvExtension); // end with newline
   }
   else

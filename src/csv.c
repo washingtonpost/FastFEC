@@ -164,7 +164,7 @@ void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, S
       if (c == '"')
       {
         // Double quotes
-        write(context, filename, extension, "\"\"");
+        writeString(context, filename, extension, "\"\"");
       }
       else
       {

@@ -155,7 +155,7 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
   }
 }
 
-void write(WRITE_CONTEXT *context, char *filename, const char *extension, char *string)
+void writeString(WRITE_CONTEXT *context, char *filename, const char *extension, char *string)
 {
   writeN(context, filename, extension, string, strlen(string));
 }
@@ -189,7 +189,7 @@ void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, 
     // Write to local buffer
     char str[100]; // should be able to fit any double
     sprintf(str, "%f", d);
-    write(context, filename, extension, str);
+    writeString(context, filename, extension, str);
   }
 }
 

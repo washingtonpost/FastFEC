@@ -208,7 +208,7 @@ static int use_buffer(URL_FILE *file, size_t want)
   return 0;
 }
 
-URL_FILE *url_fopen(const char *url, const char *operation)
+URL_FILE *url_fopen(const char *url, const char *operation, FILE *override)
 {
   /* this code could check for URLs or types in the 'url' and
      basically use the real fopen() for standard files */
@@ -220,7 +220,14 @@ URL_FILE *url_fopen(const char *url, const char *operation)
   if (!file)
     return NULL;
 
-  file->handle.file = fopen(url, operation);
+  if (override != NULL)
+  {
+    file->handle.file = override;
+  }
+  else
+  {
+    file->handle.file = fopen(url, operation);
+  }
   if (file->handle.file)
     file->type = CFTYPE_FILE; /* marked as file */
 
