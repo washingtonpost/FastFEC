@@ -93,13 +93,13 @@ PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext()
     ctx->headerVersions[i] = pcre_compile(headers[i][0], PCRE_CASELESS, &error, &errorOffset, NULL);
     if (ctx->headerVersions[i] == NULL)
     {
-      printf("PCRE header version compilation for \"%s\" failed at offset %d: %s\n", headers[i][0], errorOffset, error);
+      fprintf(stderr, "PCRE header version compilation for \"%s\" failed at offset %d: %s\n", headers[i][0], errorOffset, error);
       exit(1);
     }
     ctx->headerFormTypes[i] = pcre_compile(headers[i][1], PCRE_CASELESS, &error, &errorOffset, NULL);
     if (ctx->headerFormTypes[i] == NULL)
     {
-      printf("PCRE header form type compilation for \"%s\" failed at offset %d: %s\n", headers[i][1], errorOffset, error);
+      fprintf(stderr, "PCRE header form type compilation for \"%s\" failed at offset %d: %s\n", headers[i][1], errorOffset, error);
       exit(1);
     }
   }
@@ -110,19 +110,19 @@ PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext()
     ctx->typeVersions[i] = pcre_compile(types[i][0], PCRE_CASELESS, &error, &errorOffset, NULL);
     if (ctx->typeVersions[i] == NULL)
     {
-      printf("PCRE type version compilation for \"%s\" failed at offset %d: %s\n", types[i][0], errorOffset, error);
+      fprintf(stderr, "PCRE type version compilation for \"%s\" failed at offset %d: %s\n", types[i][0], errorOffset, error);
       exit(1);
     }
     ctx->typeFormTypes[i] = pcre_compile(types[i][1], PCRE_CASELESS, &error, &errorOffset, NULL);
     if (ctx->typeFormTypes[i] == NULL)
     {
-      printf("PCRE type form type compilation for \"%s\" failed at offset %d: %s\n", types[i][1], errorOffset, error);
+      fprintf(stderr, "PCRE type form type compilation for \"%s\" failed at offset %d: %s\n", types[i][1], errorOffset, error);
       exit(1);
     }
     ctx->typeHeaders[i] = pcre_compile(types[i][2], PCRE_CASELESS, &error, &errorOffset, NULL);
     if (ctx->typeHeaders[i] == NULL)
     {
-      printf("PCRE type header compilation for \"%s\" failed at offset %d: %s\n", types[i][2], errorOffset, error);
+      fprintf(stderr, "PCRE type header compilation for \"%s\" failed at offset %d: %s\n", types[i][2], errorOffset, error);
       exit(1);
     }
   }

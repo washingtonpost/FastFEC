@@ -14,13 +14,14 @@ char *FEC = "FEC";
 char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
 int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory)
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
   ctx->persistentMemory = persistentMemory;
   ctx->getLine = getLine;
   ctx->file = file;
   ctx->writeContext = newWriteContext(outputDirectory, filingId);
+  ctx->filingId = filingId;
   ctx->version = 0;
   ctx->versionLength = 0;
   ctx->useAscii28 = 0; // default to using comma parsing unless a version is set
@@ -32,6 +33,8 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine 
   ctx->numFields = 0;
   ctx->headers = NULL;
   ctx->types = NULL;
+  ctx->includeFilingId = includeFilingId;
+  ctx->silent = silent;
 
   // Compile regexes
   const char *error;
@@ -40,13 +43,13 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine 
   ctx->f99TextStart = pcre_compile("^\\s*\\[BEGIN ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
   if (ctx->f99TextStart == NULL)
   {
-    printf("PCRE f99 text start compilation failed at offset %d: %s\n", errorOffset, error);
+    fprintf(stderr, "PCRE f99 text start compilation failed at offset %d: %s\n", errorOffset, error);
     exit(1);
   }
   ctx->f99TextEnd = pcre_compile("^\\s*\\[END ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
   if (ctx->f99TextEnd == NULL)
   {
-    printf("PCRE f99 text end compilation failed at offset %d: %s\n", errorOffset, error);
+    fprintf(stderr, "PCRE f99 text end compilation failed at offset %d: %s\n", errorOffset, error);
     exit(1);
   }
 
@@ -184,7 +187,7 @@ void lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart
   }
 
   // Unmatched — error
-  printf("Error: Unmatched for version %s and form type %s\n", ctx->version, ctx->formType);
+  fprintf(stderr, "Error: Unmatched for version %s and form type %s\n", ctx->version, ctx->formType);
   exit(1);
 }
 
@@ -201,11 +204,17 @@ void writeSubstr(FEC_CONTEXT *ctx, char *filename, const char *extension, int st
 // Write a date field by separating the output with dashes
 void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
+  if (start == end)
+  {
+    // Empty field
+    return;
+  }
   if (end - start != 8)
   {
-    printf("Error: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    writeSubstr(ctx, filename, extension, start, end, field);
+    return;
   }
-  // TODO: update this to write to string if it doesn't parse right
 
   writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, start + 4, field);
   writeChar(ctx->writeContext, filename, extension, '-');
@@ -378,6 +387,26 @@ void readField(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext)
   }
 }
 
+void startHeaderRow(FEC_CONTEXT *ctx, char *filename, const char *extension)
+{
+  // Write the filing ID header, if includeFilingId is specified
+  if (ctx->includeFilingId)
+  {
+    writeString(ctx->writeContext, filename, extension, "filing_id");
+    writeDelimeter(ctx->writeContext, filename, extension);
+  }
+}
+
+void startDataRow(FEC_CONTEXT *ctx, char *filename, const char *extension)
+{
+  // Write the filing ID value, if includeFilingId is specified
+  if (ctx->includeFilingId)
+  {
+    writeString(ctx->writeContext, filename, extension, ctx->filingId);
+    writeDelimeter(ctx->writeContext, filename, extension);
+  }
+}
+
 // Parse a line from a filing, using FEC and form version
 // information to map fields to headers and types.
 // Return 1 if successful, or 0 if the line is not fully
@@ -415,18 +444,20 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
     else
     {
       // If column index is 1, then there are at least two columns
-      // and the line is fully specified, so write header info
+      // and the line is fully specified, so write header/line info
       if (parseContext.columnIndex == 1)
       {
         // Write header if necessary
         if (getFile(ctx->writeContext, filename, csvExtension) == 1)
         {
           // File is newly opened, write headers
+          startHeaderRow(ctx, filename, csvExtension);
           writeString(ctx->writeContext, filename, csvExtension, ctx->headers);
           writeNewline(ctx->writeContext, filename, csvExtension);
         }
 
         // Write form type
+        startDataRow(ctx, filename, csvExtension);
         writeString(ctx->writeContext, filename, csvExtension, ctx->formType);
       }
 
@@ -458,7 +489,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
         else
         {
           // Unknown type
-          printf("Unknown type %c\n", type);
+          fprintf(stderr, "Unknown type %c\n", type);
           exit(1);
         }
       }
@@ -514,6 +545,8 @@ void setVersion(FEC_CONTEXT *ctx, int start, int end)
 
 void parseHeader(FEC_CONTEXT *ctx)
 {
+  startHeaderRow(ctx, HEADER, csvExtension);
+
   // Check if the line starts with "/*"
   if (lineStartsWithLegacyHeader(ctx))
   {
@@ -597,6 +630,7 @@ void parseHeader(FEC_CONTEXT *ctx)
       }
     }
     writeNewline(ctx->writeContext, HEADER, csvExtension);
+    startDataRow(ctx, HEADER, csvExtension); // output the filing id if we have it
     writeString(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
     writeNewline(ctx->writeContext, HEADER, csvExtension); // end with newline
   }

@@ -15,6 +15,7 @@ struct fec_context
 
   WRITE_CONTEXT *writeContext;
 
+  char *filingId;
   char *version; // default null
   int versionLength;
   int useAscii28;
@@ -25,6 +26,10 @@ struct fec_context
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;
   int currentLineHasAscii28;
   int currentLineLength;
+
+  // Flags
+  int includeFilingId;
+  int silent;
 
   // Parse cache
   char *formType;
@@ -38,7 +43,7 @@ struct fec_context
 };
 typedef struct fec_context FEC_CONTEXT;
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory);
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent);
 
 void freeFecContext(FEC_CONTEXT *context);
 

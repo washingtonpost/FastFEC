@@ -10,9 +10,10 @@ Ensure you have dependencies listed below installed, and then compile with
 This will output a binary in `bin/fastfec`. The usage of that binary is as follows:
 
 ```
-Usage: ./bin/fastfec <id, file, or url> [output directory=output] [override id]
+Usage: ./bin/fastfec [flags] <id, file, or url> [output directory=output] [override id]
 ```
 
+* `[flags]`: optional flags which must come before other args; see below
 * `<id, file, or url>` is either
   * a numeric ID, in which case the filing is streamed from the FEC website
   * a file, in which case the filing is read from disk at the specified local path
@@ -26,8 +27,22 @@ The CLI will download or read from disk the specified filing and then write outp
 You can also pipe the output of another command in by following this usage:
 
 ```
-[some command] | ./bin/fastfec <id> [output directory=output]
+[some command] | ./bin/fastfec [flags] <id> [output directory=output]
 ```
+
+### Flags
+
+The CLI supports the following flags:
+
+* `--include-filing-id` / `-i`: if this flag is passed, then the generated output will include a column at the beginning of every generated file called `filing_id` that gets passed the filing ID. This can be useful for bulk uploading CSVs into a database
+* `--silent` / `-s` : suppress all non-error output messages
+
+The short form of flags can be combined, e.g. `-is` would include filing IDs and suppress output.
+
+### Examples
+
+`./bin/fastfec -s 13360 fastfec_output/`
+* This will run FastFEC in silent mode, download and parse filing ID 13360, and store the output in CSV files at `fastfec_output/13360/`.
 
 ## Dependencies
 
