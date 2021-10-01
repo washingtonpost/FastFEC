@@ -204,6 +204,11 @@ void writeSubstr(FEC_CONTEXT *ctx, char *filename, const char *extension, int st
 // Write a date field by separating the output with dashes
 void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
+  if (start == end)
+  {
+    // Empty field
+    return;
+  }
   if (end - start != 8)
   {
     fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
