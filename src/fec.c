@@ -206,9 +206,10 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
 {
   if (end - start != 8)
   {
-    fprintf(stderr, "Error: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    writeSubstr(ctx, filename, extension, start, end, field);
+    return;
   }
-  // TODO: update this to write to string if it doesn't parse right
 
   writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, start + 4, field);
   writeChar(ctx->writeContext, filename, extension, '-');

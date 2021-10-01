@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-const char *FLAG_FILING_ID = "--filingIdColumn";
+const char *FLAG_FILING_ID = "--include-filing-id";
 const char FLAG_FILING_ID_SHORT = 'i';
 const char *FLAG_SILENT = "--silent";
 const char FLAG_SILENT_SHORT = 's';
