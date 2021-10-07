@@ -4,3 +4,4 @@ bin
 *.test
 *.fec
 output/
+env/
