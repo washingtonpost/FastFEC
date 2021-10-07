@@ -287,6 +287,11 @@ URL_FILE *url_fopen(const char *url, const char *operation, FILE *override)
   return file;
 }
 
+URL_FILE *url_fopen_stdin()
+{
+  return url_fopen(NULL, "r", stdin);
+}
+
 int url_fclose(URL_FILE *file)
 {
   int ret = 0; /* default is good return */
@@ -378,6 +383,11 @@ size_t url_fread(void *ptr, size_t size, size_t nmemb, URL_FILE *file)
     break;
   }
   return want;
+}
+
+size_t url_readBuffer(char *buffer, int want, URL_FILE *file)
+{
+  return url_fread(buffer, 1, want, file);
 }
 
 char *url_fgets(char *ptr, size_t size, URL_FILE *file)
