@@ -50,6 +50,18 @@ int mkdir_p(const char *path)
   return 0;
 }
 
+// Normalize a file name by converting slashes to dashes
+// Adapted from https://stackoverflow.com/a/32496721
+void normalize_filename(char *filename)
+{
+  char *current_pos = strchr(filename, '/');
+  while (current_pos)
+  {
+    *current_pos = '-';
+    current_pos = strchr(current_pos, '/');
+  }
+}
+
 WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId)
 {
   WRITE_CONTEXT *context = (WRITE_CONTEXT *)malloc(sizeof(WRITE_CONTEXT));
@@ -118,13 +130,17 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   // Ensure the directory exists (will silently fail if it does)
   mkdir_p(fullpath);
 
-  // Add filename to path
+  // Add the normalized filename to path
   strcat(fullpath, "/");
-  strcat(fullpath, filename);
+  char *normalizedFilename = malloc(strlen(filename + 1));
+  strcpy(normalizedFilename, filename);
+  normalize_filename(normalizedFilename);
+  strcat(fullpath, normalizedFilename);
   strcat(fullpath, extension);
 
   context->files[context->nfiles] = fopen(fullpath, "w");
-  // Free the derived full path to the file
+  // Free the derived file paths
+  free(normalizedFilename);
   free(fullpath);
   context->lastname = context->filenames[context->nfiles];
   context->lastfile = context->files[context->nfiles];
