@@ -8,6 +8,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 BUFFER_SIZE = 1024 * 1024
+TRANSFER_BUFFER_SIZE = 128 * 1024
 BUFFER_READ = CFUNCTYPE(c_size_t, POINTER(c_char), c_int, c_void_p)
 CUSTOM_WRITE = CFUNCTYPE(None, c_char_p, c_char_p,
                          c_char_p, c_int)
@@ -26,7 +27,7 @@ def make_read_buffer(f):
 file_descriptors = {}
 last_filename = None
 last_fd = None
-filing_id = '1502683'
+filing_id = '1464847'
 
 bytes_written = {"bytes": 0}
 
@@ -40,7 +41,7 @@ def write_callback(filename, extension, contents, numBytes):
         fd = file_descriptors.get(path)
         if not fd:
             file_descriptors[path] = open(
-                os.path.join(f'{filing_id}', path.decode('utf8')), mode='wb', transport_params=dict(buffer_size=BUFFER_SIZE))
+                os.path.join(f's3://elex-fec-test/test-architecture/test-fastfec-output/{filing_id}', path.decode('utf8')) + '.gz', mode='wb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
             fd = file_descriptors[path]
         last_filename = filename
         last_fd = fd
@@ -94,7 +95,7 @@ class FastFEC:
 
 
 f = open(
-    f'{filing_id}.fec', mode='rb', transport_params=dict(buffer_size=BUFFER_SIZE))
+    f's3://elex-fec-test/test-architecture/test-filings/{filing_id}.fec', mode='rb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
 fast_fec = FastFEC(f)
 fast_fec.parse()
 
