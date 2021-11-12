@@ -630,6 +630,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
         fprintf(stderr, "Warning: mismatched number of fields (%d vs %d) (%s)\nLine: %s\n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType, parseContext.line->str);
       }
       // 2 indicates we won't grab the line again
+      writeNewline(ctx->writeContext, filename, csvExtension);
       return 2;
     }
   }
