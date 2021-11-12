@@ -6,7 +6,6 @@
 #include <string.h>
 
 char *HEADER = "header";
-char *F99TEXT = "f99text";
 char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
 char *FEC_VERSION_NUMBER = "fec_ver_#";
 char *FEC = "FEC";
@@ -14,7 +13,7 @@ char *FEC = "FEC";
 char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
 int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent)
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int suppress)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
   ctx->persistentMemory = persistentMemory;
@@ -35,6 +34,7 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine 
   ctx->types = NULL;
   ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
+  ctx->suppress = suppress;
 
   // Compile regexes
   const char *error;
@@ -229,7 +229,10 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
   }
   if (end - start != 8)
   {
-    fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    if (!ctx->suppress)
+    {
+      fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    }
     writeSubstr(ctx, filename, extension, start, end, field);
     return;
   }
@@ -335,6 +338,17 @@ int lineMightStartWithF99(FEC_CONTEXT *ctx)
     i++;
   }
   return ctx->persistentMemory->line->str[i] == '[';
+}
+
+// Return whether the line contains non-whitespace characters
+int lineContainsNonwhitespace(FEC_CONTEXT *ctx)
+{
+  int i = 0;
+  while (i < ctx->persistentMemory->line->n && isWhitespaceChar(ctx->persistentMemory->line->str[i]))
+  {
+    i++;
+  }
+  return ctx->persistentMemory->line->str[i] != 0;
 }
 
 // Consume whitespace, advancing a position pointer at the same time
@@ -476,6 +490,17 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
         f99Mode = 1;
         continue;
       }
+      else
+      {
+        // Invalid f99 text
+        return 0;
+      }
+    }
+    else if (lineContainsNonwhitespace(ctx))
+    {
+      // The line should only contain non-whitespace that starts
+      // f99 text
+      return 0;
     }
   }
   // Successful extraction, end the quote delimiter
@@ -486,7 +511,8 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
 // Parse a line from a filing, using FEC and form version
 // information to map fields to headers and types.
 // Return 1 if successful, or 0 if the line is not fully
-// specified.
+// specified. Return 2 if there was a warning but it was
+// still successful and the next line has already been grabbed.
 int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
 {
   // Parse fields
@@ -599,8 +625,12 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
     // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      fprintf(stderr, "Mismatched number of fields (%d vs %d) (%s)\n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType);
-      exit(1);
+      if (!ctx->suppress)
+      {
+        fprintf(stderr, "Warning: mismatched number of fields (%d vs %d) (%s)\nLine: %s\n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType, parseContext.line->str);
+      }
+      // 2 indicates we won't grab the line again
+      return 2;
     }
   }
 
@@ -783,6 +813,8 @@ void parseHeader(FEC_CONTEXT *ctx)
 
 int parseFec(FEC_CONTEXT *ctx)
 {
+  int skipGrabLine = 0;
+
   if (grabLine(ctx) == 0)
   {
     return 0;
@@ -796,7 +828,7 @@ int parseFec(FEC_CONTEXT *ctx)
   while (1)
   {
     // Load the current line
-    if (grabLine(ctx) == 0)
+    if (!skipGrabLine && grabLine(ctx) == 0)
     {
       // End of file
       break;
@@ -804,7 +836,7 @@ int parseFec(FEC_CONTEXT *ctx)
 
     // Parse the line and write its parsed output
     // to CSV files depending on version/form type
-    parseLine(ctx, NULL, 0);
+    skipGrabLine = parseLine(ctx, NULL, 0) == 2;
   }
 
   return 1;

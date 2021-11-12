@@ -3,7 +3,6 @@
 #include "memory.h"
 
 static const char csvExtension[] = ".csv";
-static const char txtExtension[] = ".txt";
 
 struct write_context
 {
