@@ -453,7 +453,7 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
     if (grabLine(ctx) == 0)
     {
       // End of file
-      return 0;
+      return 1;
     }
 
     if (f99Mode)
