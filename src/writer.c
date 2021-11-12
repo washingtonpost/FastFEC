@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+const char *NUMBER_FORMAT = "%.2f";
+
 // From https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950
 int mkdir_p(const char *path)
 {
@@ -198,13 +200,13 @@ void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, 
   {
     // Write to file
     getFile(context, filename, extension);
-    fprintf(context->lastfile, "%f", d);
+    fprintf(context->lastfile, NUMBER_FORMAT, d);
   }
   else
   {
     // Write to local buffer
     char str[100]; // should be able to fit any double
-    sprintf(str, "%f", d);
+    sprintf(str, NUMBER_FORMAT, d);
     writeString(context, filename, extension, str);
   }
 }

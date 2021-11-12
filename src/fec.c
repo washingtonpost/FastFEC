@@ -201,6 +201,24 @@ void writeSubstr(FEC_CONTEXT *ctx, char *filename, const char *extension, int st
   writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, end, field);
 }
 
+void writeQuotedCsvField(FEC_CONTEXT *ctx, char *filename, const char *extension, char *line, int length)
+{
+  for (int i = 0; i < length; i++)
+  {
+    char c = line[i];
+    if (c == '"')
+    {
+      // Write two quotes since the field is quoted
+      writeChar(ctx->writeContext, filename, extension, '"');
+      writeChar(ctx->writeContext, filename, extension, '"');
+    }
+    else
+    {
+      writeChar(ctx->writeContext, filename, extension, c);
+    }
+  }
+}
+
 // Write a date field by separating the output with dashes
 void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
@@ -407,11 +425,69 @@ void startDataRow(FEC_CONTEXT *ctx, char *filename, const char *extension)
   }
 }
 
+// Parse F99 text from a filing, writing the text to the specified
+// file in escaped CSV form if successful. Returns 1 if successful,
+// 0 otherwise.
+int parseF99Text(FEC_CONTEXT *ctx, char *filename)
+{
+  int f99Mode = 0;
+  int first = 1;
+
+  while (1)
+  {
+    // Load the current line
+    if (grabLine(ctx) == 0)
+    {
+      // End of file
+      return 0;
+    }
+
+    if (f99Mode)
+    {
+      // See if we have reached the end boundary
+      if (pcre_exec(ctx->f99TextEnd, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      {
+        f99Mode = 0;
+        break;
+      }
+
+      // Otherwise, write f99 information as a CSV field
+      if (first)
+      {
+        // Write the delimeter at the beginning and a quote character
+        // (the csv field will always be escaped so we can stream write
+        // without having to calculate whether it's escaped later).
+        writeDelimeter(ctx->writeContext, filename, csvExtension);
+        writeChar(ctx->writeContext, filename, csvExtension, '"');
+        first = 0;
+      }
+
+      writeQuotedCsvField(ctx, filename, csvExtension, ctx->persistentMemory->line->str, ctx->currentLineLength);
+      continue;
+    }
+
+    // See if line begins with f99 text boundary by first seeing if it starts with "["
+    if (lineMightStartWithF99(ctx))
+    {
+      // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
+      if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      {
+        // Set f99 mode
+        f99Mode = 1;
+        continue;
+      }
+    }
+  }
+  // Successful extraction, end the quote delimiter
+  writeChar(ctx->writeContext, filename, csvExtension, '"');
+  return 1;
+}
+
 // Parse a line from a filing, using FEC and form version
 // information to map fields to headers and types.
 // Return 1 if successful, or 0 if the line is not fully
 // specified.
-int parseLine(FEC_CONTEXT *ctx, char *filename)
+int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
 {
   // Parse fields
   PARSE_CONTEXT parseContext;
@@ -516,6 +592,16 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
   {
     // Fewer than two fields? The line isn't fully specified
     return 0;
+  }
+
+  if (parseContext.columnIndex + 1 != ctx->numFields && !headerRow)
+  {
+    // Try to read F99 text
+    if (!parseF99Text(ctx, filename))
+    {
+      fprintf(stderr, "Mismatched number of fields (%d vs %d) (%s)\n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType);
+      exit(1);
+    }
   }
 
   // Parsing successful
@@ -673,7 +759,7 @@ void parseHeader(FEC_CONTEXT *ctx)
           setVersion(ctx, parseContext.start, parseContext.end);
 
           // Parse the header now that version is known
-          parseLine(ctx, HEADER);
+          parseLine(ctx, HEADER, 1);
         }
       }
       if (parseContext.columnIndex == 2 && isFecSecondColumn)
@@ -682,7 +768,7 @@ void parseHeader(FEC_CONTEXT *ctx)
         setVersion(ctx, parseContext.start, parseContext.end);
 
         // Parse the header now that version is known
-        parseLine(ctx, HEADER);
+        parseLine(ctx, HEADER, 1);
         return;
       }
 
@@ -697,8 +783,6 @@ void parseHeader(FEC_CONTEXT *ctx)
 
 int parseFec(FEC_CONTEXT *ctx)
 {
-  int f99Mode = 0;
-
   if (grabLine(ctx) == 0)
   {
     return 0;
@@ -707,42 +791,20 @@ int parseFec(FEC_CONTEXT *ctx)
   // Parse the header
   parseHeader(ctx);
 
-  // Write the entire file out as tabular data
-  // TEMP code for perf testing
+  // Loop through parsing the entire file, line by
+  // line.
   while (1)
   {
+    // Load the current line
     if (grabLine(ctx) == 0)
     {
+      // End of file
       break;
     }
 
-    if (f99Mode)
-    {
-      // See if we have reached the end boundary
-      if (pcre_exec(ctx->f99TextEnd, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
-      {
-        f99Mode = 0;
-        continue;
-      }
-
-      // Otherwise, write f99 information to a text file
-      writeN(ctx->writeContext, F99TEXT, txtExtension, ctx->persistentMemory->line->str, ctx->currentLineLength);
-      continue;
-    }
-
-    // See if line begins with f99 text boundary by first seeing if it starts with "["
-    if (lineMightStartWithF99(ctx))
-    {
-      // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
-      if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
-      {
-        // Set f99 mode
-        f99Mode = 1;
-        continue;
-      }
-    }
-
-    parseLine(ctx, NULL);
+    // Parse the line and write its parsed output
+    // to CSV files depending on version/form type
+    parseLine(ctx, NULL, 0);
   }
 
   return 1;
