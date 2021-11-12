@@ -85,9 +85,25 @@ static char *testCsvReading()
   mu_assert("error, position != 9", parseContext.position == 9);
   mu_assert("num quotes != 0", fieldInfo.num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo.num_commas == 0);
-  free(resultString);
+
+  // Reads last field when advancing
+  setString(csv, "a,b,c\nd,e,f\n");
+  initParseContextWithLine(&parseContext, &fieldInfo, csv);
+  readCsvField(&parseContext);
+  advanceField(&parseContext);
+  readCsvField(&parseContext);
+  advanceField(&parseContext);
+  readCsvField(&parseContext);
+  resultString = realloc(resultString, parseContext.end - parseContext.start + 1);
+  strncpy(resultString, parseContext.line->str + parseContext.start, parseContext.end - parseContext.start);
+  resultString[parseContext.end - parseContext.start] = 0;
+  mu_assert("field should be \"c\" without quotes", strcmp(resultString, "c") == 0);
+  mu_assert("error, position != 5", parseContext.position == 5);
+  mu_assert("num quotes != 0", fieldInfo.num_quotes == 0);
+  mu_assert("num commas != 0", fieldInfo.num_commas == 0);
 
   freeString(csv);
+  free(resultString);
   return 0;
 }
 

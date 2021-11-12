@@ -174,8 +174,8 @@ void lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart
         }
 
         // Add null terminator
-        ctx->types[headerFields.columnIndex] = 0;
-        ctx->numFields = headerFields.columnIndex;
+        ctx->types[headerFields.columnIndex + 1] = 0;
+        ctx->numFields = headerFields.columnIndex + 1;
 
         // Free up unnecessary line memory
         freeString(headersCsv);
@@ -489,9 +489,19 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
         else
         {
           // Unknown type
-          fprintf(stderr, "Unknown type %c\n", type);
+          fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->formType);
           exit(1);
         }
+      }
+      else
+      {
+        // We shouldn't ever exceed the row length
+        char *columnContents = malloc(parseContext.end - parseContext.start + 1);
+        strncpy(columnContents, ctx->persistentMemory->line->str + parseContext.start, parseContext.end - parseContext.start);
+        columnContents[parseContext.end - parseContext.start] = 0;
+        fprintf(stderr, "Unexpected column in %s (%d): %s\n", ctx->formType, parseContext.columnIndex, columnContents);
+        free(columnContents);
+        exit(1);
       }
     }
 
