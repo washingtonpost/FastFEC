@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#define PATH_MAX 4096 /* # chars in a path name including nul */
+
 const char *NUMBER_FORMAT = "%.2f";
 
 // From https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950
