@@ -17,4 +17,4 @@ jobs:
       with:
         version: 0.8.0
     - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
-    - run: zig build
+    - run: zig build -Dtarget=x86_64-windows
