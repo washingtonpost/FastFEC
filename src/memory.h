@@ -5,8 +5,6 @@
 #include <pcre.h>
 #include "mappings.h"
 
-const size_t DEFAULT_STRING_SIZE;
-
 struct string_type
 {
   char *str;

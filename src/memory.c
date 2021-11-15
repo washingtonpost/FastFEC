@@ -1,5 +1,6 @@
 #include "memory.h"
 #include "string.h"
+#include <sys/time.h>
 
 const size_t DEFAULT_STRING_SIZE = 256;
 
@@ -67,8 +68,6 @@ void copyString(STRING *src, STRING *dst)
   // Copy the strings
   strcpy(dst->str, src->str);
 }
-
-#include <sys/time.h>
 
 PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext()
 {
