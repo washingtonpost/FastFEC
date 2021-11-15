@@ -1,0 +1,18 @@
+name: Zig release CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: goto-bus-stop/setup-zig@v1
+    - run: sudo apt install curl pcre
+    - run: zig build
