@@ -30,6 +30,7 @@ struct fec_context
   // Flags
   int includeFilingId;
   int silent;
+  int suppress;
 
   // Parse cache
   char *formType;
@@ -43,7 +44,7 @@ struct fec_context
 };
 typedef struct fec_context FEC_CONTEXT;
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent);
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, GetLine getLine, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int suppress);
 
 void freeFecContext(FEC_CONTEXT *context);
 
