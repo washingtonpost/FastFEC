@@ -7,14 +7,32 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  build-linux:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - uses: goto-bus-stop/setup-zig@v1
-      with:
-        version: 0.8.0
-    - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
-    - run: zig build -Dtarget=x86_64-windows
+      - uses: actions/checkout@v2
+      - uses: goto-bus-stop/setup-zig@v1
+        with:
+          version: 0.8.1
+      - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
+      - run: zig build
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goto-bus-stop/setup-zig@v1
+        with:
+          version: 0.8.1
+      - run: brew install pkg-config curl pcre
+      - run: zig build
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goto-bus-stop/setup-zig@v1
+        with:
+          version: 0.8.1
+      - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
+      - run: vcpkg integrate install
+      - run: vcpkg install pcre curl --triplet x64-windows-static
+      - run: zig build -Dtarget=x86_64-windows-msvc
