@@ -13,7 +13,6 @@ pub fn build(b: *std.build.Builder) void {
     // Add pcre and curl
     fastfec_cli.linkLibC();
     if (builtin.os.tag == .windows) {
-        try fastfec_cli.addVcpkgPaths(.static);
         fastfec_cli.linkSystemLibrary("pcre");
     } else {
         fastfec_cli.linkSystemLibrary("libpcre");
