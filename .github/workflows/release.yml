@@ -35,4 +35,4 @@ jobs:
       - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
       - run: vcpkg integrate install
       - run: vcpkg install pcre curl --triplet x64-windows-static
-      - run: zig build -Dtarget=x86_64-windows-msvc
+      - run: zig build
