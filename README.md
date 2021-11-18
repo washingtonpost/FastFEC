@@ -46,6 +46,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ## Dependencies
 
+Run `pip install requirements.txt`, and then install the following as needed:
 * libcurl (should be installed already)
 * pcre (`brew install pcre`)
 
