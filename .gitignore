@@ -6,3 +6,4 @@ bin
 output/
 zig-cache
 zig-out
+env/

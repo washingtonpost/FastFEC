@@ -21,6 +21,7 @@ pub fn build(b: *std.build.Builder) void {
     }
 
     fastfec_cli.addCSourceFiles(&.{
+        "src/buffer.c",
         "src/memory.c",
         "src/urlopen.c",
         "src/encoding.c",

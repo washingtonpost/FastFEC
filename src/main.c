@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <pcre.h>
 #include <string.h>
+#include <unistd.h>
+
+#define BUFFERSIZE 65536
 
 const char *FLAG_FILING_ID = "--include-filing-id";
 const char FLAG_FILING_ID_SHORT = 'i';
@@ -248,7 +251,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  handle = url_fopen(piped ? NULL : fecUrl, "r", piped ? stdin : NULL);
+  handle = piped ? url_fopen_stdin() : url_fopen(fecUrl, "r", NULL);
   if (!handle)
   {
     if (fecBackupUrl != NULL)
@@ -274,9 +277,9 @@ int main(int argc, char *argv[])
   }
 
   // Initialize persistent memory context
-  PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
+  PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext(0);
   // Initialize FEC context
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((GetLine)(&url_getline)), handle, fecId, outputDirectory, includeFilingId, silent, suppress);
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&url_readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, handle, fecId, outputDirectory, includeFilingId, silent, suppress);
 
   // Parse the fec file
   int fecParseResult = parseFec(fec);

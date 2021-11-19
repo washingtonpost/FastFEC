@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <curl/curl.h>
 #include "memory.h"
+#include "buffer.h"
 
 enum fcurl_type_e
 {
@@ -30,9 +31,11 @@ typedef struct fcurl_data URL_FILE;
 
 /* exported functions */
 URL_FILE *url_fopen(const char *url, const char *operation, FILE *override);
+URL_FILE *url_fopen_stdin();
 int url_fclose(URL_FILE *file);
 int url_feof(URL_FILE *file);
 size_t url_fread(void *ptr, size_t size, size_t nmemb, URL_FILE *file);
+size_t url_readBuffer(char *buffer, int want, URL_FILE *file);
 char *url_fgets(char *ptr, size_t size, URL_FILE *file);
 int url_getline(STRING *line, URL_FILE *file);
 void url_rewind(URL_FILE *file);

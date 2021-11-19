@@ -4,22 +4,41 @@
 
 static const char csvExtension[] = ".csv";
 
+typedef void (*CustomWriteFunction)(char *filename, char *extension, char *contents, int numBytes);
+
+struct buffer_file
+{
+  char *buffer;
+  int bufferPos;
+  int bufferSize;
+};
+typedef struct buffer_file BUFFER_FILE;
+
 struct write_context
 {
+  int bufferSize;
   char *outputDirectory;
   char *filingId;
   char **filenames;
+  char **extensions;
+  BUFFER_FILE **bufferFiles;
   FILE **files;
   int nfiles;
   char *lastname;
+  BUFFER_FILE *lastBufferFile;
   FILE *lastfile;
   int local;
   STRING *localBuffer;
   int localBufferPosition;
+  CustomWriteFunction customWriteFunction;
 };
 typedef struct write_context WRITE_CONTEXT;
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId);
+BUFFER_FILE *newBufferFile(int bufferSize);
+
+void freeBufferFile(BUFFER_FILE *bufferFile);
+
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int bufferSize, CustomWriteFunction customWriteFunction);
 
 void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line);
 

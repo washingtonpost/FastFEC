@@ -76,18 +76,38 @@ void normalize_filename(char *filename)
   }
 }
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId)
+BUFFER_FILE *newBufferFile(int bufferSize)
+{
+  BUFFER_FILE *bufferFile = (BUFFER_FILE *)malloc(sizeof(BUFFER_FILE));
+  bufferFile->buffer = malloc(bufferSize);
+  bufferFile->bufferPos = 0;
+  bufferFile->bufferSize = bufferSize;
+  return bufferFile;
+}
+
+void freeBufferFile(BUFFER_FILE *bufferFile)
+{
+  free(bufferFile->buffer);
+  free(bufferFile);
+}
+
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int bufferSize, CustomWriteFunction customWriteFunction)
 {
   WRITE_CONTEXT *context = (WRITE_CONTEXT *)malloc(sizeof(WRITE_CONTEXT));
   context->outputDirectory = outputDirectory;
   context->filingId = filingId;
+  context->bufferSize = bufferSize;
   context->filenames = NULL;
+  context->extensions = NULL;
+  context->bufferFiles = NULL;
   context->files = NULL;
   context->nfiles = 0;
   context->lastname = NULL;
+  context->lastBufferFile = NULL;
   context->lastfile = NULL;
   context->local = 0;
   context->localBuffer = NULL;
+  context->customWriteFunction = customWriteFunction;
   return context;
 }
 
@@ -113,7 +133,12 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   {
     // No files open, so open the file
     context->filenames = (char **)malloc(sizeof(char *));
-    context->files = (FILE **)malloc(sizeof(FILE *));
+    context->extensions = (char **)malloc(sizeof(char *));
+    context->bufferFiles = (BUFFER_FILE **)malloc(sizeof(BUFFER_FILE *));
+    if (context->customWriteFunction == NULL)
+    {
+      context->files = (FILE **)malloc(sizeof(FILE *));
+    }
   }
   else
   {
@@ -124,42 +149,105 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
       {
         // Write to existing file
         context->lastname = context->filenames[i];
-        context->lastfile = context->files[i];
+        context->lastBufferFile = context->bufferFiles[i];
+        if (context->customWriteFunction == NULL)
+        {
+          context->lastfile = context->files[i];
+        }
         return 0;
       }
     }
 
     // File is not open, open it
     context->filenames = (char **)realloc(context->filenames, sizeof(char *) * (context->nfiles + 1));
-    context->files = (FILE **)realloc(context->files, sizeof(FILE *) * (context->nfiles + 1));
+    context->extensions = (char **)realloc(context->extensions, sizeof(char *) * (context->nfiles + 1));
+    context->bufferFiles = (BUFFER_FILE **)realloc(context->bufferFiles, sizeof(BUFFER_FILE *) * (context->nfiles + 1));
+    if (context->customWriteFunction == NULL)
+    {
+      context->files = (FILE **)realloc(context->files, sizeof(FILE *) * (context->nfiles + 1));
+    }
   }
   // Open and write to file
-  context->filenames[context->nfiles] = malloc(strlen(filename + 1));
+  context->filenames[context->nfiles] = malloc(strlen(filename) + 1);
+  context->extensions[context->nfiles] = malloc(strlen(extension) + 1);
+  context->bufferFiles[context->nfiles] = newBufferFile(context->bufferSize);
   strcpy(context->filenames[context->nfiles], filename);
+  strcpy(context->extensions[context->nfiles], extension);
   // Derive the full path to the file
-  char *fullpath = (char *)malloc(sizeof(char) * (strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1));
-  strcpy(fullpath, context->outputDirectory);
-  strcat(fullpath, context->filingId);
 
-  // Ensure the directory exists (will silently fail if it does)
-  mkdir_p(fullpath);
+  if (context->customWriteFunction == NULL)
+  {
+    // Ensure the directory exists (will silently fail if it does)
+    char *fullpath = (char *)malloc(sizeof(char) * (strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1));
+    strcpy(fullpath, context->outputDirectory);
+    strcat(fullpath, context->filingId);
+    mkdir_p(fullpath);
 
-  // Add the normalized filename to path
-  strcat(fullpath, "/");
-  char *normalizedFilename = malloc(strlen(filename + 1));
-  strcpy(normalizedFilename, filename);
-  normalize_filename(normalizedFilename);
-  strcat(fullpath, normalizedFilename);
-  strcat(fullpath, extension);
+    // Add the normalized filename to path
+    strcat(fullpath, "/");
+    char *normalizedFilename = malloc(strlen(filename + 1));
+    strcpy(normalizedFilename, filename);
+    normalize_filename(normalizedFilename);
+    strcat(fullpath, normalizedFilename);
+    strcat(fullpath, extension);
 
-  context->files[context->nfiles] = fopen(fullpath, "w");
-  // Free the derived file paths
-  free(normalizedFilename);
-  free(fullpath);
+    context->files[context->nfiles] = fopen(fullpath, "w");
+    // Free the derived file paths
+    free(normalizedFilename);
+    free(fullpath);
+  }
   context->lastname = context->filenames[context->nfiles];
-  context->lastfile = context->files[context->nfiles];
+  context->lastBufferFile = context->bufferFiles[context->nfiles];
+  if (context->customWriteFunction == NULL)
+  {
+    context->lastfile = context->files[context->nfiles];
+  }
   context->nfiles++;
   return 1;
+}
+
+void bufferFlush(WRITE_CONTEXT *context, char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile)
+{
+  if (bufferFile->bufferPos == 0)
+  {
+    return;
+  }
+  if (context->customWriteFunction != NULL)
+  {
+    // Write to a custom write function
+    context->customWriteFunction(filename, (char *)extension, bufferFile->buffer, bufferFile->bufferPos);
+  }
+  else
+  {
+    fwrite(bufferFile->buffer, 1, bufferFile->bufferPos, file);
+  }
+  bufferFile->bufferPos = 0;
+}
+
+void bufferWrite(WRITE_CONTEXT *context, char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile, char *string, int nchars)
+{
+  int offset = 0;
+  while (nchars > 0)
+  {
+    int bytesToWrite = nchars;
+    int remaining = bufferFile->bufferSize - bufferFile->bufferPos;
+    if (bytesToWrite > remaining)
+    {
+      // Only write what is possible
+      bytesToWrite = remaining;
+    }
+    // Copy bytes over
+    memcpy(bufferFile->buffer + bufferFile->bufferPos, string + offset, bytesToWrite);
+    bufferFile->bufferPos += bytesToWrite;
+
+    // Flush if needed
+    if (bufferFile->bufferPos >= bufferFile->bufferSize)
+    {
+      bufferFlush(context, filename, extension, file, bufferFile);
+    }
+    nchars -= bytesToWrite;
+    offset += bytesToWrite;
+  }
 }
 
 void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char *string, int nchars)
@@ -168,7 +256,7 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
   {
     // Write to file
     getFile(context, filename, extension);
-    fwrite(string, sizeof(char), nchars, context->lastfile);
+    bufferWrite(context, filename, extension, context->lastfile, context->lastBufferFile, string, nchars);
   }
   else
   {
@@ -196,7 +284,7 @@ void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, ch
   {
     // Write to file
     getFile(context, filename, extension);
-    fputc(c, context->lastfile);
+    bufferWrite(context, filename, extension, context->lastfile, context->lastBufferFile, &c, 1);
   }
   else
   {
@@ -227,13 +315,33 @@ void freeWriteContext(WRITE_CONTEXT *context)
 {
   for (int i = 0; i < context->nfiles; i++)
   {
+    // Flush out any remaining file contents
+    bufferFlush(context, context->filenames[i], context->extensions[i], context->customWriteFunction == NULL ? context->files[i] : NULL, context->bufferFiles[i]);
+
+    // Free memory structures for each file
     free(context->filenames[i]);
-    fclose(context->files[i]);
+    free(context->extensions[i]);
+    freeBufferFile(context->bufferFiles[i]);
+    if (context->customWriteFunction == NULL)
+    {
+      fclose(context->files[i]);
+    }
   }
   if (context->filenames != NULL)
   {
     free(context->filenames);
+  }
+  if (context->files != NULL)
+  {
     free(context->files);
+  }
+  if (context->bufferFiles != NULL)
+  {
+    free(context->bufferFiles);
+  }
+  if (context->extensions != NULL)
+  {
+    free(context->extensions);
   }
   free(context);
 }

@@ -1,5 +1,6 @@
 
 #include "encoding.h"
+#include <stdint.h>
 
 // UTF-8 decoder notice
 // Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>

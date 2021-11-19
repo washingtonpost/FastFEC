@@ -68,3 +68,9 @@ To run the current tests: `make test`
 #### Scripts
 
 `scripts/generate_mappings.py`: A Python command to auto-generate C header files containing column header and type mappings
+
+# Linux build instructions
+
+* sudo apt-get install build-essential
+* sudo apt-get install libpcre++-dev
+* sudo apt-get install libcurl-openssl1.0-dev

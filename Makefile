@@ -1,13 +1,17 @@
 OUTPUT_DIR=bin
-COMPILE=gcc
-INCLUDE_FILES=src/memory.c src/urlopen.c src/encoding.c src/csv.c src/writer.c src/fec.c -l curl -l pcre
+COMPILE=gcc -Wall -fPIC
+INCLUDE_FILES=src/memory.c src/urlopen.c src/encoding.c src/csv.c src/writer.c src/fec.c src/buffer.c -l curl -l pcre
 COMPILE_ARGS=${INCLUDE_FILES} src/main.c -o ${OUTPUT_DIR}/fastfec
+COMPILE_LIB_ARGS=${INCLUDE_FILES} -shared -o ${OUTPUT_DIR}/fastfec.so
 
 outputdir:
 	mkdir -p ${OUTPUT_DIR}
 
 build: outputdir
-	${COMPILE} -Ofast ${COMPILE_ARGS} 
+	${COMPILE} -Ofast ${COMPILE_ARGS}
+
+buildlib: outputdir
+	${COMPILE} -Ofast ${COMPILE_LIB_ARGS}
 
 debugbuild:
 	${COMPILE} -g ${COMPILE_ARGS}
