@@ -5,3 +5,5 @@ bin
 *.fec
 output/
 env/
+zig-cache
+zig-out

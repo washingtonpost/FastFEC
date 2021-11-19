@@ -5,6 +5,9 @@
 #include "writer.h"
 #include "buffer.h"
 
+typedef int (*GetLine)(STRING *line, void *file);
+typedef int (*PutLine)(char *line, void *file);
+
 struct fec_context
 {
   // A way to pull lines
@@ -30,6 +33,7 @@ struct fec_context
   // Flags
   int includeFilingId;
   int silent;
+  int suppress;
 
   // Parse cache
   char *formType;

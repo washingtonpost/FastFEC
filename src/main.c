@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <pcre.h>
 #include <string.h>
-#include <unistd.h>
 
 #define BUFFERSIZE 65536
 
@@ -12,6 +11,8 @@ const char *FLAG_FILING_ID = "--include-filing-id";
 const char FLAG_FILING_ID_SHORT = 'i';
 const char *FLAG_SILENT = "--silent";
 const char FLAG_SILENT_SHORT = 's';
+const char *FLAG_SUPPRESS = "--suppress";
+const char FLAG_SUPPRESS_SHORT = 'w';
 
 void printUsage(char *argv[])
 {
@@ -19,6 +20,7 @@ void printUsage(char *argv[])
   fprintf(stderr, "\nOptional flags:\n");
   fprintf(stderr, "  %s, -%c: include a filing_id column at the beginning of\n                        every output CSV\n", FLAG_FILING_ID, FLAG_FILING_ID_SHORT);
   fprintf(stderr, "  %s, -%c        : suppress all stdout messages\n\n", FLAG_SILENT, FLAG_SILENT_SHORT);
+  fprintf(stderr, "  %s, -%c        : suppress all warning messages\n\n", FLAG_SUPPRESS, FLAG_SUPPRESS_SHORT);
 }
 
 /* Small main program to retrieve from a url using fgets and fread saving the
@@ -57,6 +59,7 @@ int main(int argc, char *argv[])
   // Try to extract flags
   int includeFilingId = 0;
   int silent = 0;
+  int suppress = 0;
   while (argv[1 + flagOffset][0] == '-')
   {
     if (strcmp(argv[1 + flagOffset], FLAG_FILING_ID) == 0)
@@ -67,6 +70,11 @@ int main(int argc, char *argv[])
     else if (strcmp(argv[1 + flagOffset], FLAG_SILENT) == 0)
     {
       silent = 1;
+      flagOffset++;
+    }
+    else if (strcmp(argv[1 + flagOffset], FLAG_SUPPRESS) == 0)
+    {
+      suppress = 1;
       flagOffset++;
     }
     else
@@ -83,6 +91,11 @@ int main(int argc, char *argv[])
         else if (argv[1 + flagOffset][i] == FLAG_SILENT_SHORT)
         {
           silent = 1;
+          matched = 1;
+        }
+        else if (argv[1 + flagOffset][i] == FLAG_SUPPRESS_SHORT)
+        {
+          suppress = 1;
           matched = 1;
         }
         else

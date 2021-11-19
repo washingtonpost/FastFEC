@@ -3,7 +3,6 @@
 #include "memory.h"
 
 static const char csvExtension[] = ".csv";
-static const char txtExtension[] = ".txt";
 
 typedef void (*CustomWriteFunction)(char *filename, char *extension, char *contents, int numBytes);
 

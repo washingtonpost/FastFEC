@@ -6,7 +6,6 @@
 #include <string.h>
 
 char *HEADER = "header";
-char *F99TEXT = "f99text";
 char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
 char *FEC_VERSION_NUMBER = "fec_ver_#";
 char *FEC = "FEC";
@@ -35,6 +34,7 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->types = NULL;
   ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
+  ctx->suppress = suppress;
 
   // Compile regexes
   const char *error;
@@ -175,8 +175,8 @@ void lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart
         }
 
         // Add null terminator
-        ctx->types[headerFields.columnIndex] = 0;
-        ctx->numFields = headerFields.columnIndex;
+        ctx->types[headerFields.columnIndex + 1] = 0;
+        ctx->numFields = headerFields.columnIndex + 1;
 
         // Free up unnecessary line memory
         freeString(headersCsv);
@@ -202,6 +202,24 @@ void writeSubstr(FEC_CONTEXT *ctx, char *filename, const char *extension, int st
   writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, end, field);
 }
 
+void writeQuotedCsvField(FEC_CONTEXT *ctx, char *filename, const char *extension, char *line, int length)
+{
+  for (int i = 0; i < length; i++)
+  {
+    char c = line[i];
+    if (c == '"')
+    {
+      // Write two quotes since the field is quoted
+      writeChar(ctx->writeContext, filename, extension, '"');
+      writeChar(ctx->writeContext, filename, extension, '"');
+    }
+    else
+    {
+      writeChar(ctx->writeContext, filename, extension, c);
+    }
+  }
+}
+
 // Write a date field by separating the output with dashes
 void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
 {
@@ -212,7 +230,10 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
   }
   if (end - start != 8)
   {
-    fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    if (!ctx->suppress)
+    {
+      fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
+    }
     writeSubstr(ctx, filename, extension, start, end, field);
     return;
   }
@@ -320,6 +341,17 @@ int lineMightStartWithF99(FEC_CONTEXT *ctx)
   return ctx->persistentMemory->line->str[i] == '[';
 }
 
+// Return whether the line contains non-whitespace characters
+int lineContainsNonwhitespace(FEC_CONTEXT *ctx)
+{
+  int i = 0;
+  while (i < ctx->persistentMemory->line->n && isWhitespaceChar(ctx->persistentMemory->line->str[i]))
+  {
+    i++;
+  }
+  return ctx->persistentMemory->line->str[i] != 0;
+}
+
 // Consume whitespace, advancing a position pointer at the same time
 void consumeWhitespace(FEC_CONTEXT *ctx, int *position)
 {
@@ -408,11 +440,81 @@ void startDataRow(FEC_CONTEXT *ctx, char *filename, const char *extension)
   }
 }
 
+// Parse F99 text from a filing, writing the text to the specified
+// file in escaped CSV form if successful. Returns 1 if successful,
+// 0 otherwise.
+int parseF99Text(FEC_CONTEXT *ctx, char *filename)
+{
+  int f99Mode = 0;
+  int first = 1;
+
+  while (1)
+  {
+    // Load the current line
+    if (grabLine(ctx) == 0)
+    {
+      // End of file
+      return 1;
+    }
+
+    if (f99Mode)
+    {
+      // See if we have reached the end boundary
+      if (pcre_exec(ctx->f99TextEnd, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      {
+        f99Mode = 0;
+        break;
+      }
+
+      // Otherwise, write f99 information as a CSV field
+      if (first)
+      {
+        // Write the delimeter at the beginning and a quote character
+        // (the csv field will always be escaped so we can stream write
+        // without having to calculate whether it's escaped later).
+        writeDelimeter(ctx->writeContext, filename, csvExtension);
+        writeChar(ctx->writeContext, filename, csvExtension, '"');
+        first = 0;
+      }
+
+      writeQuotedCsvField(ctx, filename, csvExtension, ctx->persistentMemory->line->str, ctx->currentLineLength);
+      continue;
+    }
+
+    // See if line begins with f99 text boundary by first seeing if it starts with "["
+    if (lineMightStartWithF99(ctx))
+    {
+      // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
+      if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      {
+        // Set f99 mode
+        f99Mode = 1;
+        continue;
+      }
+      else
+      {
+        // Invalid f99 text
+        return 0;
+      }
+    }
+    else if (lineContainsNonwhitespace(ctx))
+    {
+      // The line should only contain non-whitespace that starts
+      // f99 text
+      return 0;
+    }
+  }
+  // Successful extraction, end the quote delimiter
+  writeChar(ctx->writeContext, filename, csvExtension, '"');
+  return 1;
+}
+
 // Parse a line from a filing, using FEC and form version
 // information to map fields to headers and types.
 // Return 1 if successful, or 0 if the line is not fully
-// specified.
-int parseLine(FEC_CONTEXT *ctx, char *filename)
+// specified. Return 2 if there was a warning but it was
+// still successful and the next line has already been grabbed.
+int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
 {
   // Parse fields
   PARSE_CONTEXT parseContext;
@@ -490,9 +592,19 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
         else
         {
           // Unknown type
-          fprintf(stderr, "Unknown type %c\n", type);
+          fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->formType);
           exit(1);
         }
+      }
+      else
+      {
+        // We shouldn't ever exceed the row length
+        char *columnContents = malloc(parseContext.end - parseContext.start + 1);
+        strncpy(columnContents, ctx->persistentMemory->line->str + parseContext.start, parseContext.end - parseContext.start);
+        columnContents[parseContext.end - parseContext.start] = 0;
+        fprintf(stderr, "Unexpected column in %s (%d): %s\n", ctx->formType, parseContext.columnIndex, columnContents);
+        free(columnContents);
+        exit(1);
       }
     }
 
@@ -507,6 +619,21 @@ int parseLine(FEC_CONTEXT *ctx, char *filename)
   {
     // Fewer than two fields? The line isn't fully specified
     return 0;
+  }
+
+  if (parseContext.columnIndex + 1 != ctx->numFields && !headerRow)
+  {
+    // Try to read F99 text
+    if (!parseF99Text(ctx, filename))
+    {
+      if (!ctx->suppress)
+      {
+        fprintf(stderr, "Warning: mismatched number of fields (%d vs %d) (%s)\nLine: %s\n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType, parseContext.line->str);
+      }
+      // 2 indicates we won't grab the line again
+      writeNewline(ctx->writeContext, filename, csvExtension);
+      return 2;
+    }
   }
 
   // Parsing successful
@@ -664,7 +791,7 @@ void parseHeader(FEC_CONTEXT *ctx)
           setVersion(ctx, parseContext.start, parseContext.end);
 
           // Parse the header now that version is known
-          parseLine(ctx, HEADER);
+          parseLine(ctx, HEADER, 1);
         }
       }
       if (parseContext.columnIndex == 2 && isFecSecondColumn)
@@ -673,7 +800,7 @@ void parseHeader(FEC_CONTEXT *ctx)
         setVersion(ctx, parseContext.start, parseContext.end);
 
         // Parse the header now that version is known
-        parseLine(ctx, HEADER);
+        parseLine(ctx, HEADER, 1);
         return;
       }
 
@@ -688,7 +815,7 @@ void parseHeader(FEC_CONTEXT *ctx)
 
 int parseFec(FEC_CONTEXT *ctx)
 {
-  int f99Mode = 0;
+  int skipGrabLine = 0;
 
   if (grabLine(ctx) == 0)
   {
@@ -698,42 +825,20 @@ int parseFec(FEC_CONTEXT *ctx)
   // Parse the header
   parseHeader(ctx);
 
-  // Write the entire file out as tabular data
-  // TEMP code for perf testing
+  // Loop through parsing the entire file, line by
+  // line.
   while (1)
   {
-    if (grabLine(ctx) == 0)
+    // Load the current line
+    if (!skipGrabLine && grabLine(ctx) == 0)
     {
+      // End of file
       break;
     }
 
-    if (f99Mode)
-    {
-      // See if we have reached the end boundary
-      if (pcre_exec(ctx->f99TextEnd, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
-      {
-        f99Mode = 0;
-        continue;
-      }
-
-      // Otherwise, write f99 information to a text file
-      writeN(ctx->writeContext, F99TEXT, txtExtension, ctx->persistentMemory->line->str, ctx->currentLineLength);
-      continue;
-    }
-
-    // See if line begins with f99 text boundary by first seeing if it starts with "["
-    if (lineMightStartWithF99(ctx))
-    {
-      // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
-      if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
-      {
-        // Set f99 mode
-        f99Mode = 1;
-        continue;
-      }
-    }
-
-    parseLine(ctx, NULL);
+    // Parse the line and write its parsed output
+    // to CSV files depending on version/form type
+    skipGrabLine = parseLine(ctx, NULL, 0) == 2;
   }
 
   return 1;
