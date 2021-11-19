@@ -267,7 +267,7 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, in
 // ctx->persistentMemory->line.
 int grabLine(FEC_CONTEXT *ctx)
 {
-  ssize_t bytesRead = ctx->getLine(ctx->persistentMemory->rawLine, ctx->file);
+  int bytesRead = ctx->getLine(ctx->persistentMemory->rawLine, ctx->file);
   if (bytesRead <= 0)
   {
     return 0;

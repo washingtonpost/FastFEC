@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <pcre.h>
 #include <string.h>
-#include <unistd.h>
 
 const char *FLAG_FILING_ID = "--include-filing-id";
 const char FLAG_FILING_ID_SHORT = 'i';

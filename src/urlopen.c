@@ -431,7 +431,7 @@ char *url_fgets(char *ptr, size_t size, URL_FILE *file)
   return ptr; /*success */
 }
 
-ssize_t url_getline(STRING *line, URL_FILE *file)
+int url_getline(STRING *line, URL_FILE *file)
 {
   size_t want;
   size_t loop;

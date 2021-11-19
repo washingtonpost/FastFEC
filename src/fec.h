@@ -4,7 +4,7 @@
 #include "urlopen.h"
 #include "writer.h"
 
-typedef ssize_t (*GetLine)(STRING *line, void *file);
+typedef int (*GetLine)(STRING *line, void *file);
 typedef int (*PutLine)(char *line, void *file);
 
 struct fec_context
