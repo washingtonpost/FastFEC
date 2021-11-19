@@ -29,11 +29,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: 0.9.0-dev.1675+3d528161c
       - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
-      - run: "\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/Tools/VsDevCmd.bat\""
       - run: vcpkg integrate install
       - run: vcpkg install pcre curl --triplet x64-windows-static
       - run: zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static
