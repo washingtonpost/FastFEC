@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <pcre.h>
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #define BUFFERSIZE 65536
 

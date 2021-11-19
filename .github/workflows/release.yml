@@ -36,4 +36,4 @@ jobs:
       - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
       - run: vcpkg integrate install
       - run: vcpkg install pcre curl --triplet x64-windows-static
-      - run: zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static -Dtarget=x86_64-windows-msvc
+      - run: zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
