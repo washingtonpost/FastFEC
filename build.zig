@@ -13,14 +13,19 @@ pub fn build(b: *std.build.Builder) void {
     // Add pcre and curl
     fastfec_cli.linkLibC();
     if (builtin.os.tag == .windows) {
+        fastfec_cli.linkSystemLibrary("ws2_32");
+        fastfec_cli.linkSystemLibrary("advapi32");
+        fastfec_cli.linkSystemLibrary("crypt32");
         fastfec_cli.linkSystemLibrary("pcre");
         fastfec_cli.linkSystemLibrary("libcurl");
+        fastfec_cli.linkSystemLibrary("zlib");
     } else {
         fastfec_cli.linkSystemLibrary("libpcre");
         fastfec_cli.linkSystemLibrary("curl");
     }
 
     fastfec_cli.addCSourceFiles(&.{
+        "src/buffer.c",
         "src/memory.c",
         "src/urlopen.c",
         "src/encoding.c",

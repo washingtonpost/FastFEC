@@ -171,16 +171,19 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
     strcat(fullpath, context->filingId);
     mkdir_p(fullpath);
 
-    // Add filename to path
+    // Add the normalized filename to path
     strcat(fullpath, "/");
-    strcat(fullpath, filename);
+    char *normalizedFilename = malloc(strlen(filename + 1));
+    strcpy(normalizedFilename, filename);
+    normalize_filename(normalizedFilename);
+    strcat(fullpath, normalizedFilename);
     strcat(fullpath, extension);
 
     context->files[context->nfiles] = fopen(fullpath, "w");
-    // Free the derived full path to the file
+    // Free the derived file paths
+    free(normalizedFilename);
     free(fullpath);
   }
-
   context->lastname = context->filenames[context->nfiles];
   context->lastBufferFile = context->bufferFiles[context->nfiles];
   if (context->customWriteFunction == NULL)

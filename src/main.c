@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <pcre.h>
 #include <string.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
+#define BUFFERSIZE 65536
 
 #define BUFFERSIZE 65536
 
@@ -278,7 +283,7 @@ int main(int argc, char *argv[])
   // Initialize persistent memory context
   PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext(0);
   // Initialize FEC context
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&url_readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, handle, fecId, outputDirectory, includeFilingId, silent);
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&url_readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, handle, fecId, outputDirectory, includeFilingId, silent, suppress);
 
   // Parse the fec file
   int fecParseResult = parseFec(fec);

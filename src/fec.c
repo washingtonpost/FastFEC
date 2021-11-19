@@ -3,6 +3,7 @@
 #include "writer.h"
 #include "csv.h"
 #include "mappings.h"
+#include "buffer.h"
 #include <string.h>
 
 char *HEADER = "header";
@@ -13,7 +14,7 @@ char *FEC = "FEC";
 char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
 int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent)
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int suppress)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
   ctx->persistentMemory = persistentMemory;
@@ -268,7 +269,7 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, in
 // ctx->persistentMemory->line.
 int grabLine(FEC_CONTEXT *ctx)
 {
-  ssize_t bytesRead = readLine(ctx->buffer, ctx->persistentMemory->rawLine, ctx->file);
+  int bytesRead = readLine(ctx->buffer, ctx->persistentMemory->rawLine, ctx->file);
   if (bytesRead <= 0)
   {
     return 0;
