@@ -46,9 +46,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifndef WIN32
-#include <sys/time.h>
-#endif
 #include <stdlib.h>
 #include <errno.h>
 

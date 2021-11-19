@@ -1,6 +1,5 @@
 #include "memory.h"
 #include "string.h"
-#include <sys/time.h>
 
 const size_t DEFAULT_STRING_SIZE = 256;
 
