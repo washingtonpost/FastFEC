@@ -10,6 +10,8 @@
 
 #define BUFFERSIZE 65536
 
+#define BUFFERSIZE 65536
+
 const char *FLAG_FILING_ID = "--include-filing-id";
 const char FLAG_FILING_ID_SHORT = 'i';
 const char *FLAG_SILENT = "--silent";

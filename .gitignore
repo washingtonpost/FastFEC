@@ -4,6 +4,7 @@ bin
 *.test
 *.fec
 output/
+env/
 zig-cache
 zig-out
 env/

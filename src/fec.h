@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "urlopen.h"
 #include "writer.h"
+#include "buffer.h"
 
 struct fec_context
 {

@@ -111,13 +111,15 @@ def main(argv):
          input_file = arg
       elif opt in ("-o", "--output_file"):
          output_file = arg
+   input_file = f'{input_file}/{filing_id}'
+   output_file = f'{output_file}/{filing_id}'
    print(f'Filing ID is {filing_id}')
    print(f'Input file is {input_file}')
    print(f'Output file is {output_file}')
 
    f = open(
-     f'{input_file}/{filing_id}.fec', mode='rb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
-   fast_fec = FastFEC(f, f'{output_file}/{filing_id}')
+     f'{input_file}.fec', mode='rb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
+   fast_fec = FastFEC(f, f'{output_file}')
    fast_fec.parse()
 
    # Free memory

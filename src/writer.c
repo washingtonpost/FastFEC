@@ -64,18 +64,6 @@ int mkdir_p(const char *path)
   return 0;
 }
 
-// Normalize a file name by converting slashes to dashes
-// Adapted from https://stackoverflow.com/a/32496721
-void normalize_filename(char *filename)
-{
-  char *current_pos = strchr(filename, '/');
-  while (current_pos)
-  {
-    *current_pos = '-';
-    current_pos = strchr(current_pos, '/');
-  }
-}
-
 BUFFER_FILE *newBufferFile(int bufferSize)
 {
   BUFFER_FILE *bufferFile = (BUFFER_FILE *)malloc(sizeof(BUFFER_FILE));
@@ -296,19 +284,10 @@ void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, ch
 
 void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, double d)
 {
-  if (context->local == 0)
-  {
-    // Write to file
-    getFile(context, filename, extension);
-    fprintf(context->lastfile, NUMBER_FORMAT, d);
-  }
-  else
-  {
-    // Write to local buffer
-    char str[100]; // should be able to fit any double
-    sprintf(str, NUMBER_FORMAT, d);
-    writeString(context, filename, extension, str);
-  }
+  // Write to local buffer
+  char str[100]; // should be able to fit any double
+  sprintf(str, "%f", d);
+  writeString(context, filename, extension, str);
 }
 
 void freeWriteContext(WRITE_CONTEXT *context)
