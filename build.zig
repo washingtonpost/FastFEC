@@ -18,7 +18,7 @@ pub fn build(b: *std.build.Builder) void {
         fastfec_cli.linkSystemLibrary("crypt32");
         fastfec_cli.linkSystemLibrary("pcre");
         fastfec_cli.linkSystemLibrary("libcurl");
-        fastfec_cli.linkSystemLibrary("zlib");
+        fastfec_cli.linkSystemLibraryName("zlib");
     } else {
         fastfec_cli.linkSystemLibrary("libpcre");
         fastfec_cli.linkSystemLibrary("curl");
