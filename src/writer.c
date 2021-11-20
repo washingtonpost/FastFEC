@@ -64,6 +64,18 @@ int mkdir_p(const char *path)
   return 0;
 }
 
+// Normalize a file name by converting slashes to dashes
+// Adapted from https://stackoverflow.com/a/32496721
+void normalize_filename(char *filename)
+{
+  char *current_pos = strchr(filename, '/');
+  while (current_pos)
+  {
+    *current_pos = '-';
+    current_pos = strchr(current_pos, '/');
+  }
+}
+
 BUFFER_FILE *newBufferFile(int bufferSize)
 {
   BUFFER_FILE *bufferFile = (BUFFER_FILE *)malloc(sizeof(BUFFER_FILE));
