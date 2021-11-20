@@ -50,7 +50,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ## Dependencies
 
-Run `pip install requirements.txt`, and then install the following as needed:
+Run `pip install python/requirements.txt`, and then install the following as needed:
 - libcurl (`brew install curl`)
 - pcre (`brew install pcre`)
 
