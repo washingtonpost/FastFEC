@@ -1,17 +1,13 @@
-# fastFEC
+# FastFEC
 
-An experimental C program to stream and parse FEC filings, writing output to CSV. This project is in early stages and will benefit from rigorous testing.
+A C program to stream and parse FEC filings, writing output to CSV. This project is in early stages but works on a wide variety of filings and will benefit from additional rigorous testing.
 
 ## Usage
 
-Ensure you have dependencies listed below installed, and then compile with
-
-- `make build`
-
-This will output a binary in `bin/fastfec`. The usage of that binary is as follows:
+Once you've built a binary (see below), you can run it as follows:
 
 ```
-Usage: ./bin/fastfec [flags] <id, file, or url> [output directory=output] [override id]
+Usage: ./zig-out/bin/fastfec [flags] <id, file, or url> [output directory=output] [override id]
 ```
 
 - `[flags]`: optional flags which must come before other args; see below
@@ -29,7 +25,7 @@ The CLI will download or read from disk the specified filing and then write outp
 You can also pipe the output of another command in by following this usage:
 
 ```
-[some command] | ./bin/fastfec [flags] <id> [output directory=output]
+[some command] | ./zig-out/bin/fastfec [flags] <id> [output directory=output]
 ```
 
 ### Flags
@@ -44,34 +40,75 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ### Examples
 
-`./bin/fastfec -s 13360 fastfec_output/`
+`./zig-out/bin/fastfec -s 13360 fastfec_output/`
 
 - This will run FastFEC in silent mode, download and parse filing ID 13360, and store the output in CSV files at `fastfec_output/13360/`.
 
-## Dependencies
+## Local development
 
-Run `pip install python/requirements.txt`, and then install the following as needed:
-- libcurl (`brew install curl`)
-- pcre (`brew install pcre`)
+### Build system
+
+[Zig](https://ziglang.org/) is used to build and compile the project. Download and install the latest version of Zig (>=9.0.0) by following the instructions on the website (you can verify it's working by typing `zig` in the terminal and seeing help commands).
+
+### Library dependencies
+
+The following libraries are used:
+* curl
+* pcre
+
+Installing these libraries varies by OS:
+
+#### Mac OS X
+
+Ensure [Homebrew](https://brew.sh/) and run the following `brew` command to install the libraries:
+
+```sh
+brew install pkg-config curl pcre
+```
+
+#### Ubuntu
+
+```sh
+sudo apt install -y libcurl4-openssl-dev libpcre++-dev
+```
+
+#### Windows
+
+Install [vcpkg](https://vcpkg.io) and run the following:
+
+```sh
+vcpkg integrate install
+vcpkg install pcre curl --triplet x64-windows-static
+```
+
+### Building
+
+From the root directory of the repo, run:
+
+```sh
+zig build
+```
+
+On Windows, you may have to supply additional arguments to locate vcpkg dependencies and ensure the msvc toolchain is used:
+
+```sh
+zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
+```
+
+The above commands will output a binary in `zig-out/bin/fastfec`. 
 
 #### Time benchmarks
 
-Using massive `1533121.fec` (5.8gb)
+Using massive `1464847.fec` (8.4gb) on an M1 MacBook Air
 
 - 2m 11s
 
 #### Testing
 
-Currently, there's only C tests for specific CSV/ascii28 parsing functionality, but ideally once a Python wrapper is completed, we can have Python unit tests.
+Currently, there's only C tests for specific parsing/buffer/write functionality, but we hope to expand unit testing soon.
 
-To run the current tests: `make test`
+To run the current tests (only verified to work on Mac): `make test`
 
 #### Scripts
 
 `scripts/generate_mappings.py`: A Python command to auto-generate C header files containing column header and type mappings
-
-# Linux build instructions
-
-* sudo apt-get install build-essential
-* sudo apt-get install libpcre++-dev
-* sudo apt-get install libcurl-openssl1.0-dev
