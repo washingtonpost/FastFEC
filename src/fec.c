@@ -14,7 +14,7 @@ char *FEC = "FEC";
 char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
 int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int suppress)
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
   ctx->persistentMemory = persistentMemory;
@@ -35,7 +35,7 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->types = NULL;
   ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
-  ctx->suppress = suppress;
+  ctx->warn = warn;
 
   // Compile regexes
   const char *error;
@@ -231,7 +231,7 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
   }
   if (end - start != 8)
   {
-    if (!ctx->suppress)
+    if (ctx->warn)
     {
       fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
     }
@@ -627,7 +627,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
     // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      if (!ctx->suppress)
+      if (ctx->warn)
       {
         fprintf(stderr, "Warning: mismatched number of fields (%d vs %d) (%s)\nLine: %s\n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType, parseContext.line->str);
       }

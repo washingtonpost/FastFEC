@@ -298,7 +298,7 @@ void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, 
 {
   // Write to local buffer
   char str[100]; // should be able to fit any double
-  sprintf(str, "%f", d);
+  sprintf(str, NUMBER_FORMAT, d);
   writeString(context, filename, extension, str);
 }
 

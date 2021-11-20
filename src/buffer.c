@@ -70,6 +70,10 @@ int readLine(BUFFER *buffer, STRING *string, void *data)
       growString(string);
     }
     int end = c == '\n';
+    if (end)
+    {
+      n++;
+    }
     if (end || eof)
     {
       string->str[n] = '\0';
@@ -78,7 +82,7 @@ int readLine(BUFFER *buffer, STRING *string, void *data)
 
     if (end || eof)
     {
-      memcpy(string->str + stringStart, buffer->buffer + start, buffer->bufferPos - start - 1);
+      memcpy(string->str + stringStart, buffer->buffer + start, buffer->bufferPos - start - 1 + (end ? 1 : 0));
       break;
     }
   }

@@ -28,11 +28,11 @@ static char *testShortBuffer()
   STRING *s = newString(100);
 
   // Read lines
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"The cat\"", strcmp(s->str, "The cat") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"The cat\n\"", strcmp(s->str, "The cat\n") == 0);
 
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"and the\"", strcmp(s->str, "and the") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"and the\n\"", strcmp(s->str, "and the\n") == 0);
 
   mu_assert("Expected line length 4", readLine(buffer, s, NULL) == 4);
   mu_assert("Expected line \"hat.\"", strcmp(s->str, "hat.") == 0);
@@ -53,11 +53,11 @@ static char *testLongBuffer()
   STRING *s = newString(100);
 
   // Read lines
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"The cat\"", strcmp(s->str, "The cat") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"The cat\n\"", strcmp(s->str, "The cat\n") == 0);
 
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"and the\"", strcmp(s->str, "and the") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"and the\n\"", strcmp(s->str, "and the\n") == 0);
 
   mu_assert("Expected line length 4", readLine(buffer, s, NULL) == 4);
   mu_assert("Expected line \"hat.\"", strcmp(s->str, "hat.") == 0);
@@ -78,11 +78,11 @@ static char *testAlmostFileLengthBuffer()
   STRING *s = newString(10);
 
   // Read lines
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"The cat\"", strcmp(s->str, "The cat") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"The cat\n\"", strcmp(s->str, "The cat\n") == 0);
 
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"and the\"", strcmp(s->str, "and the") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"and the\n\"", strcmp(s->str, "and the\n") == 0);
 
   mu_assert("Expected line length 4", readLine(buffer, s, NULL) == 4);
   mu_assert("Expected line \"hat.\"", strcmp(s->str, "hat.") == 0);
@@ -103,11 +103,11 @@ static char *testDivisibleBuffer()
   STRING *s = newString(100);
 
   // Read lines
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"The cat\"", strcmp(s->str, "The cat") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"The cat\n\"", strcmp(s->str, "The cat\n") == 0);
 
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"and the\"", strcmp(s->str, "and the") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"and the\n\"", strcmp(s->str, "and the\n") == 0);
 
   mu_assert("Expected line length 4", readLine(buffer, s, NULL) == 4);
   mu_assert("Expected line \"hat.\"", strcmp(s->str, "hat.") == 0);
@@ -128,11 +128,11 @@ static char *testByteBuffer()
   STRING *s = newString(100);
 
   // Read lines
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"The cat\"", strcmp(s->str, "The cat") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"The cat\n\"", strcmp(s->str, "The cat\n") == 0);
 
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"and the\"", strcmp(s->str, "and the") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"and the\n\"", strcmp(s->str, "and the\n") == 0);
 
   mu_assert("Expected line length 4", readLine(buffer, s, NULL) == 4);
   mu_assert("Expected line \"hat.\"", strcmp(s->str, "hat.") == 0);
@@ -153,12 +153,12 @@ static char *testStringExpansion()
   STRING *s = newString(1);
 
   // Read lines
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"The cat\"", strcmp(s->str, "The cat") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"The cat\n\"", strcmp(s->str, "The cat\n") == 0);
   mu_assert("Expected n 8", s->n == 8);
 
-  mu_assert("Expected line length 7", readLine(buffer, s, NULL) == 7);
-  mu_assert("Expected line \"and the\"", strcmp(s->str, "and the") == 0);
+  mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
+  mu_assert("Expected line \"and the\n\"", strcmp(s->str, "and the\n") == 0);
 
   mu_assert("Expected line length 4", readLine(buffer, s, NULL) == 4);
   mu_assert("Expected line \"hat.\"", strcmp(s->str, "hat.") == 0);
