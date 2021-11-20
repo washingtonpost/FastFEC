@@ -185,7 +185,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
 
     // Add the normalized filename to path
     strcat(fullpath, "/");
-    char *normalizedFilename = malloc(strlen(filename + 1));
+    char *normalizedFilename = malloc(strlen(filename) + 1);
     strcpy(normalizedFilename, filename);
     normalize_filename(normalizedFilename);
     strcat(fullpath, normalizedFilename);
