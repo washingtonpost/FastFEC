@@ -101,7 +101,7 @@ The above commands will output a binary in `zig-out/bin/fastfec`.
 
 Using massive `1464847.fec` (8.4gb) on an M1 MacBook Air
 
-- 2m 11s
+- 1m 42s
 
 #### Testing
 
