@@ -53,14 +53,15 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 ### Library dependencies
 
 The following libraries are used:
-* curl
-* pcre
+
+- curl
+- pcre
 
 Installing these libraries varies by OS:
 
 #### Mac OS X
 
-Ensure [Homebrew](https://brew.sh/) and run the following `brew` command to install the libraries:
+Ensure [Homebrew](https://brew.sh/) is installed and run the following `brew` command to install the libraries:
 
 ```sh
 brew install pkg-config curl pcre
@@ -95,7 +96,7 @@ On Windows, you may have to supply additional arguments to locate vcpkg dependen
 zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
 ```
 
-The above commands will output a binary in `zig-out/bin/fastfec`. 
+The above commands will output a binary in `zig-out/bin/fastfec`.
 
 #### Time benchmarks
 
