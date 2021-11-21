@@ -4,10 +4,10 @@ A C program to stream and parse FEC filings, writing output to CSV. This project
 
 ## Usage
 
-Once you've built a binary (see below), you can run it as follows:
+Once you've downloaded the [latest release](https://github.com/WPMedia/FastFEC/releases/latest) or built a binary (see below), you can run it as follows:
 
 ```
-Usage: ./zig-out/bin/fastfec [flags] <id, file, or url> [output directory=output] [override id]
+Usage: fastfec [flags] <id, file, or url> [output directory=output] [override id]
 ```
 
 - `[flags]`: optional flags which must come before other args; see below
@@ -25,7 +25,7 @@ The CLI will download or read from disk the specified filing and then write outp
 You can also pipe the output of another command in by following this usage:
 
 ```
-[some command] | ./zig-out/bin/fastfec [flags] <id> [output directory=output]
+[some command] | fastfec [flags] <id> [output directory=output]
 ```
 
 ### Flags
@@ -40,7 +40,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ### Examples
 
-`./zig-out/bin/fastfec -s 13360 fastfec_output/`
+`fastfec -s 13360 fastfec_output/`
 
 - This will run FastFEC in silent mode, download and parse filing ID 13360, and store the output in CSV files at `fastfec_output/13360/`.
 
