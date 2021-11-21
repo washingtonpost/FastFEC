@@ -20,7 +20,7 @@ jobs:
         shell: bash
       - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
       - run: zig build
-      - run: zip fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
+      - run: zip -j fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -39,9 +39,9 @@ jobs:
         shell: bash
       - run: brew install pkg-config curl pcre
       - run: zig build
-      - run: zip fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
+      - run: zip -j fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
       - run: zig build -Dtarget=aarch64-macos
-      - run: zip fastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
+      - run: zip -j fastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
