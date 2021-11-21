@@ -19,7 +19,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: zig-out/bin/zig
+          files: zig-out/bin/fastfec
   build-macos:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: macos-latest
@@ -33,7 +33,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: zig-out/bin/zig
+          files: zig-out/bin/fastfec
   build-windows:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: windows-latest
@@ -50,4 +50,4 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: zig-out/bin/zig.exe
+          files: zig-out/bin/fastfec.exe
