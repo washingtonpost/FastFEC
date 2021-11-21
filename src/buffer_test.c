@@ -9,7 +9,7 @@ int tests_run = 0;
 char contents[20] = "The cat\nand the\nhat.";
 int contentsPos = 0;
 
-ssize_t contentsRead(char *buffer, int want)
+int contentsRead(char *buffer, int want)
 {
   int remaining = strlen(contents) - contentsPos;
   if (remaining < want)
