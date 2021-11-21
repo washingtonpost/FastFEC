@@ -102,6 +102,7 @@ static char *all_tests()
 
 int main(int argc, char **argv)
 {
+  printf("\nWriter tests\n");
   char *result = all_tests();
   if (result != 0)
   {

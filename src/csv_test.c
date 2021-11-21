@@ -193,7 +193,6 @@ static char *testStripWhitespace()
   stripWhitespace(&parseContext);
 
   mu_assert("error, start != 3", parseContext.start == 3);
-  printf("%d\n", parseContext.end);
   mu_assert("error, end != 6", parseContext.end == 6);
   mu_assert("error, position != 10", parseContext.position == 10);
 
@@ -211,6 +210,7 @@ static char *all_tests()
 
 int main(int argc, char **argv)
 {
+  printf("\nCSV tests\n");
   char *result = all_tests();
   if (result != 0)
   {
