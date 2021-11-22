@@ -96,7 +96,7 @@ On Windows, you may have to supply additional arguments to locate vcpkg dependen
 zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
 ```
 
-The above commands will output a binary in `zig-out/bin/fastfec`.
+The above commands will output a binary at `zig-out/bin/fastfec` and a shared library file in the `zig-out/lib/` directory.
 
 #### Time benchmarks
 
@@ -108,8 +108,8 @@ Using massive `1464847.fec` (8.4gb) on an M1 MacBook Air
 
 Currently, there's only C tests for specific parsing/buffer/write functionality, but we hope to expand unit testing soon.
 
-To run the current tests (only verified to work on Mac): `make test`
+To run the current tests: `zig build test`
 
 #### Scripts
 
-`scripts/generate_mappings.py`: A Python command to auto-generate C header files containing column header and type mappings
+`python scripts/generate_mappings.py`: A Python script to auto-generate C header files containing column header and type mappings

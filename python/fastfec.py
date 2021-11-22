@@ -1,7 +1,7 @@
 import sys, getopt
-import time
 from ctypes import *
 import os
+import pathlib
 from smart_open import open
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -23,9 +23,30 @@ def make_read_buffer(f):
 
 
 class FastFEC:
+    def __init__(self, file_handle, output_directory, use_compression=False, make_dirs=False):
+        self.init_lib()
+        self.file_handle = file_handle
+        self.use_compression=use_compression
+        self.make_dirs = make_dirs
+
+        # Initialize
+        self.file_descriptors = {}
+        self.last_filename = None
+        self.last_fd = None
+        self.bytes_written = 0
+        self.buffer_read_fn = BUFFER_READ(
+            make_read_buffer(file_handle))
+        write_callback = self.provide_write_callback(output_directory)
+        self.write_callback_fn = CUSTOM_WRITE(write_callback)
+
+        self.persistent_memory_context = self.libfastfec.newPersistentMemoryContext(
+            1)
+        self.fec_context = self.libfastfec.newFecContext(
+            self.persistent_memory_context, self.buffer_read_fn, BUFFER_SIZE, self.write_callback_fn, BUFFER_SIZE, None, None, None, 0, 1)
 
     def init_lib(self):
-        self.libfastfec = CDLL(os.path.join(SCRIPT_DIR, "../bin/fastfec.so"))
+        # TOOD: ensure this works on any platform
+        self.libfastfec = CDLL(os.path.join(SCRIPT_DIR, "../zig-out/lib/libfastfec.dylib"))
 
         # Lay out arg/res types
         self.libfastfec.newPersistentMemoryContext.argtypes = [c_int]
@@ -42,26 +63,7 @@ class FastFEC:
 
         self.libfastfec.freePersistentMemoryContext.argtypes = [c_void_p]
 
-    def __init__(self, file_handle, output_file):
-        self.init_lib()
-        self.file_handle = file_handle
-
-        # Initialize
-        self.file_descriptors = {}
-        self.last_filename = None
-        self.last_fd = None
-        self.bytes_written = 0
-        self.buffer_read_fn = BUFFER_READ(
-            make_read_buffer(file_handle))
-        write_callback = self.provide_write_callback(output_file)
-        self.write_callback_fn = CUSTOM_WRITE(write_callback)
-
-        self.persistent_memory_context = self.libfastfec.newPersistentMemoryContext(
-            1)
-        self.fec_context = self.libfastfec.newFecContext(
-            self.persistent_memory_context, self.buffer_read_fn, BUFFER_SIZE, self.write_callback_fn, BUFFER_SIZE, None, None, None, 0, 1)
-
-    def provide_write_callback(self, output_file):
+    def provide_write_callback(self, output_directory):
         def write_callback(filename, extension, contents, numBytes):
             if filename == self.last_filename:
                 self.last_fd.write(contents[:numBytes])
@@ -69,8 +71,10 @@ class FastFEC:
                 path = filename + extension
                 fd = self.file_descriptors.get(path)
                 if not fd:
+                    if self.make_dirs:
+                        pathlib.Path(output_directory).mkdir(parents=True, exist_ok=True)
                     self.file_descriptors[path] = open(
-                        os.path.join(output_file, path.decode('utf8')) + '.gz', mode='wb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
+                        os.path.join(output_directory, f'{path.decode("utf8")}{".gz" if self.use_compression else ""}'), mode='wb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
                     fd = self.file_descriptors[path]
                 self.last_filename = filename
                 self.last_fd = fd
@@ -94,32 +98,39 @@ class FastFEC:
 
 def main(argv):
    filing_id = ''
-   input_file = ''
-   output_file = ''
+   input_directory = ''
+   output_directory = ''
+   use_compression = False
+   make_dirs = False
    try:
-      opts, args = getopt.getopt(argv, 'hf:i:o:')
+      opts, _ = getopt.getopt(argv, 'hf:i:o:z:m:')
    except getopt.GetoptError:
-      print('fastfec.py -f <filing_id> -i <input_file> -o <output_file>')
+      print('fastfec.py -f <filing_id> -i <input_directory> -o <output_directory> -z <use_compression=false> -m <make_dirs=false>')
       sys.exit(2)
    for opt, arg in opts:
       if opt == '-h':
-         print('fastfec.py -f <filing_id> -i <input_file> -o <output_file>')
+         print('fastfec.py -f <filing_id> -i <input_directory> -o <output_directory> -z <use_compression=false> -m <make_dirs=false>')
          sys.exit()
       elif opt in ("-f", "--filing_id"):
          filing_id = arg
-      elif opt in ("-i", "--input_file"):
-         input_file = arg
-      elif opt in ("-o", "--output_file"):
-         output_file = arg
-   input_file = f'{input_file}/{filing_id}'
-   output_file = f'{output_file}/{filing_id}'
+      elif opt in ("-i", "--input_directory"):
+         input_directory = arg
+      elif opt in ("-o", "--output_directory"):
+         output_directory = arg
+      elif opt in ("-z", "--use_compression"):
+         use_compression = arg.lower() != 'false'
+      elif opt in ("-m", "--make_dirs"):
+         make_dirs = arg.lower() != 'false'
+   input_file = f'{os.path.join(input_directory, filing_id)}.fec'
+   output_directory = os.path.join(output_directory, filing_id)
    print(f'Filing ID is {filing_id}')
    print(f'Input file is {input_file}')
-   print(f'Output file is {output_file}')
+   print(f'Output directory is {output_directory}')
+   print(f'Make parent directories: {make_dirs}')
 
    f = open(
-     f'{input_file}.fec', mode='rb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
-   fast_fec = FastFEC(f, f'{output_file}')
+     input_file, mode='rb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
+   fast_fec = FastFEC(f, output_directory, use_compression=use_compression, make_dirs=make_dirs)
    fast_fec.parse()
 
    # Free memory
