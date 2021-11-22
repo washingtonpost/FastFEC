@@ -568,43 +568,49 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       // Write delimeter
       writeDelimeter(ctx->writeContext, filename, csvExtension);
 
-      // Get the type of the current field
+      // Get the type of the current field and write accordingly
+      char type;
       if (parseContext.columnIndex < ctx->numFields)
       {
         // Ensure the column index is in bounds
-        char type = ctx->types[parseContext.columnIndex];
-
-        // Iterate possible types
-        if (type == 's')
-        {
-          // String
-          writeSubstr(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
-        }
-        else if (type == 'd')
-        {
-          // Date
-          writeDateField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
-        }
-        else if (type == 'f')
-        {
-          // Float
-          writeFloatField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
-        }
-        else
-        {
-          // Unknown type
-          fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->formType);
-          exit(1);
-        }
+        type = ctx->types[parseContext.columnIndex];
       }
       else
       {
-        // We shouldn't ever exceed the row length
-        char *columnContents = malloc(parseContext.end - parseContext.start + 1);
-        strncpy(columnContents, ctx->persistentMemory->line->str + parseContext.start, parseContext.end - parseContext.start);
-        columnContents[parseContext.end - parseContext.start] = 0;
-        fprintf(stderr, "Unexpected column in %s (%d): %s\n", ctx->formType, parseContext.columnIndex, columnContents);
-        free(columnContents);
+        // Warning: column exceeding row length
+        if (ctx->warn)
+        {
+          fprintf(stderr, "Unexpected column in %s (%d): ", ctx->formType, parseContext.columnIndex);
+          for (int i = parseContext.start; i < parseContext.end; i++)
+          {
+            fprintf(stderr, "%c", ctx->persistentMemory->line->str[i]);
+          }
+          fprintf(stderr, "\n");
+        }
+        // Default to string type
+        type = 's';
+      }
+
+      // Iterate possible types
+      if (type == 's')
+      {
+        // String
+        writeSubstr(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
+      }
+      else if (type == 'd')
+      {
+        // Date
+        writeDateField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
+      }
+      else if (type == 'f')
+      {
+        // Float
+        writeFloatField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
+      }
+      else
+      {
+        // Unknown type
+        fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->formType);
         exit(1);
       }
     }
