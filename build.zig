@@ -6,31 +6,43 @@ pub fn build(b: *std.build.Builder) !void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
 
+    const lib_only: bool = b.option(bool, "lib-only", "Only compile the library") orelse false;
+
+    // Compile pcre
+    const pcre = b.addStaticLibrary("pcre", null);
+    pcre.setBuildMode(.ReleaseFast);
+    pcre.setTarget(target);
+    pcre.linkLibC();
+    pcre.addIncludeDir(pcreIncludeDir);
+    pcre.addCSourceFiles(&pcreSources, &buildOptions);
+
     // Main build step
-    const fastfec_cli = b.addExecutable("fastfec", null);
-    fastfec_cli.setTarget(target);
-    fastfec_cli.setBuildMode(mode);
-    fastfec_cli.install();
+    if (!lib_only) {
+        const fastfec_cli = b.addExecutable("fastfec", null);
+        fastfec_cli.setTarget(target);
+        fastfec_cli.setBuildMode(mode);
+        fastfec_cli.install();
 
-    // Add pcre and curl
-    fastfec_cli.linkLibC();
-    if (builtin.os.tag == .windows) {
-        fastfec_cli.linkSystemLibrary("ws2_32");
-        fastfec_cli.linkSystemLibrary("advapi32");
-        fastfec_cli.linkSystemLibrary("crypt32");
-        fastfec_cli.linkSystemLibrary("pcre");
-        fastfec_cli.linkSystemLibrary("libcurl");
-        fastfec_cli.linkSystemLibraryName("zlib");
-    } else {
-        fastfec_cli.linkSystemLibrary("libpcre");
-        fastfec_cli.linkSystemLibrary("curl");
+        // Add curl
+        fastfec_cli.linkLibC();
+        fastfec_cli.addIncludeDir(pcreIncludeDir);
+        fastfec_cli.linkLibrary(pcre);
+        if (builtin.os.tag == .windows) {
+            fastfec_cli.linkSystemLibrary("ws2_32");
+            fastfec_cli.linkSystemLibrary("advapi32");
+            fastfec_cli.linkSystemLibrary("crypt32");
+            fastfec_cli.linkSystemLibrary("libcurl");
+            fastfec_cli.linkSystemLibraryName("zlib");
+        } else {
+            fastfec_cli.linkSystemLibrary("curl");
+        }
+
+        fastfec_cli.addCSourceFiles(&libSources, &buildOptions);
+        fastfec_cli.addCSourceFiles(&.{
+            "src/urlopen.c",
+            "src/main.c",
+        }, &buildOptions);
     }
-
-    fastfec_cli.addCSourceFiles(&libSources, &buildOptions);
-    fastfec_cli.addCSourceFiles(&.{
-        "src/urlopen.c",
-        "src/main.c",
-    }, &buildOptions);
 
     // Library build step
     const fastfec_lib = b.addSharedLibrary("fastfec", null, .unversioned);
@@ -38,11 +50,8 @@ pub fn build(b: *std.build.Builder) !void {
     fastfec_lib.setBuildMode(mode);
     fastfec_lib.install();
     fastfec_lib.linkLibC();
-    if (builtin.os.tag == .windows) {
-        fastfec_lib.linkSystemLibrary("pcre");
-    } else {
-        fastfec_lib.linkSystemLibrary("libpcre");
-    }
+    fastfec_lib.addIncludeDir(pcreIncludeDir);
+    fastfec_lib.linkLibrary(pcre);
     fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
 
     // Test step
@@ -54,11 +63,8 @@ pub fn build(b: *std.build.Builder) !void {
         subtest_exe.addCSourceFiles(&testIncludes, &buildOptions);
         subtest_exe.addCSourceFile(test_file, &buildOptions);
         // Link PCRE
-        if (builtin.os.tag == .windows) {
-            subtest_exe.linkSystemLibrary("pcre");
-        } else {
-            subtest_exe.linkSystemLibrary("libpcre");
-        }
+        subtest_exe.addIncludeDir(pcreIncludeDir);
+        subtest_exe.linkLibrary(pcre);
         const subtest_cmd = subtest_exe.run();
         if (prev_test_step != null) {
             subtest_cmd.step.dependOn(prev_test_step.?);
@@ -78,6 +84,30 @@ const libSources = [_][]const u8{
     "src/writer.c",
     "src/fec.c",
 };
+const pcreSources = [_][]const u8{
+    "deps/pcre/pcre_chartables.c",
+    "deps/pcre/pcre_byte_order.c",
+    "deps/pcre/pcre_compile.c",
+    "deps/pcre/pcre_config.c",
+    "deps/pcre/pcre_dfa_exec.c",
+    "deps/pcre/pcre_exec.c",
+    "deps/pcre/pcre_fullinfo.c",
+    "deps/pcre/pcre_get.c",
+    "deps/pcre/pcre_globals.c",
+    "deps/pcre/pcre_jit_compile.c",
+    "deps/pcre/pcre_maketables.c",
+    "deps/pcre/pcre_newline.c",
+    "deps/pcre/pcre_ord2utf8.c",
+    "deps/pcre/pcre_refcount.c",
+    "deps/pcre/pcre_string_utils.c",
+    "deps/pcre/pcre_study.c",
+    "deps/pcre/pcre_tables.c",
+    "deps/pcre/pcre_ucd.c",
+    "deps/pcre/pcre_valid_utf8.c",
+    "deps/pcre/pcre_version.c",
+    "deps/pcre/pcre_xclass.c",
+};
+const pcreIncludeDir = "deps/pcre";
 const tests = [_][]const u8{ "src/buffer_test.c", "src/csv_test.c", "src/writer_test.c" };
 const testIncludes = [_][]const u8{
     "src/buffer.c",

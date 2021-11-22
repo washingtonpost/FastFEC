@@ -1,0 +1,3 @@
+This is a pared down version of the official 8.45 PCRE release downloaded from here: https://github.com/jwilk-mirrors/pcre
+
+It has been modified to simplify compilation with Zig by the parent project, FastFEC.
