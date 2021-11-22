@@ -89,6 +89,6 @@ jobs:
         with:
           files: |
             fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-            fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
+            fastfec-windows-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
             libfastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.dll
             libfastfec-windows-aarch64-${{ steps.get_version.outputs.VERSION }}.dll
