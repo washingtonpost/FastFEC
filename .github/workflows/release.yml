@@ -21,10 +21,18 @@ jobs:
       - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
       - run: zig build
       - run: zip -j fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
+      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
+      - run: zig build -Dtarget=aarch64-linux
+      - run: zip -j fastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
+      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
+          files: |
+            fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
+            fastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
+            libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
+            libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
   build-macos:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: macos-latest
@@ -40,14 +48,18 @@ jobs:
       - run: brew install pkg-config curl pcre
       - run: zig build
       - run: zip -j fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
+      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.dylib
       - run: zig build -Dtarget=aarch64-macos
       - run: zip -j fastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
+      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.dylib
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
             fastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
+            libfastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.dylib
+            libfastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.dylib
   build-windows:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: windows-latest
@@ -66,7 +78,17 @@ jobs:
       - run: vcpkg install pcre curl --triplet x64-windows-static
       - run: zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
       - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
+      - run: mv zig-out/lib/fastfec.dll libfastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.dll
+        shell: bash
+      - run: zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=aarch64-windows-msvc
+      - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
+      - run: mv zig-out/lib/fastfec.dll libfastfec-windows-aarch64-${{ steps.get_version.outputs.VERSION }}.dll
+        shell: bash
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
+          files: |
+            fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
+            fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
+            libfastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.dll
+            libfastfec-windows-aarch64-${{ steps.get_version.outputs.VERSION }}.dll
