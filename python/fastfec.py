@@ -45,7 +45,7 @@ class FastFEC:
             self.persistent_memory_context, self.buffer_read_fn, BUFFER_SIZE, self.write_callback_fn, BUFFER_SIZE, None, None, None, 0, 1)
 
     def init_lib(self):
-        # TOOD: ensure this works on any platform
+        # TODO: ensure this works on any platform
         self.libfastfec = CDLL(os.path.join(SCRIPT_DIR, "../zig-out/lib/libfastfec.dylib"))
 
         # Lay out arg/res types
