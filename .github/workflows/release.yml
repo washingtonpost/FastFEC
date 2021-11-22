@@ -22,12 +22,15 @@ jobs:
       - run: zig build
       - run: zip -j fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
+      - run: zig build -Dlib-only=true -Dtarget=aarch64-linux
+      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
             libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
+            libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
   build-macos:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: macos-latest
