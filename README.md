@@ -50,12 +50,11 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 [Zig](https://ziglang.org/) is used to build and compile the project. Download and install the latest version of Zig (>=9.0.0) by following the instructions on the website (you can verify it's working by typing `zig` in the terminal and seeing help commands).
 
-### Library dependencies
+### Dependencies
 
 The following libraries are used:
 
-- curl
-- pcre
+- curl (needed for the CLI, not the library)
 
 Installing these libraries varies by OS:
 
@@ -64,13 +63,13 @@ Installing these libraries varies by OS:
 Ensure [Homebrew](https://brew.sh/) is installed and run the following `brew` command to install the libraries:
 
 ```sh
-brew install pkg-config curl pcre
+brew install pkg-config curl
 ```
 
 #### Ubuntu
 
 ```sh
-sudo apt install -y libcurl4-openssl-dev libpcre++-dev
+sudo apt install -y libcurl4-openssl-dev
 ```
 
 #### Windows
@@ -79,7 +78,7 @@ Install [vcpkg](https://vcpkg.io) and run the following:
 
 ```sh
 vcpkg integrate install
-vcpkg install pcre curl --triplet x64-windows-static
+vcpkg install curl --triplet x64-windows-static
 ```
 
 ### Building
@@ -93,10 +92,10 @@ zig build
 On Windows, you may have to supply additional arguments to locate vcpkg dependencies and ensure the msvc toolchain is used:
 
 ```sh
-zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
+zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
 ```
 
-The above commands will output a binary at `zig-out/bin/fastfec` and a shared library file in the `zig-out/lib/` directory.
+The above commands will output a binary at `zig-out/bin/fastfec` and a shared library file in the `zig-out/lib/` directory. If you want to only build the library, you can pass `-Dlib-only=true` as a build option following `zig build`.
 
 #### Time benchmarks
 

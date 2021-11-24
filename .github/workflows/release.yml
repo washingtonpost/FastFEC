@@ -18,7 +18,7 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
         shell: bash
-      - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
+      - run: sudo apt install -y libcurl4-openssl-dev
       - run: zig build
       - run: zip -j fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
@@ -46,7 +46,7 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
         shell: bash
-      - run: brew install pkg-config curl pcre
+      - run: brew install pkg-config curl
       - run: zig build
       - run: zip -j fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.dylib
@@ -76,8 +76,8 @@ jobs:
         shell: bash
       - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
       - run: vcpkg integrate install
-      - run: vcpkg install pcre curl --triplet x64-windows-static
-      - run: zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
+      - run: vcpkg install curl --triplet x64-windows-static
+      - run: zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
       - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
       - run: mv zig-out/lib/fastfec.dll libfastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.dll
         shell: bash
