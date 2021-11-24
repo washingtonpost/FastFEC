@@ -24,6 +24,8 @@ jobs:
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
       - run: zig build -Dlib-only=true -Dtarget=aarch64-linux
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
+      - run: zig build -Dlib-only=true -Dtarget=wasm32-freestanding
+      - run: mv zig-out/lib/fastfec.wasm libfastfec-${{ steps.get_version.outputs.VERSION }}.wasm
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -31,6 +33,7 @@ jobs:
             fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
             libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
             libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
+            libfastfec-${{ steps.get_version.outputs.VERSION }}.wasm
   build-macos:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: macos-latest

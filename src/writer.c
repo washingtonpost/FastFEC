@@ -5,7 +5,15 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#ifndef PATH_MAX_LENGTH
 #define PATH_MAX_LENGTH 4096 /* # chars in a path name including nul */
+#endif
+#ifndef EEXIST
+#define EEXIST 17
+#endif
+#ifndef ENAMETOOLONG
+#define ENAMETOOLONG 63
+#endif
 
 const char *NUMBER_FORMAT = "%.2f";
 
