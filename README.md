@@ -55,6 +55,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 The following libraries are used:
 
 - curl (needed for the CLI, not the library)
+- pcre (only needed on Windows)
 
 Installing these libraries varies by OS:
 
@@ -78,7 +79,7 @@ Install [vcpkg](https://vcpkg.io) and run the following:
 
 ```sh
 vcpkg integrate install
-vcpkg install curl --triplet x64-windows-static
+vcpkg install pcre curl --triplet x64-windows-static
 ```
 
 ### Building
@@ -92,7 +93,7 @@ zig build
 On Windows, you may have to supply additional arguments to locate vcpkg dependencies and ensure the msvc toolchain is used:
 
 ```sh
-zig build --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
+zig build --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
 ```
 
 The above commands will output a binary at `zig-out/bin/fastfec` and a shared library file in the `zig-out/lib/` directory. If you want to only build the library, you can pass `-Dlib-only=true` as a build option following `zig build`.

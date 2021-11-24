@@ -25,16 +25,17 @@ pub fn build(b: *std.build.Builder) !void {
 
         // Add curl
         fastfec_cli.linkLibC();
-        fastfec_cli.addIncludeDir(pcreIncludeDir);
-        fastfec_cli.linkLibrary(pcre);
         if (builtin.os.tag == .windows) {
             fastfec_cli.linkSystemLibrary("ws2_32");
             fastfec_cli.linkSystemLibrary("advapi32");
             fastfec_cli.linkSystemLibrary("crypt32");
             fastfec_cli.linkSystemLibrary("libcurl");
             fastfec_cli.linkSystemLibraryName("zlib");
+            fastfec_cli.linkSystemLibrary("pcre");
         } else {
             fastfec_cli.linkSystemLibrary("curl");
+            fastfec_cli.addIncludeDir(pcreIncludeDir);
+            fastfec_cli.linkLibrary(pcre);
         }
 
         fastfec_cli.addCSourceFiles(&libSources, &buildOptions);
@@ -50,9 +51,13 @@ pub fn build(b: *std.build.Builder) !void {
     fastfec_lib.setBuildMode(mode);
     fastfec_lib.install();
     fastfec_lib.linkLibC();
-    fastfec_lib.addIncludeDir(pcreIncludeDir);
-    fastfec_lib.linkLibrary(pcre);
     fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
+    if (builtin.os.tag == .windows) {
+        fastfec_lib.linkSystemLibrary("pcre");
+    } else {
+        fastfec_lib.addIncludeDir(pcreIncludeDir);
+        fastfec_lib.linkLibrary(pcre);
+    }
 
     // Test step
     var prev_test_step: ?*std.build.Step = null;
@@ -63,8 +68,12 @@ pub fn build(b: *std.build.Builder) !void {
         subtest_exe.addCSourceFiles(&testIncludes, &buildOptions);
         subtest_exe.addCSourceFile(test_file, &buildOptions);
         // Link PCRE
-        subtest_exe.addIncludeDir(pcreIncludeDir);
-        subtest_exe.linkLibrary(pcre);
+        if (builtin.os.tag == .windows) {
+            subtest_exe.linkSystemLibrary("pcre");
+        } else {
+            subtest_exe.addIncludeDir(pcreIncludeDir);
+            subtest_exe.linkLibrary(pcre);
+        }
         const subtest_cmd = subtest_exe.run();
         if (prev_test_step != null) {
             subtest_cmd.step.dependOn(prev_test_step.?);
