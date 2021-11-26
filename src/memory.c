@@ -68,7 +68,7 @@ void copyString(STRING *src, STRING *dst)
   strcpy(dst->str, src->str);
 }
 
-PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext(int bufferSize)
+PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext()
 {
   PERSISTENT_MEMORY_CONTEXT *ctx = malloc(sizeof(PERSISTENT_MEMORY_CONTEXT));
   ctx->rawLine = newString(DEFAULT_STRING_SIZE);

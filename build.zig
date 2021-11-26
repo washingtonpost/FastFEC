@@ -1,5 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const CrossTarget = std.zig.CrossTarget;
 
 pub fn build(b: *std.build.Builder) !void {
     b.setPreferredReleaseMode(.ReleaseFast);
@@ -7,17 +8,17 @@ pub fn build(b: *std.build.Builder) !void {
     const mode = b.standardReleaseOptions();
 
     const lib_only: bool = b.option(bool, "lib-only", "Only compile the library") orelse false;
+    const wasm: bool = b.option(bool, "wasm", "Compile the wasm library") orelse false;
 
     // Compile pcre
     const pcre = b.addStaticLibrary("pcre", null);
-    pcre.setBuildMode(.ReleaseFast);
     pcre.setTarget(target);
     pcre.linkLibC();
     pcre.addIncludeDir(pcreIncludeDir);
     pcre.addCSourceFiles(&pcreSources, &buildOptions);
 
     // Main build step
-    if (!lib_only) {
+    if (!lib_only and !wasm) {
         const fastfec_cli = b.addExecutable("fastfec", null);
         fastfec_cli.setTarget(target);
         fastfec_cli.setBuildMode(mode);
@@ -45,18 +46,34 @@ pub fn build(b: *std.build.Builder) !void {
         }, &buildOptions);
     }
 
-    // Library build step
-    const fastfec_lib = b.addSharedLibrary("fastfec", null, .unversioned);
-    fastfec_lib.setTarget(target);
-    fastfec_lib.setBuildMode(mode);
-    fastfec_lib.install();
-    fastfec_lib.linkLibC();
-    fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
-    if (builtin.os.tag == .windows) {
-        fastfec_lib.linkSystemLibrary("pcre");
+    if (!wasm) {
+        // Library build step
+        const fastfec_lib = b.addSharedLibrary("fastfec", null, .unversioned);
+        fastfec_lib.setTarget(target);
+        fastfec_lib.setBuildMode(mode);
+        fastfec_lib.install();
+        fastfec_lib.linkLibC();
+        if (builtin.os.tag == .windows) {
+            fastfec_lib.linkSystemLibrary("pcre");
+        } else {
+            fastfec_lib.addIncludeDir(pcreIncludeDir);
+            fastfec_lib.linkLibrary(pcre);
+        }
+        fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
     } else {
-        fastfec_lib.addIncludeDir(pcreIncludeDir);
-        fastfec_lib.linkLibrary(pcre);
+        // Wasm library build step
+        const fastfec_wasm = b.addSharedLibrary("fastfec", null, .unversioned);
+        const wasm_target = CrossTarget{ .cpu_arch = .wasm32, .os_tag = .wasi };
+        fastfec_wasm.setTarget(wasm_target);
+        // Update pcre target for wasm
+        pcre.setTarget(wasm_target);
+        fastfec_wasm.setBuildMode(mode);
+        fastfec_wasm.install();
+        fastfec_wasm.linkLibC();
+        fastfec_wasm.addIncludeDir(pcreIncludeDir);
+        fastfec_wasm.linkLibrary(pcre);
+        fastfec_wasm.addCSourceFiles(&libSources, &buildOptions);
+        fastfec_wasm.addCSourceFile("src/wasm.c", &buildOptions);
     }
 
     // Test step

@@ -49,7 +49,7 @@ class FastFEC:
         self.libfastfec = CDLL(os.path.join(SCRIPT_DIR, "../zig-out/lib/libfastfec.dylib"))
 
         # Lay out arg/res types
-        self.libfastfec.newPersistentMemoryContext.argtypes = [c_int]
+        self.libfastfec.newPersistentMemoryContext.argtypes = []
         self.libfastfec.newPersistentMemoryContext.restype = c_void_p
 
         self.libfastfec.newFecContext.argtypes = [

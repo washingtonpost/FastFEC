@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
   }
 
   // Initialize persistent memory context
-  PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext(0);
+  PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
   // Initialize FEC context
   FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&url_readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, handle, fecId, outputDirectory, includeFilingId, silent, warn);
 

@@ -24,7 +24,7 @@ jobs:
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
       - run: zig build -Dlib-only=true -Dtarget=aarch64-linux
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
-      - run: zig build -Dlib-only=true -Dtarget=wasm32-freestanding
+      - run: zig build -Dwasm
       - run: mv zig-out/lib/fastfec.wasm libfastfec-${{ steps.get_version.outputs.VERSION }}.wasm
       - name: Release
         uses: softprops/action-gh-release@v1
