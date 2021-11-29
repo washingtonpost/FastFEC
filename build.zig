@@ -9,6 +9,7 @@ pub fn build(b: *std.build.Builder) !void {
 
     const lib_only: bool = b.option(bool, "lib-only", "Only compile the library") orelse false;
     const wasm: bool = b.option(bool, "wasm", "Compile the wasm library") orelse false;
+    const vendored_pcre: bool = b.option(bool, "vendored-pcre", "Use vendored pcre (for non-Windows platforms)") orelse true;
 
     // Compile pcre
     const pcre = b.addStaticLibrary("pcre", null);
@@ -35,8 +36,12 @@ pub fn build(b: *std.build.Builder) !void {
             fastfec_cli.linkSystemLibrary("pcre");
         } else {
             fastfec_cli.linkSystemLibrary("curl");
-            fastfec_cli.addIncludeDir(pcreIncludeDir);
-            fastfec_cli.linkLibrary(pcre);
+            if (vendored_pcre) {
+                fastfec_cli.addIncludeDir(pcreIncludeDir);
+                fastfec_cli.linkLibrary(pcre);
+            } else {
+                fastfec_cli.linkSystemLibrary("libpcre");
+            }
         }
 
         fastfec_cli.addCSourceFiles(&libSources, &buildOptions);
@@ -56,8 +61,12 @@ pub fn build(b: *std.build.Builder) !void {
         if (builtin.os.tag == .windows) {
             fastfec_lib.linkSystemLibrary("pcre");
         } else {
-            fastfec_lib.addIncludeDir(pcreIncludeDir);
-            fastfec_lib.linkLibrary(pcre);
+            if (vendored_pcre) {
+                fastfec_lib.addIncludeDir(pcreIncludeDir);
+                fastfec_lib.linkLibrary(pcre);
+            } else {
+                fastfec_lib.linkSystemLibrary("libpcre");
+            }
         }
         fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
     } else {
@@ -70,8 +79,12 @@ pub fn build(b: *std.build.Builder) !void {
         fastfec_wasm.setBuildMode(mode);
         fastfec_wasm.install();
         fastfec_wasm.linkLibC();
-        fastfec_wasm.addIncludeDir(pcreIncludeDir);
-        fastfec_wasm.linkLibrary(pcre);
+        if (vendored_pcre) {
+            fastfec_wasm.addIncludeDir(pcreIncludeDir);
+            fastfec_wasm.linkLibrary(pcre);
+        } else {
+            fastfec_wasm.linkSystemLibrary("libpcre");
+        }
         fastfec_wasm.addCSourceFiles(&libSources, &buildOptions);
         fastfec_wasm.addCSourceFile("src/wasm.c", &buildOptions);
     }
@@ -88,8 +101,12 @@ pub fn build(b: *std.build.Builder) !void {
         if (builtin.os.tag == .windows) {
             subtest_exe.linkSystemLibrary("pcre");
         } else {
-            subtest_exe.addIncludeDir(pcreIncludeDir);
-            subtest_exe.linkLibrary(pcre);
+            if (vendored_pcre) {
+                subtest_exe.addIncludeDir(pcreIncludeDir);
+                subtest_exe.linkLibrary(pcre);
+            } else {
+                subtest_exe.linkSystemLibrary("libpcre");
+            }
         }
         const subtest_cmd = subtest_exe.run();
         if (prev_test_step != null) {
