@@ -16,6 +16,8 @@ const char *FLAG_SILENT = "--silent";
 const char FLAG_SILENT_SHORT = 's';
 const char *FLAG_WARN = "--warn";
 const char FLAG_WARN_SHORT = 'w';
+const char *FLAG_DISABLE_STDIN = "--no-stdin";
+const char FLAG_DISABLE_STDIN_SHORT = 'x';
 
 void printUsage(char *argv[])
 {
@@ -24,6 +26,7 @@ void printUsage(char *argv[])
   fprintf(stderr, "  %s, -%c: include a filing_id column at the beginning of\n                        every output CSV\n", FLAG_FILING_ID, FLAG_FILING_ID_SHORT);
   fprintf(stderr, "  %s, -%c        : suppress all stdout messages\n\n", FLAG_SILENT, FLAG_SILENT_SHORT);
   fprintf(stderr, "  %s, -%c        : show warning messages\n\n", FLAG_WARN, FLAG_WARN_SHORT);
+  fprintf(stderr, "  %s, -%c        : disable piped input\n\n", FLAG_DISABLE_STDIN, FLAG_DISABLE_STDIN_SHORT);
 }
 
 /* Small main program to retrieve from a url using fgets and fread saving the
@@ -80,6 +83,11 @@ int main(int argc, char *argv[])
       warn = 1;
       flagOffset++;
     }
+    else if (strcmp(argv[1 + flagOffset], FLAG_DISABLE_STDIN) == 0)
+    {
+      piped = 0;
+      flagOffset++;
+    }
     else
     {
       // Try to extract flags in short form
@@ -99,6 +107,11 @@ int main(int argc, char *argv[])
         else if (argv[1 + flagOffset][i] == FLAG_WARN_SHORT)
         {
           warn = 1;
+          matched = 1;
+        }
+        else if (argv[1 + flagOffset][i] == FLAG_DISABLE_STDIN_SHORT)
+        {
+          piped = 0;
           matched = 1;
         }
         else

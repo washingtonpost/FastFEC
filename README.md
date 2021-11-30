@@ -35,6 +35,7 @@ The CLI supports the following flags:
 - `--include-filing-id` / `-i`: if this flag is passed, then the generated output will include a column at the beginning of every generated file called `filing_id` that gets passed the filing ID. This can be useful for bulk uploading CSVs into a database
 - `--silent` / `-s` : suppress all non-error output messages
 - `--warn` / `-w` : show warning messages (e.g. for rows with unexpected numbers of fields or field types that don't match exactly)
+- `--no-stdin` / `-x`: disable receiving piped input from other programs (stdin)
 
 The short form of flags can be combined, e.g. `-is` would include filing IDs and suppress output.
 
