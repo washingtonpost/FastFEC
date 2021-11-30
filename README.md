@@ -55,6 +55,29 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 - This will run FastFEC in silent mode, download and parse filing ID 13360, and store the output in CSV files at `fastfec_output/13360/`.
 
+#### Example via Python wrapper
+
+Log into the AWS Eletions account in your browser via Okta, and then go to https://s3.console.aws.amazon.com/s3/buckets/elex-fec-test?region=us-east-1&prefix=test-architecture/test-filings/&showversions=false, find a filing that is more than 0B of data AND for which there isn't a corresponding output folder here https://s3.console.aws.amazon.com/s3/buckets/elex-fec-test?region=us-east-1&prefix=test-architecture/test-fastfec-output/&showversions=false and then use that filing number in the command below, which you should run from the root of the FastFEC repo:
+`python /python/fastfec.py -f "[FILING NUMBER GOES HERE]" -i "s3://elex-fec-test/test-architecture/test-filings" -o "s3://elex-fec-test/test-architecture/test-fastfec-output"`
+
+After running the command, make sure you get something like this in the console:
+
+```
+➜  fastFEC git:(python-ctypes) ✗ python /python/fastfec.py -f "1375137" -i "s3://elex-fec-test/test-architecture/test-filings" -o "s3://elex-fec-test/test-architecture/test-fastfec-output"
+Filing ID is 1375137
+Input file is s3://elex-fec-test/test-architecture/test-filings/1375137
+Output file is s3://elex-fec-test/test-architecture/test-fastfec-output/1375137
+Parsing (py)
+Parsed; status 1
+1.2386590242385864e-07
+4.439614713191986e-06
+7.579103112220764e-06
+```
+
+This will run FastFEC in silent mode, download and parse filing ID 1375137, and store the output in CSV files at `fastfec_output/1375137/`.
+
+Make sure the output for that filing appears here: https://s3.console.aws.amazon.com/s3/buckets/elex-fec-test?region=us-east-1&prefix=test-architecture/test-fastfec-output/&showversions=false
+
 ## Local development
 
 ### Build system
