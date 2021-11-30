@@ -2,9 +2,19 @@
 
 A C program to stream and parse FEC filings, writing output to CSV. This project is in early stages but works on a wide variety of filings and will benefit from additional rigorous testing.
 
+## Installation
+
+Download the [latest release](https://github.com/WPMedia/FastFEC/releases/latest) and place it on your path, or if you have [Homebrew](https://brew.sh/) and are on Mac or Linux, you can install via:
+
+```
+brew install fastfec
+```
+
+You can also build a binary yourself following the development instructions below.
+
 ## Usage
 
-Once you've downloaded the [latest release](https://github.com/WPMedia/FastFEC/releases/latest) or built a binary (see below), you can run it as follows:
+Once FastFEC has been installed, you can run the program by calling `fastfec` in your terminal:
 
 ```
 Usage: fastfec [flags] <id, file, or url> [output directory=output] [override id]
