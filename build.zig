@@ -8,6 +8,7 @@ pub fn build(b: *std.build.Builder) !void {
     const mode = b.standardReleaseOptions();
 
     const lib_only: bool = b.option(bool, "lib-only", "Only compile the library") orelse false;
+    const skip_lib: bool = b.option(bool, "skip-lib", "Skip compiling the library") orelse false;
     const wasm: bool = b.option(bool, "wasm", "Compile the wasm library") orelse false;
     const vendored_pcre: bool = b.option(bool, "vendored-pcre", "Use vendored pcre (for non-Windows platforms)") orelse true;
 
@@ -51,7 +52,7 @@ pub fn build(b: *std.build.Builder) !void {
         }, &buildOptions);
     }
 
-    if (!wasm) {
+    if (!wasm and !skip_lib) {
         // Library build step
         const fastfec_lib = b.addSharedLibrary("fastfec", null, .unversioned);
         fastfec_lib.setTarget(target);
@@ -69,7 +70,7 @@ pub fn build(b: *std.build.Builder) !void {
             }
         }
         fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
-    } else {
+    } else if (wasm) {
         // Wasm library build step
         const fastfec_wasm = b.addSharedLibrary("fastfec", null, .unversioned);
         const wasm_target = CrossTarget{ .cpu_arch = .wasm32, .os_tag = .wasi };
