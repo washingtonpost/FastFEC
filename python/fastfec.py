@@ -1,43 +1,9 @@
 """
 A Python library to interface with FastFEC.
 
-Import the library helper via:
-
-    from fastfec import FastFEC
-
-Receive an instance of the LibFastFEC class that automatically handles freeing up used memory:
-
-    with FastFEC() as fastfec:
-        ...
-
-Example usage:
-
-    * Parse a filing line by line:
-
-        from fastfec import FastFEC
-
-        with open('12345.fec', 'rb') as f:
-            with FastFEC() as fastfec:
-                for form, line in fastfec.parse(f):
-                    print("GOT", form, line)
-
-    * Parse a filing to output files:
-
-        import os
-        from pathlib import Path
-        from fastfec import FastFEC
-
-        # Custom open method that places files in an output directory,
-        # and creates the directory if it does not exist
-        def open_output_file(filename, *args, **kwargs):
-            filename = os.path.join('custom_python_output', filename)
-            output_file = Path(filename)
-            output_file.parent.mkdir(exist_ok=True, parents=True)
-            return open(filename, *args, **kwargs)
-
-        with open('12345.fec', 'rb') as f:
-            with FastFEC() as fastfec:
-                fastfec.parse_as_files(f, open_output_file)
+This library provides methods to
+  * parse a .fec file line by line, yieling a parsed result
+  * parse a .fec file into parsed output .csv files
 """
 
 import contextlib
@@ -113,6 +79,8 @@ def find_fastfec_lib():
     system_library = find_library("fastfec")
     if system_library is None:
         system_library = find_library("libfastfec")
+    if system_library is None:
+        raise LookupError("Unable to find libfastfec")
     return system_library
 
 
@@ -257,41 +225,7 @@ def provide_line_callback(queue):
 
 
 class LibFastFEC:
-    """Python wrapper for the fastfec library
-
-    Usage:
-
-        Initialize the library:
-
-            fastfec = FastFEC()
-
-        Call a parse method. Options:
-
-        * parse: parse the input file line-by-line
-
-            with open('file.fec', 'rb') as f:
-                for form, line in fastfec.parse(f):
-                    print("Got line:", form, line)
-
-        * parse_as_files: parse the input file into output files
-
-            import os
-            from pathlib import Path
-
-            # Custom open method
-            def open_output_file(filename, *args, **kwargs):
-                filename = os.path.join('custom_output_dir', filename)
-                output_file = Path(filename)
-                output_file.parent.mkdir(exist_ok=True, parents=True)
-                return open(filename, *args, **kwargs)
-
-            with open('file.fec', 'rb') as f:
-                fastfec.parse_as_files(f, open=open_output_file)
-
-        Close the library:
-
-            fastfec.free()
-        """
+    """Python wrapper for the fastfec library"""
 
     def __init__(self):
         self.__init_lib()
@@ -321,11 +255,12 @@ class LibFastFEC:
                 0),
             BUFFER_SIZE, line_callback_fn, 0, None, None, None, 0, 1, 0)
 
-        # Run the parsing in a separate thread
+        # Run the parsing in a separate thread. It's essentially still single-threaded
+        # but this provides a mechanism to yield the results of a callback function
+        # from the caller. See https://stackoverflow.com/a/9968886 for more context
         def task():
             self.libfastfec.parseFec(fec_context)
             queue.put(done_processing)
-
         Thread(target=task, args=()).start()
 
         # Yield processed lines
@@ -339,13 +274,37 @@ class LibFastFEC:
         # Free FEC context
         self.libfastfec.freeFecContext(fec_context)
 
-    def parse_as_files(self, file_handle, open_function=open):
+    def parse_as_files(self, file_handle, output_directory):
+        """Parses the input file into output files in the output directory
+
+        Parent directories will be automatically created as needed.
+
+        Arguments:
+            file_handle -- An input stream for reading a .fec file
+            output_directory -- A directory in which to place output parsed .csv files
+
+        Returns:
+            A status code. 1 indicates a successful parse, 0 an unsuccessful one."""
+
+        # Custom open method
+        def open_output_file(filename, *args, **kwargs):
+            filename = os.path.join(output_directory, filename)
+            output_file = pathlib.Path(filename)
+            output_file.parent.mkdir(exist_ok=True, parents=True)
+            return open(filename, *args, **kwargs)  # pylint: disable=consider-using-with
+
+        return self.parse_as_files_custom(file_handle, open_output_file)
+
+    def parse_as_files_custom(self, file_handle, open_function):
         """Parses the input file into output files
 
         Arguments:
             file_handle -- An input stream for reading a .fec file
-            open_function -- An optional function to open an output file for writing. This can be
-                             set to customize the output stream for each parsed .csv file"""
+            open_function -- A function to open an output file for writing. This can be set to
+                             customize the output stream for each parsed .csv file
+
+        Returns:
+            A status code. 1 indicates a successful parse, 0 an unsuccessful one."""
         # Set callbacks
         buffer_read_fn = provide_read_callback(file_handle)
         write_callback_fn, free_file_descriptors = provide_write_callback(
@@ -398,7 +357,8 @@ def FastFEC():  # pylint: disable=invalid-name
     Usage:
 
         with FastFEC() as fastfec:
-            # Running fastfec parse methods
+            # Run fastfec parse methods here
+            #
             # The memory is freed afterwards, so no need to ever call
             # fastfec.free()
             ...
