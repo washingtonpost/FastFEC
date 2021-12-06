@@ -119,7 +119,11 @@ def line_result(headers, items, types):
 
     # Build up result object
     result = {}
-    missing_header = 1  # Used to handle missing header #'s
+    # Used to handle missing header #'s
+    # (we don't expect this to happen, but FEC filings sometimes have
+    # more values than headers in a particular row. If this happens,
+    # we can still capture the data with a `__missing_header_#` key)
+    missing_header = 1
     for i in range(max(len(headers), len(items))):
         if i < len(headers):
             header = headers[i]
@@ -299,7 +303,7 @@ class LibFastFEC:
         line_cache = LineCache()
 
         def line_callback(filename, line, types):
-            # Somehow yield in parent function
+            # Yield in parent function by utilizing the passed in queue
             if filename == line_cache.last_filename:
                 queue.put((filename.decode('utf8'), line_result(line_cache.last_headers,
                                                                 csv_parse(line.decode('utf8')), types)))
