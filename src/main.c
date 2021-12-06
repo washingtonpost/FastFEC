@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
   // Initialize persistent memory context
   PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
   // Initialize FEC context
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&url_readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, handle, fecId, outputDirectory, includeFilingId, silent, warn);
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&url_readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, NULL, 1, handle, fecId, outputDirectory, includeFilingId, silent, warn);
 
   // Parse the fec file
   int fecParseResult = parseFec(fec);

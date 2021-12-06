@@ -9,3 +9,6 @@ env/
 zig-cache
 zig-out
 env/
+build/
+dist/
+MANIFEST

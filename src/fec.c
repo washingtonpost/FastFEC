@@ -14,13 +14,13 @@ char *FEC = "FEC";
 char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
 int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
+FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
   ctx->persistentMemory = persistentMemory;
   ctx->buffer = newBuffer(inputBufferSize, bufferRead);
   ctx->file = file;
-  ctx->writeContext = newWriteContext(outputDirectory, filingId, outputBufferSize, customWriteFunction);
+  ctx->writeContext = newWriteContext(outputDirectory, filingId, writeToFile, outputBufferSize, customWriteFunction, customLineFunction);
   ctx->filingId = filingId;
   ctx->version = 0;
   ctx->versionLength = 0;
@@ -558,6 +558,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
           startHeaderRow(ctx, filename, csvExtension);
           writeString(ctx->writeContext, filename, csvExtension, ctx->headers);
           writeNewline(ctx->writeContext, filename, csvExtension);
+          endLine(ctx->writeContext, ctx->types);
         }
 
         // Write form type
@@ -639,12 +640,14 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       }
       // 2 indicates we won't grab the line again
       writeNewline(ctx->writeContext, filename, csvExtension);
+      endLine(ctx->writeContext, ctx->types);
       return 2;
     }
   }
 
   // Parsing successful
   writeNewline(ctx->writeContext, filename, csvExtension);
+  endLine(ctx->writeContext, ctx->types);
   return 1;
 }
 
@@ -765,9 +768,11 @@ void parseHeader(FEC_CONTEXT *ctx)
       }
     }
     writeNewline(ctx->writeContext, HEADER, csvExtension);
+    endLine(ctx->writeContext, ctx->types);
     startDataRow(ctx, HEADER, csvExtension); // output the filing id if we have it
     writeString(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
     writeNewline(ctx->writeContext, HEADER, csvExtension); // end with newline
+    endLine(ctx->writeContext, ctx->types);
   }
   else
   {

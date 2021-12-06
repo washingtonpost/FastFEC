@@ -6,6 +6,8 @@ static const char csvExtension[] = ".csv";
 
 typedef void (*CustomWriteFunction)(char *filename, char *extension, char *contents, int numBytes);
 
+typedef void (*CustomLineFunction)(char *filename, char *line, char *types);
+
 struct buffer_file
 {
   char *buffer;
@@ -30,7 +32,12 @@ struct write_context
   int local;
   STRING *localBuffer;
   int localBufferPosition;
+  int useCustomLine;
+  STRING *customLineBuffer;
+  int customLineBufferPosition;
+  int writeToFile;
   CustomWriteFunction customWriteFunction;
+  CustomLineFunction customLineFunction;
 };
 typedef struct write_context WRITE_CONTEXT;
 
@@ -38,9 +45,13 @@ BUFFER_FILE *newBufferFile(int bufferSize);
 
 void freeBufferFile(BUFFER_FILE *bufferFile);
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int bufferSize, CustomWriteFunction customWriteFunction);
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction);
 
 void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line);
+
+void initializeCustomWriteContext(WRITE_CONTEXT *writeContext);
+
+void endLine(WRITE_CONTEXT *writeContext, char *types);
 
 // Return 0 if file is cached, or 1 if it is newly created for writing
 int getFile(WRITE_CONTEXT *context, char *filename, const char *extension);
