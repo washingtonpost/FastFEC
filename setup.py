@@ -1,5 +1,8 @@
-from distutils.core import setup, Extension
+"""
+Setup script to install the FastFEC python package
+"""
 
+from distutils.core import Extension, setup
 
 fastfec_library = Extension(
     "fastfec_lib",

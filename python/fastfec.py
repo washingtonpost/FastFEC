@@ -41,17 +41,18 @@ Example usage:
 """
 
 import contextlib
-from ctypes import c_char, c_int, c_void_p, c_size_t, c_char_p, memmove, POINTER, CFUNCTYPE, CDLL
-from ctypes.util import find_library
-from dataclasses import dataclass
-import os
-import pathlib
-from glob import glob
-import logging
 import csv
 import datetime
-from threading import Thread
+import logging
+import os
+import pathlib
+from ctypes import (CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_int,
+                    c_size_t, c_void_p, memmove)
+from ctypes.util import find_library
+from dataclasses import dataclass
+from glob import glob
 from queue import Queue
+from threading import Thread
 
 # Directories used for locating the shared library
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
