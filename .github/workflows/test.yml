@@ -23,5 +23,5 @@ jobs:
           pip install pylint isort
       - name: Run pylint and isort
         run: |
-          pylint **/*.py
           isort --check-only **/*.py
+          pylint **/*.py
