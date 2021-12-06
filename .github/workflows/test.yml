@@ -17,9 +17,11 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.9
-      - name: Install pylint
+      - name: Install pylint and isort
         run: |
           python -m pip install --upgrade pip
-          pip install pylint
-      - name: Run pylint
-        run: pylint **/*.py
+          pip install pylint isort
+      - name: Run pylint and isort
+        run: |
+          pylint **/*.py
+          isort --check-only **/*.py
