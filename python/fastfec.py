@@ -100,7 +100,7 @@ class LineCache:
     last_headers = None  # The last headers used
 
 
-def csv_parse(line):
+def parse_csv_line(line):
     """Parses a string holding a CSV line into a Python list"""
     return list(csv.reader([line]))[0]
 
@@ -200,7 +200,8 @@ def provide_line_callback(queue):
         if filename == line_cache.last_filename:
             queue.put(
                 (filename.decode('utf8'),
-                    line_result(line_cache.last_headers, csv_parse(line.decode('utf8')), types)))
+                    line_result(line_cache.last_headers,
+                                parse_csv_line(line.decode('utf8')), types)))
             queue.join()
         else:
             # Grab the headers from the cache if possible
@@ -210,7 +211,7 @@ def provide_line_callback(queue):
                 # The headers have not yet encountered. They
                 # are always in the first line, so this line
                 # will contain them.
-                line_cache.headers[filename] = csv_parse(
+                line_cache.headers[filename] = parse_csv_line(
                     line.decode('utf8'))
                 headers = line_cache.headers[filename]
                 first_line = True
@@ -218,7 +219,7 @@ def provide_line_callback(queue):
             line_cache.last_headers = headers
             if not first_line:
                 # Format the result and return it (if not a header)
-                queue.put((filename.decode('utf8'), line_result(headers, csv_parse(
+                queue.put((filename.decode('utf8'), line_result(headers, parse_csv_line(
                     line.decode('utf8')), types)))
                 queue.join()
     return line_callback
