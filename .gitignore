@@ -9,3 +9,8 @@ env/
 zig-cache
 zig-out
 env/
+
+# Python byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class

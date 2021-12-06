@@ -1,0 +1,8 @@
+pylint
+tox
+autopep8
+pytest
+pytest-cov
+pytest-xdist
+pytest-mock
+pylint
