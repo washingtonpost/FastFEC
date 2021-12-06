@@ -44,7 +44,7 @@ setup(
     name='fastfec',
     version='0.0.4',
     description='An extremely fast FEC filing parser written in C',
-    author='The Wapo Newsroom Engineering Team',
+    author='Washington Post News Engineering',
     license='MIT',
     url='https://github.com/washingtonpost/FastFEC',
     packages=['fastfec'],

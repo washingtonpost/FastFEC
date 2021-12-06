@@ -23,7 +23,7 @@ with FastFEC() as fastfec:
 
 ### `fastfec.parse(file_handle)`
 
-Parses a .fec filing in `file_handle` line by line, returning an iterator that can view parsed results.
+Parses a .fec filing in `file_handle` line by line, returning a generator that can view parsed results.
 
 Each iteration yields the tuple `(form_type, line)`, where `form_type` is a string describing the form type of the parsed line and `line` is a Python dictionary mapping header keys to parsed line values. The type of each value in the `line` dictionary can be a string, float, datetime, or None.
 

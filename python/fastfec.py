@@ -7,222 +7,15 @@ This library provides methods to
 """
 
 import contextlib
-import csv
-import datetime
-import logging
 import os
 import pathlib
-from ctypes import (CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_int,
-                    c_size_t, c_void_p, memmove)
-from ctypes.util import find_library
-from dataclasses import dataclass
-from glob import glob
+from ctypes import CDLL, c_char_p, c_int, c_void_p
 from queue import Queue
 from threading import Thread
 
-# Directories used for locating the shared library
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-PARENT_DIR = pathlib.Path(SCRIPT_DIR).parent.absolute()
-
-# Buffer constants
-BUFFER_SIZE = 1024 * 1024
-
-# Callback function ctypes
-BUFFER_READ = CFUNCTYPE(c_size_t, POINTER(c_char), c_int, c_void_p)
-CUSTOM_WRITE = CFUNCTYPE(None, c_char_p, c_char_p,
-                         c_char_p, c_int)
-CUSTOM_LINE = CFUNCTYPE(None, c_char_p, c_char_p, c_char_p)
-
-
-def make_read_buffer(file_input):
-    """Creates a read buffer callback given an open input stream
-
-    Arguments:
-        file_input -- An input stream for the callback to consume
-
-    Returns:
-        A callback function that C code can wrap to consume the input stream"""
-
-    def read_buffer(buffer, want, _):
-        contents_raw = file_input.read(want)
-        received = len(contents_raw)
-        contents = c_char_p(contents_raw)
-        memmove(buffer, contents, received)
-        return received
-    return read_buffer
-
-
-def find_fastfec_lib():
-    """Scans for the fastfec shared library and returns the path of the found library
-
-    This method tries searching in the parent directory first but has a fallback to
-    the local zig build directory for development work.
-    """
-    prefixes = ["fastfec", "libfastfec"]
-    suffixes = ["so", "dylib", "dll"]
-    directories = [
-        PARENT_DIR,
-        os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
-    ]
-
-    # Search in parent directory
-    for root_dir in directories:
-        for prefix in prefixes:
-            for suffix in suffixes:
-                files = glob(os.path.join(root_dir, f"{prefix}*.{suffix}"))
-                if files:
-                    if len(files) > 1:
-                        logging.warning("Expected just one library file")
-                    return os.path.join(PARENT_DIR, files[0])
-
-    # Search in system library directory as last-ditch attempt
-    system_library = find_library("fastfec")
-    if system_library is None:
-        system_library = find_library("libfastfec")
-    if system_library is None:
-        raise LookupError("Unable to find libfastfec")
-    return system_library
-
-
-@dataclass
-class WriteCache:
-    """Class to store cache information for the custom write function"""
-    file_descriptors = {}  # Store all open file descriptors
-    last_filename = None  # The last opened filename
-    last_fd = None  # The last file descriptor
-
-
-@dataclass
-class LineCache:
-    """Class to store cache information for the custom line function"""
-    headers = {}  # Store all headers given filename
-    last_filename = None  # The last opened filename
-    last_headers = None  # The last headers used
-
-
-def parse_csv_line(line):
-    """Parses a string holding a CSV line into a Python list"""
-    return list(csv.reader([line]))[0]
-
-
-def array_get(array, idx, fallback):
-    """Retrieves the item at position idx in array, or fallback if out of bounds"""
-    try:
-        return array[idx]
-    except IndexError:
-        return fallback
-
-
-def line_result(headers, items, types):
-    """Formats the results of the line callback according to specified headers and types"""
-    def convert_item(i):
-        item = array_get(items, i, None)
-        if item is None:
-            return None
-        if types is None:
-            return item
-        fec_type = array_get(types, i, ord(b's'))
-        if fec_type == ord(b's'):
-            return item
-        if fec_type == ord(b'd'):
-            # Convert standard YYYY-MM-DD date to Pythonic date object
-            return datetime.date(*(int(component) for component in item.split('-')))
-        if fec_type == ord(b'f'):
-            return float(item)
-
-        logging.warning("Unrecognized type: %s", chr(fec_type))
-        return item
-
-    # Build up result object
-    result = {}
-    # Used to handle missing header #'s
-    # (we don't expect this to happen, but FEC filings sometimes have
-    # more values than headers in a particular row. If this happens,
-    # we can still capture the data with a `__missing_header_#` key)
-    missing_header = 1
-    for i in range(max(len(headers), len(items))):
-        if i < len(headers):
-            header = headers[i]
-        else:
-            header = f'__missing_header_{missing_header}'
-            missing_header += 1
-        item = convert_item(i)
-        result[header] = item
-
-    return result
-
-
-def provide_read_callback(file_handle):
-    """Provides a C callback to read from a given file stream"""
-    return BUFFER_READ(
-        make_read_buffer(file_handle))
-
-
-def provide_write_callback(open_function):
-    """Provides a C callback to write to file given a function to open file streams"""
-    # Initialize parsing cache
-    write_cache = WriteCache()
-
-    def write_callback(filename, extension, contents, num_bytes):
-        if filename == write_cache.last_filename:
-            # Same filename as last call? Reuse file handle
-            write_cache.last_fd.write(contents[:num_bytes])
-        else:
-            path = filename + extension
-            # Grab the file descriptor from the cache if possible
-            file_descriptor = write_cache.file_descriptors.get(path)
-            if not file_descriptor:
-                # Open the file
-                write_cache.file_descriptors[path] = open_function(
-                    path.decode("utf8"), mode='wb')
-                file_descriptor = write_cache.file_descriptors[path]
-            write_cache.last_filename = filename
-            write_cache.last_fd = file_descriptor
-            # Write to the file descriptor
-            file_descriptor.write(contents[:num_bytes])
-
-    def free_file_descriptors():
-        for path in write_cache.file_descriptors:
-            write_cache.file_descriptors[path].close()
-
-    return [CUSTOM_WRITE(write_callback), free_file_descriptors]
-
-
-def provide_line_callback(queue):
-    """Provides a C callback to return parsed lines given a queue to handle threading
-
-    The threading allows the parent caller to yield result lines as they are returned"""
-    # Initialize parsing cache
-    line_cache = LineCache()
-
-    def line_callback(filename, line, types):
-        # Yield in parent function by utilizing the passed in queue
-        if filename == line_cache.last_filename:
-            queue.put(
-                (filename.decode('utf8'),
-                    line_result(line_cache.last_headers,
-                                parse_csv_line(line.decode('utf8')), types)))
-            queue.join()
-        else:
-            # Grab the headers from the cache if possible
-            headers = line_cache.headers.get(filename)
-            first_line = False
-            if not headers:
-                # The headers have not yet encountered. They
-                # are always in the first line, so this line
-                # will contain them.
-                line_cache.headers[filename] = parse_csv_line(
-                    line.decode('utf8'))
-                headers = line_cache.headers[filename]
-                first_line = True
-            line_cache.last_filename = filename
-            line_cache.last_headers = headers
-            if not first_line:
-                # Format the result and return it (if not a header)
-                queue.put((filename.decode('utf8'), line_result(headers, parse_csv_line(
-                    line.decode('utf8')), types)))
-                queue.join()
-    return line_callback
+from .utils import (BUFFER_READ, BUFFER_SIZE, CUSTOM_LINE, CUSTOM_WRITE,
+                    find_fastfec_lib, provide_line_callback,
+                    provide_read_callback, provide_write_callback)
 
 
 class LibFastFEC:
@@ -241,11 +34,11 @@ class LibFastFEC:
             file_handle -- An input stream for reading a .fec file
 
         Returns:
-            An iterator that receives the form name and a dictionary
+            A generator that receives the form name and a dictionary
             object describing each line in the file"""
         # Set up a queue to be able to yield output
         queue = Queue()
-        done_processing = object()
+        done_processing = object()  # A custom object to signal the end of processing
 
         # Provide a custom line callback
         buffer_read_fn = provide_read_callback(file_handle)
@@ -261,13 +54,14 @@ class LibFastFEC:
         # from the caller. See https://stackoverflow.com/a/9968886 for more context
         def task():
             self.libfastfec.parseFec(fec_context)
-            queue.put(done_processing)
+            queue.put(done_processing)  # Signal processing is over
         Thread(target=task, args=()).start()
 
         # Yield processed lines
         while True:
             line = queue.get()
             if line == done_processing:
+                # End the task when done processing
                 break
             yield line
             queue.task_done()
