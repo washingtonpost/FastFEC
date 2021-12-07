@@ -56,7 +56,7 @@ with open('12345.fec', 'rb') as f:
 
 Parses a .fec filing in `file_handle`, writing output parsed .csv files using the custom provided `open_output_file` method (which should emulate the system `open` method).
 
-This is an advanced method intended to give more control over writing to unconventional output streams, e.g. streaming output directory to s3 using the `smart-open` package.
+This is an advanced method intended to give more control over writing to unconventional output streams, e.g. streaming output directory to s3 using the `smart-open` package or changing the output directory structure more broadly.
 
 This method returns a status code: 1 indicates a successful parse, 0 indicates an unsuccessful one.
 
@@ -77,5 +77,5 @@ def open_output_file(filename, *args, **kwargs):
 
 with open('12345.fec', 'rb') as f:
     with FastFEC() as fastfec:
-        fastfec.parse_as_files(f, open_output_file)
+        fastfec.parse_as_files_custom(f, open_output_file)
 ```
