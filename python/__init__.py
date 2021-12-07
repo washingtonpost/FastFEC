@@ -1,1 +1,1 @@
-from fastfec import FastFEC, LibFastFEC
+from .fastfec import FastFEC, LibFastFEC
