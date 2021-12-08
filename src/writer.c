@@ -99,11 +99,12 @@ void freeBufferFile(BUFFER_FILE *bufferFile)
   free(bufferFile);
 }
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int bufferSize, CustomWriteFunction customWriteFunction)
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction)
 {
   WRITE_CONTEXT *context = (WRITE_CONTEXT *)malloc(sizeof(WRITE_CONTEXT));
   context->outputDirectory = outputDirectory;
   context->filingId = filingId;
+  context->writeToFile = writeToFile;
   context->bufferSize = bufferSize;
   context->filenames = NULL;
   context->extensions = NULL;
@@ -115,7 +116,11 @@ WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int buffer
   context->lastfile = NULL;
   context->local = 0;
   context->localBuffer = NULL;
+  context->useCustomLine = customLineFunction != NULL;
+  context->customLineBuffer = context->useCustomLine ? newString(DEFAULT_STRING_SIZE) : NULL;
   context->customWriteFunction = customWriteFunction;
+  context->customLineFunction = customLineFunction;
+  initializeCustomWriteContext(context);
   return context;
 }
 
@@ -126,6 +131,31 @@ void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line)
   writeContext->localBufferPosition = 0;
   // Ensure the line is empty
   writeContext->localBuffer->str[0] = 0;
+}
+
+void initializeCustomWriteContext(WRITE_CONTEXT *writeContext)
+{
+  if (!writeContext->useCustomLine)
+  {
+    return;
+  }
+
+  writeContext->customLineBufferPosition = 0;
+  // Ensure the line is empty
+  writeContext->customLineBuffer->str[0] = 0;
+}
+
+void endLine(WRITE_CONTEXT *writeContext, char *types)
+{
+  if (!writeContext->useCustomLine)
+  {
+    return;
+  }
+
+  writeContext->customLineFunction(writeContext->lastname, writeContext->customLineBuffer->str, types);
+  writeContext->customLineBufferPosition = 0;
+  // Ensure the line is empty
+  writeContext->customLineBuffer->str[0] = 0;
 }
 
 int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
@@ -143,7 +173,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
     context->filenames = (char **)malloc(sizeof(char *));
     context->extensions = (char **)malloc(sizeof(char *));
     context->bufferFiles = (BUFFER_FILE **)malloc(sizeof(BUFFER_FILE *));
-    if (context->customWriteFunction == NULL)
+    if (context->writeToFile)
     {
       context->files = (FILE **)malloc(sizeof(FILE *));
     }
@@ -158,7 +188,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
         // Write to existing file
         context->lastname = context->filenames[i];
         context->lastBufferFile = context->bufferFiles[i];
-        if (context->customWriteFunction == NULL)
+        if (context->writeToFile)
         {
           context->lastfile = context->files[i];
         }
@@ -170,7 +200,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
     context->filenames = (char **)realloc(context->filenames, sizeof(char *) * (context->nfiles + 1));
     context->extensions = (char **)realloc(context->extensions, sizeof(char *) * (context->nfiles + 1));
     context->bufferFiles = (BUFFER_FILE **)realloc(context->bufferFiles, sizeof(BUFFER_FILE *) * (context->nfiles + 1));
-    if (context->customWriteFunction == NULL)
+    if (context->writeToFile)
     {
       context->files = (FILE **)realloc(context->files, sizeof(FILE *) * (context->nfiles + 1));
     }
@@ -183,7 +213,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   strcpy(context->extensions[context->nfiles], extension);
   // Derive the full path to the file
 
-  if (context->customWriteFunction == NULL)
+  if (context->writeToFile)
   {
     // Ensure the directory exists (will silently fail if it does)
     char *fullpath = (char *)malloc(sizeof(char) * (strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1));
@@ -206,7 +236,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   }
   context->lastname = context->filenames[context->nfiles];
   context->lastBufferFile = context->bufferFiles[context->nfiles];
-  if (context->customWriteFunction == NULL)
+  if (context->writeToFile)
   {
     context->lastfile = context->files[context->nfiles];
   }
@@ -225,7 +255,7 @@ void bufferFlush(WRITE_CONTEXT *context, char *filename, const char *extension, 
     // Write to a custom write function
     context->customWriteFunction(filename, (char *)extension, bufferFile->buffer, bufferFile->bufferPos);
   }
-  else
+  if (context->writeToFile)
   {
     fwrite(bufferFile->buffer, 1, bufferFile->bufferPos, file);
   }
@@ -265,6 +295,20 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
     // Write to file
     getFile(context, filename, extension);
     bufferWrite(context, filename, extension, context->lastfile, context->lastBufferFile, string, nchars);
+
+    if (context->useCustomLine)
+    {
+      // Write to custom line function
+      int newPosition = context->customLineBufferPosition + nchars;
+      if (newPosition + 1 > context->customLineBuffer->n)
+      {
+        growStringTo(context->customLineBuffer, newPosition + 1);
+      }
+      memcpy(context->customLineBuffer->str + context->customLineBufferPosition, string, nchars);
+      context->customLineBufferPosition = newPosition;
+      // Add null terminator
+      context->customLineBuffer->str[context->customLineBufferPosition] = 0;
+    }
   }
   else
   {
@@ -288,7 +332,7 @@ void writeString(WRITE_CONTEXT *context, char *filename, const char *extension, 
 
 void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, char c)
 {
-  if (context->local == 0)
+  if (context->local == 0 && (!context->useCustomLine))
   {
     // Write to file
     getFile(context, filename, extension);
@@ -315,13 +359,13 @@ void freeWriteContext(WRITE_CONTEXT *context)
   for (int i = 0; i < context->nfiles; i++)
   {
     // Flush out any remaining file contents
-    bufferFlush(context, context->filenames[i], context->extensions[i], context->customWriteFunction == NULL ? context->files[i] : NULL, context->bufferFiles[i]);
+    bufferFlush(context, context->filenames[i], context->extensions[i], context->writeToFile ? context->files[i] : NULL, context->bufferFiles[i]);
 
     // Free memory structures for each file
     free(context->filenames[i]);
     free(context->extensions[i]);
     freeBufferFile(context->bufferFiles[i]);
-    if (context->customWriteFunction == NULL)
+    if (context->writeToFile)
     {
       fclose(context->files[i]);
     }
@@ -341,6 +385,10 @@ void freeWriteContext(WRITE_CONTEXT *context)
   if (context->extensions != NULL)
   {
     free(context->extensions);
+  }
+  if (context->customLineBuffer != NULL)
+  {
+    freeString(context->customLineBuffer);
   }
   free(context);
 }
