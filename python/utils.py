@@ -79,7 +79,6 @@ def as_bytes(text):
     """Converts text to bytes, or leaves intact if already bytes or none"""
     if isinstance(text, str):
         # Convert to bytes if in string form
-        print("ENCODING", text.encode('utf8'))
         return text.encode('utf8')
     return text
 
@@ -173,7 +172,6 @@ def provide_write_callback(open_function):
     """Provides a C callback to write to file given a function to open file streams"""
     # Initialize parsing cache
     write_cache = WriteCache()
-    print('WC', write_cache.file_descriptors)
 
     def write_callback(filename, extension, contents, num_bytes):
         if filename == write_cache.last_filename:
@@ -216,7 +214,6 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
 
         if form_type == line_cache.last_form_type:
             # Same form type as past form — return immediately
-            print(line)
             yield_result((form_type.decode('utf8'),
                           line_result(line_cache.last_headers,
                                       parse_csv_line(line.decode('utf8')), types,

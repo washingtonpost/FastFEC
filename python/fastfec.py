@@ -124,7 +124,6 @@ class LibFastFEC:
         filing_id_included = include_filing_id is not None
 
         # Initialize fastfec context
-        print("INC", include_filing_id)
         fec_context = self.libfastfec.newFecContext(
             self.persistent_memory_context, buffer_read_fn, BUFFER_SIZE,
             write_callback_fn, BUFFER_SIZE, CUSTOM_LINE(0), 0, None, include_filing_id, None,
