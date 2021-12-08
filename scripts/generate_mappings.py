@@ -65,9 +65,9 @@ type_enum = {
 
 
 if __name__ == '__main__':
-    with open(os.path.join(script_dir, 'mappings.json'), 'r') as f:
+    with open(os.path.join(script_dir, 'mappings.json'), 'r', encoding='utf8') as f:
         mappings_json = json.load(f)
-    with open(os.path.join(script_dir, 'types.json'), 'r') as f:
+    with open(os.path.join(script_dir, 'types.json'), 'r', encoding='utf8') as f:
         types_json = json.load(f)
 
     headers = []
@@ -112,5 +112,5 @@ if __name__ == '__main__':
         'd is YYYYMMDD date and f is float. If nothing matches, the type is\n' +
         'assumed to be s (string).', type_table)
 
-    with open(os.path.join(script_dir, '../src/mappings_generated.h'), 'w') as f:
+    with open(os.path.join(script_dir, '../src/mappings_generated.h'), 'w', encoding='utf8') as f:
         f.write(result)

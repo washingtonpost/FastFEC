@@ -13,7 +13,6 @@ import os
 import pathlib
 from ctypes import (CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_size_t,
                     c_void_p, memmove)
-from dataclasses import dataclass
 from glob import glob
 
 logger = logging.getLogger("fastfec")
@@ -76,20 +75,29 @@ def find_fastfec_lib():
     raise LookupError("Unable to find libfastfec")
 
 
-@dataclass
-class WriteCache:
+def as_bytes(text):
+    """Converts text to bytes, or leaves intact if already bytes or none"""
+    if isinstance(text, str):
+        # Convert to bytes if in string form
+        print("ENCODING", text.encode('utf8'))
+        return text.encode('utf8')
+    return text
+
+
+class WriteCache:  # pylint: disable=too-few-public-methods
     """Class to store cache information for the custom write function"""
-    file_descriptors = {}  # Store all open file descriptors
-    last_filename = None  # The last opened filename
-    last_fd = None  # The last file descriptor
+    def __init__(self):
+        self.file_descriptors = {}  # Store all open file descriptors
+        self.last_filename = None  # The last opened filename
+        self.last_fd = None  # The last file descriptor
 
 
-@dataclass
-class LineCache:
+class LineCache:  # pylint: disable=too-few-public-methods
     """Class to store cache information for the custom line function"""
-    headers = {}  # Store all headers given form type
-    last_form_type = None  # The last opened form type
-    last_headers = None  # The last headers used
+    def __init__(self):
+        self.headers = {}  # Store all headers given form type
+        self.last_form_type = None  # The last opened form type
+        self.last_headers = None  # The last headers used
 
 
 def parse_csv_line(line):
@@ -115,7 +123,7 @@ def parse_date(date):
     return datetime.date(year, month, day)
 
 
-def line_result(headers, items, types):
+def line_result(headers, items, types, filing_id_included, should_parse_date):
     """Formats the results of the line callback according to specified headers and types"""
     def convert_item(i):
         item = array_get(items, i, None)
@@ -123,12 +131,13 @@ def line_result(headers, items, types):
             return None
         if types is None:
             return item
-        fec_type = array_get(types, i, ord(b's'))
+        # Offset types if filing id is included to account for string type at beginning
+        fec_type = array_get(types, i - (1 if filing_id_included else 0), ord(b's'))
         if fec_type == ord(b's'):
             return item
         if fec_type == ord(b'd'):
-            # Convert standard YYYY-MM-DD date to Pythonic date object
-            return parse_date(item)
+            # Convert standard YYYY-MM-DD date to Pythonic date object if the date is to be parsed
+            return parse_date(item) if should_parse_date else item
         if fec_type == ord(b'f'):
             return float(item)
 
@@ -164,6 +173,7 @@ def provide_write_callback(open_function):
     """Provides a C callback to write to file given a function to open file streams"""
     # Initialize parsing cache
     write_cache = WriteCache()
+    print('WC', write_cache.file_descriptors)
 
     def write_callback(filename, extension, contents, num_bytes):
         if filename == write_cache.last_filename:
@@ -184,13 +194,13 @@ def provide_write_callback(open_function):
             file_descriptor.write(contents[:num_bytes])
 
     def free_file_descriptors():
-        for path in write_cache.file_descriptors:
-            write_cache.file_descriptors[path].close()
+        for file_descriptor in write_cache.file_descriptors.values():
+            file_descriptor.close()
 
     return [CUSTOM_WRITE(write_callback), free_file_descriptors]
 
 
-def provide_line_callback(queue):
+def provide_line_callback(queue, filing_id_included, should_parse_date):
     """Provides a C callback to return parsed lines given a queue to handle threading
 
     The threading allows the parent caller to yield result lines as they are returned.
@@ -206,9 +216,11 @@ def provide_line_callback(queue):
 
         if form_type == line_cache.last_form_type:
             # Same form type as past form — return immediately
+            print(line)
             yield_result((form_type.decode('utf8'),
                           line_result(line_cache.last_headers,
-                                      parse_csv_line(line.decode('utf8')), types)))
+                                      parse_csv_line(line.decode('utf8')), types,
+                                      filing_id_included, should_parse_date)))
         else:
             # Grab the headers from the cache if possible
             headers = line_cache.headers.get(form_type)
@@ -226,5 +238,5 @@ def provide_line_callback(queue):
             if not first_line:
                 # Format the result and return it (if not a header)
                 yield_result((form_type.decode('utf8'), line_result(headers, parse_csv_line(
-                    line.decode('utf8')), types)))
+                    line.decode('utf8')), types, filing_id_included, should_parse_date)))
     return line_callback

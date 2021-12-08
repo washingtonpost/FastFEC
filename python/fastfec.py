@@ -14,7 +14,7 @@ from queue import Queue
 from threading import Thread
 
 from .utils import (BUFFER_READ, BUFFER_SIZE, CUSTOM_LINE, CUSTOM_WRITE,
-                    find_fastfec_lib, provide_line_callback,
+                    as_bytes, find_fastfec_lib, provide_line_callback,
                     provide_read_callback, provide_write_callback)
 
 
@@ -27,11 +27,16 @@ class LibFastFEC:
         # Initialize
         self.persistent_memory_context = self.libfastfec.newPersistentMemoryContext()
 
-    def parse(self, file_handle):
+    def parse(self, file_handle, include_filing_id=None, should_parse_date=True):
         """Parses the input file line-by-line
 
         Arguments:
             file_handle -- An input stream for reading a .fec file
+            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
+                                 with the specified filing id (defaults to None)
+            should_parse_date -- If true, yields parsed datetime.date objects for date fields; if
+                                 false, yields strings for date fields. This would mainly be set to
+                                 false for performance reasons (defaults to true)
 
         Returns:
             A generator that receives the form name and a dictionary
@@ -40,14 +45,18 @@ class LibFastFEC:
         queue = Queue()
         done_processing = object()  # A custom object to signal the end of processing
 
+        # Prepare the filing id to include, if specified
+        include_filing_id = as_bytes(include_filing_id)
+        filing_id_included = include_filing_id is not None
+
         # Provide a custom line callback
         buffer_read_fn = provide_read_callback(file_handle)
         line_callback_fn = CUSTOM_LINE(
-            provide_line_callback(queue))
+            provide_line_callback(queue, filing_id_included, should_parse_date))
         fec_context = self.libfastfec.newFecContext(
-            self.persistent_memory_context, buffer_read_fn, BUFFER_SIZE, CUSTOM_WRITE(
-                0),
-            BUFFER_SIZE, line_callback_fn, 0, None, None, None, 0, 1, 0)
+            self.persistent_memory_context, buffer_read_fn, BUFFER_SIZE, CUSTOM_WRITE(0),
+            BUFFER_SIZE, line_callback_fn, 0, None, include_filing_id, None,
+            filing_id_included, 1, 0)
 
         # Run the parsing in a separate thread. It's essentially still single-threaded
         # but this provides a mechanism to yield the results of a callback function
@@ -69,7 +78,7 @@ class LibFastFEC:
         # Free FEC context
         self.libfastfec.freeFecContext(fec_context)
 
-    def parse_as_files(self, file_handle, output_directory):
+    def parse_as_files(self, file_handle, output_directory, include_filing_id=None):
         """Parses the input file into output files in the output directory
 
         Parent directories will be automatically created as needed.
@@ -77,6 +86,8 @@ class LibFastFEC:
         Arguments:
             file_handle -- An input stream for reading a .fec file
             output_directory -- A directory in which to place output parsed .csv files
+            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
+                                 with the specified filing id (defaults to None)
 
         Returns:
             A status code. 1 indicates a successful parse, 0 an unsuccessful one."""
@@ -86,17 +97,20 @@ class LibFastFEC:
             filename = os.path.join(output_directory, filename)
             output_file = pathlib.Path(filename)
             output_file.parent.mkdir(exist_ok=True, parents=True)
-            return open(filename, *args, **kwargs)  # pylint: disable=consider-using-with
+            return open(filename, *args, **kwargs)  # pylint: disable=consider-using-with,unspecified-encoding
 
-        return self.parse_as_files_custom(file_handle, open_output_file)
+        return self.parse_as_files_custom(
+            file_handle, open_output_file, include_filing_id=include_filing_id)
 
-    def parse_as_files_custom(self, file_handle, open_function):
+    def parse_as_files_custom(self, file_handle, open_function, include_filing_id=None):
         """Parses the input file into output files
 
         Arguments:
             file_handle -- An input stream for reading a .fec file
             open_function -- A function to open an output file for writing. This can be set to
                              customize the output stream for each parsed .csv file
+            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
+                                 with the specified filing id (defaults to None)
 
         Returns:
             A status code. 1 indicates a successful parse, 0 an unsuccessful one."""
@@ -105,10 +119,16 @@ class LibFastFEC:
         write_callback_fn, free_file_descriptors = provide_write_callback(
             open_function)
 
+        # Prepare the filing id to include, if specified
+        include_filing_id = as_bytes(include_filing_id)
+        filing_id_included = include_filing_id is not None
+
         # Initialize fastfec context
+        print("INC", include_filing_id)
         fec_context = self.libfastfec.newFecContext(
             self.persistent_memory_context, buffer_read_fn, BUFFER_SIZE,
-            write_callback_fn, BUFFER_SIZE, CUSTOM_LINE(0), 0, None, None, None, 0, 1, 0)
+            write_callback_fn, BUFFER_SIZE, CUSTOM_LINE(0), 0, None, include_filing_id, None,
+            filing_id_included, 1, 0)
 
         # Parse
         result = self.libfastfec.parseFec(fec_context)
