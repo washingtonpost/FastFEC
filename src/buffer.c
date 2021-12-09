@@ -64,7 +64,7 @@ int readLine(BUFFER *buffer, STRING *string, void *data)
     char c = eof ? '\0' : buffer->buffer[buffer->bufferPos];
     buffer->bufferPos++;
     // Set the string
-    while (n > string->n + 2)
+    while (n + 2 > string->n)
     {
       // Ensure the string is large enough
       growString(string);
