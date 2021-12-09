@@ -11,4 +11,5 @@ jobs:
         with:
           version: 0.9.0-dev.1675+3d528161c
       - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
+      - run: zig build
       - run: zig build test

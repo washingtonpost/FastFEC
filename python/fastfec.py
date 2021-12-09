@@ -1,59 +1,159 @@
-import sys, getopt
-from ctypes import *
+"""
+A Python library to interface with FastFEC.
+
+This library provides methods to
+  * parse a .fec file line by line, yieling a parsed result
+  * parse a .fec file into parsed output .csv files
+"""
+
+import contextlib
 import os
 import pathlib
-from smart_open import open
+from ctypes import CDLL, c_char_p, c_int, c_void_p
+from queue import Queue
+from threading import Thread
 
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-
-BUFFER_SIZE = 1024 * 1024
-TRANSFER_BUFFER_SIZE = 128 * 1024
-BUFFER_READ = CFUNCTYPE(c_size_t, POINTER(c_char), c_int, c_void_p)
-CUSTOM_WRITE = CFUNCTYPE(None, c_char_p, c_char_p,
-                         c_char_p, c_int)
-
-def make_read_buffer(f):
-    def read_buffer(buffer, want, _):
-        contents_raw = f.read(want)
-        received = len(contents_raw)
-        contents = c_char_p(contents_raw)
-        memmove(buffer, contents, received)
-        return received
-    return read_buffer
+from .utils import (BUFFER_READ, BUFFER_SIZE, CUSTOM_LINE, CUSTOM_WRITE,
+                    as_bytes, find_fastfec_lib, provide_line_callback,
+                    provide_read_callback, provide_write_callback)
 
 
-class FastFEC:
-    def __init__(self, file_handle, output_directory, use_compression=False, make_dirs=False):
-        self.init_lib()
-        self.file_handle = file_handle
-        self.use_compression=use_compression
-        self.make_dirs = make_dirs
+class LibFastFEC:
+    """Python wrapper for the fastfec library"""
+
+    def __init__(self):
+        self.__init_lib()
 
         # Initialize
-        self.file_descriptors = {}
-        self.last_filename = None
-        self.last_fd = None
-        self.bytes_written = 0
-        self.buffer_read_fn = BUFFER_READ(
-            make_read_buffer(file_handle))
-        write_callback = self.provide_write_callback(output_directory)
-        self.write_callback_fn = CUSTOM_WRITE(write_callback)
+        self.persistent_memory_context = self.libfastfec.newPersistentMemoryContext()
 
-        self.persistent_memory_context = self.libfastfec.newPersistentMemoryContext(
-            1)
-        self.fec_context = self.libfastfec.newFecContext(
-            self.persistent_memory_context, self.buffer_read_fn, BUFFER_SIZE, self.write_callback_fn, BUFFER_SIZE, None, None, None, 0, 1)
+    def parse(self, file_handle, include_filing_id=None, should_parse_date=True):
+        """Parses the input file line-by-line
 
-    def init_lib(self):
-        # TODO: ensure this works on any platform
-        self.libfastfec = CDLL(os.path.join(SCRIPT_DIR, "../zig-out/lib/libfastfec.dylib"))
+        Arguments:
+            file_handle -- An input stream for reading a .fec file
+            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
+                                 with the specified filing id (defaults to None)
+            should_parse_date -- If true, yields parsed datetime.date objects for date fields; if
+                                 false, yields strings for date fields. This would mainly be set to
+                                 false for performance reasons (defaults to true)
 
-        # Lay out arg/res types
+        Returns:
+            A generator that receives the form name and a dictionary
+            object describing each line in the file"""
+        # Set up a queue to be able to yield output
+        queue = Queue()
+        done_processing = object()  # A custom object to signal the end of processing
+
+        # Prepare the filing id to include, if specified
+        include_filing_id = as_bytes(include_filing_id)
+        filing_id_included = include_filing_id is not None
+
+        # Provide a custom line callback
+        buffer_read_fn = provide_read_callback(file_handle)
+        line_callback_fn = CUSTOM_LINE(
+            provide_line_callback(queue, filing_id_included, should_parse_date))
+        fec_context = self.libfastfec.newFecContext(
+            self.persistent_memory_context, buffer_read_fn, BUFFER_SIZE, CUSTOM_WRITE(0),
+            BUFFER_SIZE, line_callback_fn, 0, None, include_filing_id, None,
+            filing_id_included, 1, 0)
+
+        # Run the parsing in a separate thread. It's essentially still single-threaded
+        # but this provides a mechanism to yield the results of a callback function
+        # from the caller. See https://stackoverflow.com/a/9968886 for more context
+        def task():
+            self.libfastfec.parseFec(fec_context)
+            queue.put(done_processing)  # Signal processing is over
+        Thread(target=task, args=()).start()
+
+        # Yield processed lines
+        while True:
+            line = queue.get()
+            if line == done_processing:
+                # End the task when done processing
+                break
+            yield line
+            queue.task_done()
+
+        # Free FEC context
+        self.libfastfec.freeFecContext(fec_context)
+
+    def parse_as_files(self, file_handle, output_directory, include_filing_id=None):
+        """Parses the input file into output files in the output directory
+
+        Parent directories will be automatically created as needed.
+
+        Arguments:
+            file_handle -- An input stream for reading a .fec file
+            output_directory -- A directory in which to place output parsed .csv files
+            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
+                                 with the specified filing id (defaults to None)
+
+        Returns:
+            A status code. 1 indicates a successful parse, 0 an unsuccessful one."""
+
+        # Custom open method
+        def open_output_file(filename, *args, **kwargs):
+            filename = os.path.join(output_directory, filename)
+            output_file = pathlib.Path(filename)
+            output_file.parent.mkdir(exist_ok=True, parents=True)
+            return open(filename, *args, **kwargs)  # pylint: disable=consider-using-with,unspecified-encoding
+
+        return self.parse_as_files_custom(
+            file_handle, open_output_file, include_filing_id=include_filing_id)
+
+    def parse_as_files_custom(self, file_handle, open_function, include_filing_id=None):
+        """Parses the input file into output files
+
+        Arguments:
+            file_handle -- An input stream for reading a .fec file
+            open_function -- A function to open an output file for writing. This can be set to
+                             customize the output stream for each parsed .csv file
+            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
+                                 with the specified filing id (defaults to None)
+
+        Returns:
+            A status code. 1 indicates a successful parse, 0 an unsuccessful one."""
+        # Set callbacks
+        buffer_read_fn = provide_read_callback(file_handle)
+        write_callback_fn, free_file_descriptors = provide_write_callback(
+            open_function)
+
+        # Prepare the filing id to include, if specified
+        include_filing_id = as_bytes(include_filing_id)
+        filing_id_included = include_filing_id is not None
+
+        # Initialize fastfec context
+        fec_context = self.libfastfec.newFecContext(
+            self.persistent_memory_context, buffer_read_fn, BUFFER_SIZE,
+            write_callback_fn, BUFFER_SIZE, CUSTOM_LINE(0), 0, None, include_filing_id, None,
+            filing_id_included, 1, 0)
+
+        # Parse
+        result = self.libfastfec.parseFec(fec_context)
+
+        # Free memory and file descriptors
+        self.libfastfec.freeFecContext(fec_context)
+        free_file_descriptors()
+
+        return result
+
+    def free(self):
+        """Frees all the allocated memory from the fastfec library"""
+        self.libfastfec.freePersistentMemoryContext(
+            self.persistent_memory_context)
+
+    def __init_lib(self):
+        # Find the fastfec library
+        self.libfastfec = CDLL(find_fastfec_lib())
+
+        # Lay out arg/res types for C callbacks
         self.libfastfec.newPersistentMemoryContext.argtypes = []
         self.libfastfec.newPersistentMemoryContext.restype = c_void_p
 
         self.libfastfec.newFecContext.argtypes = [
-            c_void_p, BUFFER_READ, c_int, CUSTOM_WRITE, c_int, c_void_p, c_char_p, c_char_p, c_int, c_int]
+            c_void_p, BUFFER_READ, c_int, CUSTOM_WRITE, c_int, CUSTOM_LINE, c_int, c_void_p,
+            c_char_p, c_char_p, c_int, c_int, c_int]
         self.libfastfec.newFecContext.restype = c_void_p
 
         self.libfastfec.parseFec.argtypes = [c_void_p]
@@ -63,79 +163,20 @@ class FastFEC:
 
         self.libfastfec.freePersistentMemoryContext.argtypes = [c_void_p]
 
-    def provide_write_callback(self, output_directory):
-        def write_callback(filename, extension, contents, numBytes):
-            if filename == self.last_filename:
-                self.last_fd.write(contents[:numBytes])
-            else:
-                path = filename + extension
-                fd = self.file_descriptors.get(path)
-                if not fd:
-                    if self.make_dirs:
-                        pathlib.Path(output_directory).mkdir(parents=True, exist_ok=True)
-                    self.file_descriptors[path] = open(
-                        os.path.join(output_directory, f'{path.decode("utf8")}{".gz" if self.use_compression else ""}'), mode='wb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
-                    fd = self.file_descriptors[path]
-                self.last_filename = filename
-                self.last_fd = fd
-                fd.write(contents[:numBytes])
-            self.bytes_written += numBytes
-            print(self.bytes_written / 1024.0 / 1024.0 / 1024.0)
-        return write_callback
 
-    def parse(self):
-        print("Parsing (py)")
-        print(f'Parsed; status {self.libfastfec.parseFec(self.fec_context)}')
+@ contextlib.contextmanager
+def FastFEC():  # pylint: disable=invalid-name
+    """A convenience method to run fastfec and free memory afterwards
 
-    def free(self):
-        self.libfastfec.freeFecContext(self.fec_context)
-        self.libfastfec.freePersistentMemoryContext(
-            self.persistent_memory_context)
-        
-        # Close open file descriptors
-        for path in self.file_descriptors:
-            self.file_descriptors[path].close()
+    Usage:
 
-def main(argv):
-   filing_id = ''
-   input_directory = ''
-   output_directory = ''
-   use_compression = False
-   make_dirs = False
-   try:
-      opts, _ = getopt.getopt(argv, 'hf:i:o:z:m:')
-   except getopt.GetoptError:
-      print('fastfec.py -f <filing_id> -i <input_directory> -o <output_directory> -z <use_compression=false> -m <make_dirs=false>')
-      sys.exit(2)
-   for opt, arg in opts:
-      if opt == '-h':
-         print('fastfec.py -f <filing_id> -i <input_directory> -o <output_directory> -z <use_compression=false> -m <make_dirs=false>')
-         sys.exit()
-      elif opt in ("-f", "--filing_id"):
-         filing_id = arg
-      elif opt in ("-i", "--input_directory"):
-         input_directory = arg
-      elif opt in ("-o", "--output_directory"):
-         output_directory = arg
-      elif opt in ("-z", "--use_compression"):
-         use_compression = arg.lower() != 'false'
-      elif opt in ("-m", "--make_dirs"):
-         make_dirs = arg.lower() != 'false'
-   input_file = f'{os.path.join(input_directory, filing_id)}.fec'
-   output_directory = os.path.join(output_directory, filing_id)
-   print(f'Filing ID is {filing_id}')
-   print(f'Input file is {input_file}')
-   print(f'Output directory is {output_directory}')
-   print(f'Make parent directories: {make_dirs}')
-
-   f = open(
-     input_file, mode='rb', transport_params=dict(buffer_size=TRANSFER_BUFFER_SIZE))
-   fast_fec = FastFEC(f, output_directory, use_compression=use_compression, make_dirs=make_dirs)
-   fast_fec.parse()
-
-   # Free memory
-   fast_fec.free()
-   f.close()
-
-if __name__ == "__main__":
-   main(sys.argv[1:])
+        with FastFEC() as fastfec:
+            # Run fastfec parse methods here
+            #
+            # The memory is freed afterwards, so no need to ever call
+            # fastfec.free()
+            ...
+    """
+    instance = LibFastFEC()
+    yield instance
+    instance.free()
