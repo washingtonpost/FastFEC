@@ -3,6 +3,7 @@ Setup script to install the FastFEC python package
 """
 
 from distutils.core import Extension, setup
+from setuptools import find_packages
 
 fastfec_library = Extension(
     "fastfec_lib",
@@ -47,7 +48,8 @@ setup(
     author='Washington Post News Engineering',
     license='MIT',
     url='https://github.com/washingtonpost/FastFEC',
-    packages=['fastfec'],
-    package_dir={'fastfec': 'python'},
+    packages=find_packages('python/src/'),
+    package_dir={'fastfec': 'python/src/fastfec/'},
+    py_modules=['fastfec'],
     ext_modules=[fastfec_library],
 )
