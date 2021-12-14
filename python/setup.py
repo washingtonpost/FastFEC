@@ -3,7 +3,8 @@ Setup script to install the FastFEC python package
 """
 
 from distutils.core import Extension
-from setuptools import find_packages, setup
+
+from setuptools import setup
 
 fastfec_library = Extension(
     "fastfec_lib",
@@ -37,18 +38,18 @@ fastfec_library = Extension(
         "../deps/pcre/pcre_version.c",
         "../deps/pcre/pcre_xclass.c",
     ],
-    include_dirs=['../deps/pcre'],
+    include_dirs=["../deps/pcre"],
     runtime_library_dirs=["../deps/pcre"],
 )
 
 setup(
-    name='FastFEC',
-    version='0.0.4',
-    description='An extremely fast FEC filing parser written in C',
-    author='Washington Post News Engineering',
-    license='MIT',
-    url='https://github.com/washingtonpost/FastFEC',
-    packages=['fastfec'],
-    package_dir={'': 'src'},
+    name="FastFEC",
+    version="0.0.4",
+    description="An extremely fast FEC filing parser written in C",
+    author="Washington Post News Engineering",
+    license="MIT",
+    url="https://github.com/washingtonpost/FastFEC",
+    packages=["fastfec"],
+    package_dir={"": "src"},
     ext_modules=[fastfec_library],
 )

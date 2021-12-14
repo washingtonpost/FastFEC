@@ -1,3 +1,3 @@
 """Provides the fastfec package"""
 
-from .client import FastFEC, LibFastFEC
+from .client import FastFEC, LibFastFEC  # noqa: F401
