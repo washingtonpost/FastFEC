@@ -1,6 +1,7 @@
 .*
 !.gitignore
 !.github
+!.pre-commit-config.yaml
 bin
 *.test
 *.fec
