@@ -8,4 +8,4 @@ pytest-mock
 pylint
 black
 isort
--e ../
+-e .
