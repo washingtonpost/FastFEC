@@ -90,9 +90,9 @@ with open('12345.fec', 'rb') as f:
 
 ### Setup
 
-1. If you have not done so already follow the instructions in the root readme
+1. If you have not done so already follow the instructions in the root readme to build FastFEC locally.
 
-1. Set you working directory to the python subdirectory `cd python`.
+1. Set your working directory to the python subdirectory `cd python`.
 
 2. Install the dev requirements in a virtual environment with `pip install -r requirements-dev.txt`.
 
