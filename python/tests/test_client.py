@@ -17,7 +17,7 @@ def test_filing_1550126_line_callback(filing_1550126):
 
             # Test the summary data parse
             summary_form, summary_data = parsed[1]
-            assert len(summary_data.keys()) == 93
+            assert len(summary_data) == 93
             assert summary_form == "F3A"
             assert summary_data["filer_committee_id_number"] == "C00772335"
             assert summary_data["committee_name"] == "Jeffrey Buongiorno for US Congress"
@@ -28,7 +28,7 @@ def test_filing_1550126_line_callback(filing_1550126):
 
             # Test the contribution data parse
             contribution_form, contribution_data = parsed[2]
-            assert len(contribution_data.keys()) == 45
+            assert len(contribution_data) == 45
             assert contribution_form == "SA11AI"
             assert contribution_data["filer_committee_id_number"] == "C00772335"
             assert contribution_data["transaction_id"] == "SA11AI.4265"
@@ -41,7 +41,7 @@ def test_filing_1550126_line_callback(filing_1550126):
 
             # Test the disbursement data parse
             disbursement_form, disbursement_data = parsed[8]
-            assert len(disbursement_data.keys()) == 44
+            assert len(disbursement_data) == 44
             assert disbursement_form == "SB17"
             assert disbursement_data["expenditure_date"] == datetime.date(2021, 9, 10)
             assert disbursement_data["expenditure_amount"] == 2000.0
