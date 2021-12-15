@@ -137,14 +137,19 @@ def array_get(array, idx, fallback):
 
 def parse_date(date):
     """
-    Parses a YYYY-MM-DD date into a Python datetime, or returns None on fail
+    Parses a YYYY-MM-DD date into a Python datetime, or returns the input string
+    on failure.
     """
     if date is None or len(date) != 10:
-        return None
-    year = int(date[0:4])
-    month = int(date[5:7])
-    day = int(date[8:10])
-    return datetime.date(year, month, day)
+        return date
+
+    try:
+        year = int(date[0:4])
+        month = int(date[5:7])
+        day = int(date[8:10])
+        return datetime.date(year, month, day)
+    except (ValueError, OverflowError, TypeError):
+        return date
 
 
 def line_result(headers, items, types, filing_id_included, should_parse_date):
@@ -166,7 +171,10 @@ def line_result(headers, items, types, filing_id_included, should_parse_date):
             # Convert standard YYYY-MM-DD date to Pythonic date object if the date is to be parsed
             return parse_date(item) if should_parse_date else item
         if fec_type == ord(b"f"):
-            return float(item)
+            try:
+                return float(item)
+            except ValueError:
+                return item
 
         logger.warning("Unrecognized type: %s", chr(fec_type))
         return item

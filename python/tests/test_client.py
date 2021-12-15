@@ -22,7 +22,7 @@ def test_filing_1550126_line_callback(filing_1550126):
             assert (
                 summary_data["committee_name"] == "Jeffrey Buongiorno for US Congress"
             )
-            assert summary_data["election_date"] is None
+            assert summary_data["election_date"] == ""
             assert summary_data["coverage_from_date"] == datetime.date(2021, 7, 1)
             assert summary_data["col_a_total_contributions_no_loans"] == 4239.0
             assert summary_data["col_b_total_disbursements"] == 9229.09
@@ -40,11 +40,11 @@ def test_filing_1550126_line_callback(filing_1550126):
             assert contribution_data["contribution_amount"] == 1000.0
             assert contribution_data["reference_code"] is None
 
-            # # Test the disbursement data parse
-            # # Not working right now...
-            # disbursement_form, disbursement_data = parsed[8]
-            # assert len(disbursement_data.keys()) == 20
-            # assert disbursement_form == "SB17"
+            # Test the disbursement data parse
+            disbursement_form, disbursement_data = parsed[8]
+            print("disbursement_data", disbursement_data)
+            assert len(disbursement_data.keys()) == 44
+            assert disbursement_form == "SB17"
 
 
 def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):

@@ -41,5 +41,5 @@ def test_parse_date():
     """
     assert parse_date("2020-10-01") == datetime.date(2020, 10, 1)
     assert parse_date(None) is None
-    assert parse_date("Foo") is None
-    assert parse_date("hello_a_long_string") is None
+    assert parse_date("Foo") == "Foo"
+    assert parse_date("hello_a_long_string") == "hello_a_long_string"
