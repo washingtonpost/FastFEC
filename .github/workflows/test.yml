@@ -1,5 +1,5 @@
 name: Test
-on: [push, pull_request]
+on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -21,10 +21,11 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          pip install -r python/requirements-dev.txt
       - name: Run zig build
         run: zig build
       - name: Run zig test
         run: zig build test
       - name: Run Python Tests
+        working-directory: python
         run: tox -e py
