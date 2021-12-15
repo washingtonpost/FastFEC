@@ -5,7 +5,6 @@ pytest
 pytest-cov
 pytest-xdist
 pytest-mock
-pylint
 black
 isort
 -e .
