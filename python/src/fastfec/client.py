@@ -124,9 +124,7 @@ class LibFastFEC:
             filename = os.path.join(output_directory, filename)
             output_file = pathlib.Path(filename)
             output_file.parent.mkdir(exist_ok=True, parents=True)
-            return open(
-                filename, *args, **kwargs
-            )  # pylint: disable=consider-using-with,unspecified-encoding
+            return open(filename, *args, **kwargs)  # pylint: disable=consider-using-with,unspecified-encoding,bad-option-value
 
         return self.parse_as_files_custom(
             file_handle, open_output_file, include_filing_id=include_filing_id
@@ -148,7 +146,8 @@ class LibFastFEC:
         """
         # Set callbacks
         buffer_read_fn = provide_read_callback(file_handle)
-        write_callback_fn, free_file_descriptors = provide_write_callback(open_function)
+        write_callback_fn, free_file_descriptors = provide_write_callback(
+            open_function)
 
         # Prepare the filing id to include, if specified
         include_filing_id = as_bytes(include_filing_id)
@@ -184,7 +183,8 @@ class LibFastFEC:
         """
         Frees all the allocated memory from the fastfec library
         """
-        self.libfastfec.freePersistentMemoryContext(self.persistent_memory_context)
+        self.libfastfec.freePersistentMemoryContext(
+            self.persistent_memory_context)
 
     def __init_lib(self):
         # Find the fastfec library

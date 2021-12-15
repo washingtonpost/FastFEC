@@ -10,9 +10,10 @@ def test_filing_1550126_line_callback(filing_1550126):
     to the package's ability to parse summary, contribution and
     disbursement rows.
     """
-    with open(filing_1550126, "rb") as f:
+    with open(filing_1550126, "rb") as filing:
         with FastFEC() as fastfec:
-            parsed = list(fastfec.parse(f))
+            parsed = list(fastfec.parse(filing))
+            assert len(parsed) == 25
 
             # Test the summary data parse
             summary_form, summary_data = parsed[1]
@@ -42,9 +43,14 @@ def test_filing_1550126_line_callback(filing_1550126):
 
             # Test the disbursement data parse
             disbursement_form, disbursement_data = parsed[8]
-            print("disbursement_data", disbursement_data)
             assert len(disbursement_data.keys()) == 44
             assert disbursement_form == "SB17"
+            assert disbursement_data["expenditure_date"] == datetime.date(2021, 9, 10)
+            assert disbursement_data["expenditure_amount"] == 2000.0
+            assert disbursement_data["entity_type"] == "IND"
+            assert disbursement_data["payee_state"] == "FL"
+            assert disbursement_data["election_code"] == "P2022"
+            assert disbursement_data["payee_street_1"] == "1111 Lake Ter"
 
 
 def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
@@ -52,9 +58,9 @@ def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
     Test that the FastFEC `parse_as_files` method outputs the correct files
     and that they are the correct length.
     """
-    with open(filing_1550548, "rb") as f:
+    with open(filing_1550548, "rb") as filing:
         with FastFEC() as fastfec:
-            fastfec.parse_as_files(f, tmpdir)
+            fastfec.parse_as_files(filing, tmpdir)
 
     assert (
         os.listdir(tmpdir).sort()
@@ -67,17 +73,17 @@ def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
         ].sort()
     )
 
-    with open(os.path.join(tmpdir, "header.csv")) as f:
-        assert len(f.readlines()) == 2
+    with open(os.path.join(tmpdir, "header.csv")) as filing:
+        assert len(filing.readlines()) == 2
 
-    with open(os.path.join(tmpdir, "F3XA.csv")) as f:
-        assert len(f.readlines()) == 2
+    with open(os.path.join(tmpdir, "F3XA.csv")) as filing:
+        assert len(filing.readlines()) == 2
 
-    with open(os.path.join(tmpdir, "SA11AI.csv")) as f:
-        assert len(f.readlines()) == 77
+    with open(os.path.join(tmpdir, "SA11AI.csv")) as filing:
+        assert len(filing.readlines()) == 77
 
-    with open(os.path.join(tmpdir, "SB21B.csv")) as f:
-        assert len(f.readlines()) == 8
+    with open(os.path.join(tmpdir, "SB21B.csv")) as filing:
+        assert len(filing.readlines()) == 8
 
-    with open(os.path.join(tmpdir, "SB23.csv")) as f:
-        assert len(f.readlines()) == 36
+    with open(os.path.join(tmpdir, "SB23.csv")) as filing:
+        assert len(filing.readlines()) == 36

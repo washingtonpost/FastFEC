@@ -164,11 +164,13 @@ def line_result(headers, items, types, filing_id_included, should_parse_date):
         if types is None:
             return item
         # Offset types if filing id is included to account for string type at beginning
-        fec_type = array_get(types, i - (1 if filing_id_included else 0), ord(b"s"))
+        fec_type = array_get(
+            types, i - (1 if filing_id_included else 0), ord(b"s"))
         if fec_type == ord(b"s"):
             return item
         if fec_type == ord(b"d"):
-            # Convert standard YYYY-MM-DD date to Pythonic date object if the date is to be parsed
+            # Convert standard YYYY-MM-DD date to Pythonic date object if the date is
+            # to be parsed
             return parse_date(item) if should_parse_date else item
         if fec_type == ord(b"f"):
             try:
@@ -276,7 +278,8 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
                 # The headers have not yet encountered. They
                 # are always in the first line, so this line
                 # will contain them.
-                line_cache.headers[form_type] = parse_csv_line(line.decode("utf8"))
+                line_cache.headers[form_type] = parse_csv_line(
+                    line.decode("utf8"))
                 headers = line_cache.headers[form_type]
                 first_line = True
             line_cache.last_form_type = form_type
