@@ -18,15 +18,15 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Run zig build
+        run: zig build
+      - name: Run zig test
+        run: zig build test
       - name: Install Python dependencies
         working-directory: python
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
-      - name: Run zig build
-        run: zig build
-      - name: Run zig test
-        run: zig build test
       - name: Run Python Tests
         working-directory: python
         run: tox -e py
