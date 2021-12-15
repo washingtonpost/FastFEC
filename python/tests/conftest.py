@@ -1,51 +1,48 @@
-# import json
-# import logging
-# import os
-# import sys
-# from unittest import mock
+import os
 
-# import pytest
+import pytest
 
-# _TEST_FOLDER = os.path.dirname(__file__)
-# FIXTURE_DIR = os.path.join(_TEST_FOLDER, "fixtures")
+_TEST_FOLDER = os.path.dirname(__file__)
+FIXTURE_DIR = os.path.join(_TEST_FOLDER, "fixtures")
 
 
-# @pytest.fixture(scope="session", autouse=True)
-# def tests_setup():
-#     """
-#     Set environment variables before the first test
-#     """
-#     temp_env_vars = {
-#         "DJANGO_API_ROOT": "https://dummy_api_route",
-#         "DJANGO_API_AUTH_TOKEN": "dummy_api_auth_token",
-#     }
-#     os.environ.update(temp_env_vars)
+@pytest.fixture(scope="session")
+def get_fixture():
+    """
+    Fetch locally stored fixture files.
+    """
+
+    def _get_fixture(filename, load=False):
+        filepath = os.path.join(FIXTURE_DIR, filename)
+        if load:
+            with open(filepath) as fileobj:
+                return fileobj.read()
+        else:
+            return filepath
+
+    return _get_fixture
 
 
-# @pytest.fixture(autouse=True, scope="session")
-# def setup_logging():
-#     """
-#     Set up the logger.
-#     """
-#     app_logger = logging.getLogger("document_processing")
-#     handler = logging.StreamHandler(sys.stdout)
-#     handler.setLevel(logging.DEBUG)
-#     handler.setFormatter(
-#         logging.Formatter(fmt="%(asctime)s %(levelname)s %(name)s %(message)s")
-#     )
-#     app_logger.addHandler(handler)
+# @pytest.fixture
+# def filing_13360(get_fixture):
+#     return get_fixture("13360.fec")
 
 
-# @pytest.fixture(scope="session")
-# def get_fixture():
-#     """
-#     Fetch locally stored fixture data.
-#     """
+# @pytest.fixture
+# def filing_1527862(get_fixture):
+#     return get_fixture("1527862.fec")
 
-#     def _get_fixture(filename, load=False):
-#         with open(os.path.join(FIXTURE_DIR, filename)) as fileobj:
-#             if load:
-#                 return json.load(fileobj)
-#             return fileobj
 
-#     return _get_fixture
+# @pytest.fixture
+# def filing_1544132(get_fixture):
+#     return get_fixture("1544132.fec")
+
+
+@pytest.fixture
+def filing_1550126(get_fixture):
+    return get_fixture("1550126.fec")
+
+
+@pytest.fixture
+def filing_1550548(get_fixture):
+    return get_fixture("1550548.fec")
