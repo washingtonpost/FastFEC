@@ -11,16 +11,7 @@ import datetime
 import logging
 import os
 import pathlib
-from ctypes import (
-    CFUNCTYPE,
-    POINTER,
-    c_char,
-    c_char_p,
-    c_int,
-    c_size_t,
-    c_void_p,
-    memmove,
-)
+from ctypes import CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_size_t, c_void_p, memmove
 from glob import glob
 
 logger = logging.getLogger("fastfec")
@@ -223,9 +214,7 @@ def provide_write_callback(open_function):
             file_descriptor = write_cache.file_descriptors.get(path)
             if not file_descriptor:
                 # Open the file
-                write_cache.file_descriptors[path] = open_function(
-                    path.decode("utf8"), mode="wb"
-                )
+                write_cache.file_descriptors[path] = open_function(path.decode("utf8"), mode="wb")
                 file_descriptor = write_cache.file_descriptors[path]
             write_cache.last_filename = filename
             write_cache.last_fd = file_descriptor

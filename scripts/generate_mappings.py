@@ -73,9 +73,7 @@ if __name__ == "__main__":
     headers = []
     for form_type in mappings_json:
         for version in mappings_json[form_type]:
-            headers.append(
-                [version, form_type, list_to_csv(mappings_json[form_type][version])]
-            )
+            headers.append([version, form_type, list_to_csv(mappings_json[form_type][version])])
     header_table = generate_c_array("headers", 3, headers)
 
     types = []
@@ -88,9 +86,7 @@ if __name__ == "__main__":
                     raise ValueError("Expect to get a type")
                 if type_value == "date":
                     if type_mapping.get("format") != "%Y%m%d":
-                        raise ValueError(
-                            f'Unexpected date format: {type_mapping.get("format")}'
-                        )
+                        raise ValueError(f'Unexpected date format: {type_mapping.get("format")}')
                 elif type_value != "float":
                     raise ValueError(f"Unexpected type: {type_value}")
 
@@ -119,7 +115,5 @@ if __name__ == "__main__":
         type_table,
     )
 
-    with open(
-        os.path.join(script_dir, "../src/mappings_generated.h"), "w", encoding="utf8"
-    ) as f:
+    with open(os.path.join(script_dir, "../src/mappings_generated.h"), "w", encoding="utf8") as f:
         f.write(result)
