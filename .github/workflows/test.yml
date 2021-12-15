@@ -28,6 +28,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
       - name: Run Python Tests
-        run: |
-          cd python
-          tox -e py
+        working-directory: python
+        run: tox -e py
