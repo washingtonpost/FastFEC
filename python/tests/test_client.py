@@ -56,13 +56,16 @@ def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
         with FastFEC() as fastfec:
             fastfec.parse_as_files(f, tmpdir)
 
-    assert os.listdir(tmpdir) == [
-        "SB23.csv",
-        "header.csv",
-        "SB21B.csv",
-        "F3XA.csv",
-        "SA11AI.csv",
-    ]
+    assert (
+        os.listdir(tmpdir).sort()
+        == [
+            "SB23.csv",
+            "header.csv",
+            "SB21B.csv",
+            "F3XA.csv",
+            "SA11AI.csv",
+        ].sort()
+    )
 
     with open(os.path.join(tmpdir, "header.csv")) as f:
         assert len(f.readlines()) == 2
