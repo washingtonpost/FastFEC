@@ -85,3 +85,27 @@ with open('12345.fec', 'rb') as f:
     with FastFEC() as fastfec:
         fastfec.parse_as_files_custom(f, open_output_file)
 ```
+
+## Development
+
+### Setup
+
+1. If you have not done so already follow the instructions in the root readme
+
+1. Set you working directory to the python subdirectory `cd python`.
+
+2. Install the dev requirements in a virtual environment with `pip install -r requirements-dev.txt`.
+
+3. Install the pre-commit hooks with `pre-commit install`.
+
+4. Verify things worked by running the unit tests with `tox`.
+
+### Running tests
+
+You can run the default test and linting setup on the repo by running `tox`. Settings for this are handled in the [tox.ini](tox.ini) file.
+
+You can run the pre-commit hooks, including flake8, using `pre-commit run --all-files`.
+
+**Linting with pylint**
+
+If you just want to lint the repo, you can run `pylint --rcfile=setup.cfg [FILES OR FOLDERS]`, e.g. `pylint --rcfile=setup.cfg src`.
