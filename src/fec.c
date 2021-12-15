@@ -231,6 +231,7 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
   }
   if (end - start != 8)
   {
+    // Could not parse date, write string as is and log warning
     if (ctx->warn)
     {
       fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
@@ -254,8 +255,12 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, in
 
   if (doubleStr == conversionFloat)
   {
-    // Could not convert to a float, write null
-    writeString(ctx->writeContext, filename, extension, "null");
+    // Could not convert to a float, write string as is and log warning
+    if (ctx->warn)
+    {
+      fprintf(stderr, "Warning: Could not parse float field\n");
+    }
+    writeSubstr(ctx, filename, extension, start, end, field);
     return;
   }
 
