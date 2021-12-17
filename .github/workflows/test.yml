@@ -1,15 +1,32 @@
 name: Test
-
 on: [push]
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: [3.8]
     steps:
       - uses: actions/checkout@v2
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: 0.9.0-dev.1675+3d528161c
-      - run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
-      - run: zig build
-      - run: zig build test
+      - name: Install system dependencies
+        run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run zig build
+        run: zig build
+      - name: Run zig test
+        run: zig build test
+      - name: Install Python dependencies
+        working-directory: python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Run Python Tests
+        working-directory: python
+        run: tox -e py
