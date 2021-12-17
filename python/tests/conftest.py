@@ -23,21 +23,6 @@ def get_fixture():
     return _get_fixture
 
 
-# @pytest.fixture
-# def filing_13360(get_fixture):
-#     return get_fixture("13360.fec")
-
-
-# @pytest.fixture
-# def filing_1527862(get_fixture):
-#     return get_fixture("1527862.fec")
-
-
-# @pytest.fixture
-# def filing_1544132(get_fixture):
-#     return get_fixture("1544132.fec")
-
-
 @pytest.fixture
 def filing_1550126(get_fixture):
     """
