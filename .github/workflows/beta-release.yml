@@ -1,8 +1,12 @@
 name: Beta Release
 
+on:
+  push:
+    branches:
+      - develop
+
 jobs:
   build-linux:
-    if: github.event.base_ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +34,6 @@ jobs:
             libfastfec-linux-aarch64-latest.so
             libfastfec-latest.wasm
   build-macos:
-    if: github.event.base_ref == 'refs/heads/develop'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -57,7 +60,6 @@ jobs:
             libfastfec-macos-x86_64-latest.dylib
             libfastfec-macos-aarch64-latest.dylib
   build-windows:
-    if: github.event.base_ref == 'refs/heads/develop'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
