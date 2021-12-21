@@ -6,6 +6,9 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./python
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-10.15]
@@ -15,9 +18,7 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.3.1
-        working-directory: python
 
       - uses: actions/upload-artifact@v2
-        working-directory: python
         with:
           path: ./wheelhouse/*.whl
