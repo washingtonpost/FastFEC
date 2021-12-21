@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: ./python
+        working-directory: python
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-10.15]
