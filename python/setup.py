@@ -51,7 +51,7 @@ fastfec_library = Extension(
 
 setup(
     name="FastFEC",
-    version="0.0.4",
+    version="0.0.5",
     description="An extremely fast FEC filing parser written in C",
     author="Washington Post News Engineering",
     license="MIT",
