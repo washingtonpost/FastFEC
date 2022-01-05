@@ -3,9 +3,10 @@ Setup script to install the FastFEC python package
 """
 
 import os
-from distutils.core import Extension
+import sys
 
-from setuptools import setup
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 
 # get current directory
 CURRENT_DIR = os.path.dirname(__file__)
@@ -49,6 +50,16 @@ fastfec_library = Extension(
     runtime_library_dirs=[os.path.join(PARENT_DIR, "deps/pcre")],
 )
 
+
+class zig_build_ext(build_ext):
+    def build_extensions(self):
+        # Override the compiler executable to use zig
+        zig_compiler = f"{sys.executable} -m ziglang cc"
+        self.compiler.set_executable("compiler_so", zig_compiler)
+        self.compiler.set_executable("compiler_cxx", zig_compiler)
+        build_ext.build_extensions(self)
+
+
 setup(
     name="FastFEC",
     version="0.0.5",
@@ -59,4 +70,5 @@ setup(
     packages=["fastfec"],
     package_dir={"": "src"},
     ext_modules=[fastfec_library],
+    cmdclass={"build_ext": zig_build_ext},
 )
