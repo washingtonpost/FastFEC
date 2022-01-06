@@ -9,7 +9,7 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
 # get current directory
-CURRENT_DIR = os.path.dirname(__file__)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 
 deps = [
@@ -43,9 +43,15 @@ deps = [
     "deps/pcre/pcre_xclass.c",
 ]
 
+
+def print_pass(p):
+    print("PP", p)
+    return p
+
+
 fastfec_library = Extension(
     "fastfec_lib",
-    [os.path.join(PARENT_DIR, i) for i in deps],
+    print_pass([os.path.join(PARENT_DIR, i) for i in deps]),
     include_dirs=[os.path.join(PARENT_DIR, "deps/pcre")],
     runtime_library_dirs=[os.path.join(PARENT_DIR, "deps/pcre")],
 )
