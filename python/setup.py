@@ -42,7 +42,7 @@ setup(
     license="MIT",
     url="https://github.com/washingtonpost/FastFEC",
     packages=["fastfec"],
-    data_files=[('.', library_files)],
+    data_files=[('lib', library_files)],
     package_dir={"": "src"},
     cmdclass={'bdist_wheel': bdist_wheel},
 )
