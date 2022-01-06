@@ -26,11 +26,19 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel==2.3.1
 
+      - name: Remove wheelhouse directory
+        uses: JesseTG/rm@v1.0.2
+        with:
+          path: wheelhouse
+
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse ./python
         env:
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_LINUX: auto aarch64
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS:
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX:
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS:
 
       - uses: actions/upload-artifact@v2
         with:
