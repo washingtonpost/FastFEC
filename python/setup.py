@@ -23,6 +23,17 @@ library_dir = os.path.join(PARENT_DIR, 'zig-out/lib')
 # Collect compiled library files (extension .dylib|.so|.dll)
 library_files = glob(os.path.join(library_dir, '*.dylib')) + glob(os.path.join(library_dir, '*.so')) + glob(os.path.join(library_dir, '*.dll'))
 
+# Force building a non-pure lib wheel
+# From https://stackoverflow.com/a/45150383
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+    class bdist_wheel(_bdist_wheel):
+        def finalize_options(self):
+            _bdist_wheel.finalize_options(self)
+            self.root_is_pure = False
+except ImportError:
+    bdist_wheel = None
+
 setup(
     name="FastFEC",
     version="0.0.5",
@@ -33,4 +44,5 @@ setup(
     packages=["fastfec"],
     data_files=[('.', library_files)],
     package_dir={"": "src"},
+    cmdclass={'bdist_wheel': bdist_wheel},
 )
