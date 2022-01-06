@@ -9,7 +9,8 @@ jobs:
     strategy:
       matrix:
         #os: [ubuntu-20.04, windows-2019, macos-10.15]
-        os: [windows-2019]
+        os: [ubuntu-20.04]
+        # os: [windows-2019]
         # os: [ubuntu-20.04, macos-10.15]
 
     steps:
@@ -19,7 +20,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel==2.3.1
