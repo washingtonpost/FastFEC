@@ -2,6 +2,7 @@
 Setup script to install the FastFEC python package
 """
 
+from glob import glob
 import os
 import sys
 import subprocess
@@ -18,6 +19,9 @@ def compile_library():
     subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true"], cwd=PARENT_DIR)
 
 compile_library()
+library_dir = os.path.join(PARENT_DIR, 'zig-out/lib')
+# Collect compiled library files (extension .dylib|.so|.dll)
+library_files = glob(os.path.join(library_dir, '*.dylib')) + glob(os.path.join(library_dir, '*.so')) + glob(os.path.join(library_dir, '*.dll'))
 
 setup(
     name="FastFEC",
@@ -27,6 +31,6 @@ setup(
     license="MIT",
     url="https://github.com/washingtonpost/FastFEC",
     packages=["fastfec"],
-    package_data={'fastfec': ['../zig-out/lib/*']},
+    data_files=[('.', library_files)],
     package_dir={"": "src"},
 )
