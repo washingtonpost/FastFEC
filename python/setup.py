@@ -16,7 +16,6 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 
 def compile_library():
-    print("COMPILING LIBRARY")
     subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true"], cwd=PARENT_DIR)
 
 compile_library()
