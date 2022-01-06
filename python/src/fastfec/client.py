@@ -122,9 +122,10 @@ class LibFastFEC:
             filename = os.path.join(output_directory, filename)
             output_file = pathlib.Path(filename)
             output_file.parent.mkdir(exist_ok=True, parents=True)
+            # pylint: disable=consider-using-with,unspecified-encoding,bad-option-value
             return open(
                 filename, *args, **kwargs
-            )  # pylint: disable=consider-using-with,unspecified-encoding,bad-option-value
+            )
 
         return self.parse_as_files_custom(file_handle, open_output_file, include_filing_id=include_filing_id)
 

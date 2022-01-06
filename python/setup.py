@@ -46,6 +46,6 @@ setup(
     url="https://github.com/washingtonpost/FastFEC",
     packages=["fastfec"],
     package_data={'fastfec': library_files},
-    package_dir={"fastfec": "src"},
+    package_dir={"": "src"},
     cmdclass={'bdist_wheel': bdist_wheel},
 )
