@@ -61,13 +61,18 @@ class zig_build_ext(build_ext):
     def build_extensions(self):
         # Override the compiler executable to use zig
         zig_compiler = f"{sys.executable} -m ziglang cc"
-        self.compiler.set_executable("preprocessor", zig_compiler)
+        # self.compiler.set_executable("preprocessor", zig_compiler)
         self.compiler.set_executable("compiler", zig_compiler)
         self.compiler.set_executable("compiler_so", zig_compiler)
         self.compiler.set_executable("compiler_cxx", zig_compiler)
         self.compiler.set_executable("compiler_cxx_so", zig_compiler)
-        os.environ["CC"] = zig_compiler
-        os.environ["CXX"] = zig_compiler
+        # os.environ["CC"] = zig_compiler
+        # os.environ["CXX"] = zig_compiler
+        # Force compiler initialization
+        self.compiler.initialize()
+        # Override compiler (to force Windows compilation to use zig)
+        self.compiler.cc = zig_compiler
+        print("COMPILER", self.compiler)
         build_ext.build_extensions(self)
 
 
