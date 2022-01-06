@@ -32,9 +32,9 @@ jobs:
         env:
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_LINUX: auto aarch64
-          CIBW_REPAIR_WHEEL_COMMAND_MACOS:
-          CIBW_REPAIR_WHEEL_COMMAND_LINUX:
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS:
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: ''
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: ''
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ''
 
       - uses: actions/upload-artifact@v2
         with:
