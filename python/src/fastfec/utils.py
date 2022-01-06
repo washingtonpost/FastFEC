@@ -12,7 +12,6 @@ import logging
 import os
 import pathlib
 from ctypes import CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_size_t, c_void_p, memmove
-from ctypes.util import find_library
 from glob import glob
 
 logger = logging.getLogger("fastfec")
@@ -55,19 +54,14 @@ def find_fastfec_lib():
     """
     Scans for the fastfec shared library and returns the path of the found library
 
-    This method tries searching in system directories first, then the parent directory
-    with a final fallback to the local zig build directory for development work.
+    This method tries searching in package directories, with a fallback to the local
+    zig build directory for development work.
     """
     prefixes = ["fastfec", "libfastfec"]
 
-    for prefix in prefixes:
-        # Check system libraries first
-        library = find_library(prefix)
-        if library is not None:
-            return library
-
     suffixes = ["so", "dylib", "dll"]
     directories = [
+        SCRIPT_DIR,
         PARENT_DIR,
         os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
     ]
