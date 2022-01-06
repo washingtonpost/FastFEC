@@ -61,8 +61,10 @@ class zig_build_ext(build_ext):
     def build_extensions(self):
         # Override the compiler executable to use zig
         zig_compiler = f"{sys.executable} -m ziglang cc"
+        self.compiler.set_executable("compiler", zig_compiler)
         self.compiler.set_executable("compiler_so", zig_compiler)
         self.compiler.set_executable("compiler_cxx", zig_compiler)
+        self.compiler.set_executable("compiler_cxx_so", zig_compiler)
         build_ext.build_extensions(self)
 
 
