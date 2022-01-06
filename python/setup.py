@@ -66,7 +66,8 @@ class zig_build_ext(build_ext):
         self.compiler.set_executable("compiler_so", zig_compiler)
         self.compiler.set_executable("compiler_cxx", zig_compiler)
         self.compiler.set_executable("compiler_cxx_so", zig_compiler)
-        self.compiler.cc = zig_compiler
+        os.environ["CC"] = zig_compiler
+        os.environ["CXX"] = zig_compiler
         build_ext.build_extensions(self)
 
 
