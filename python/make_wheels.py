@@ -34,6 +34,7 @@ PARENT_DIR = os.path.dirname(CURRENT_DIR)
 SRC_DIR = os.path.join(CURRENT_DIR, "src", "fastfec")
 LIBRARY_DIR = os.path.join(PARENT_DIR, 'zig-out', 'lib')
 OUTPUT_DIR = "wheelhouse"
+PACKAGE_NAME = 'fastfec'
 
 class ReproducibleWheelFile(WheelFile):
     # Copied from Zig make_wheels.py
@@ -94,7 +95,7 @@ base_contents = {}
 for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
     with open(path, 'rb') as f:
         file_contents = f.read()
-    base_contents[os.path.relpath(path, SRC_DIR)] = file_contents
+    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = file_contents
 
 current_platform = platform.system()
 for target_platform, zig_target, wheel_platform in matrix:
@@ -114,7 +115,7 @@ for target_platform, zig_target, wheel_platform in matrix:
     # Write the library file to the archive contents
     for library_file in library_files:
         with open(library_file, 'rb') as f:
-            contents[os.path.relpath(library_file, LIBRARY_DIR)] = f.read()
+            contents[os.path.join(PACKAGE_NAME, os.path.relpath(library_file, LIBRARY_DIR))] = f.read()
 
     # Create output directory if needed
     if not os.path.exists(OUTPUT_DIR):
