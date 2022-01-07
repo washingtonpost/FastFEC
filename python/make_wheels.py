@@ -26,7 +26,6 @@ matrix = [
     ('Linux', 'aarch64-linux', 'manylinux_2_17_aarch64.manylinux2014_aarch64'),
     ('Darwin', 'x86_64-macos', 'macosx_10_9_x86_64'),
     ('Darwin', 'aarch64-macos', 'macosx_11_0_arm64'),
-    ('Windows', 'x86_64-windows-msvc', 'win32'),
     ('Windows', 'x86_64-windows-msvc', 'win_amd64'),
 ]
 
@@ -110,7 +109,7 @@ for target_platform, zig_target, wheel_platform in matrix:
     if os.path.exists(LIBRARY_DIR):
         shutil.rmtree(LIBRARY_DIR)
     # Compile! Requires ziglang==0.9.0 to be installed
-    subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true", f"-Dtarget={zig_target}"], cwd=PARENT_DIR)
+    subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true", f"-Dtarget={zig_target}", *sys.argv[1:]], cwd=PARENT_DIR)
     # Collect compiled library files (extension .dylib|.so|.dll)
     library_files = glob(os.path.join(LIBRARY_DIR, '*.dylib')) + glob(os.path.join(LIBRARY_DIR, '*.so')) + glob(os.path.join(LIBRARY_DIR, '*.dll'))
     # Write the library file to the archive contents

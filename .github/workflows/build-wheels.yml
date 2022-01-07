@@ -15,6 +15,15 @@ jobs:
 
       - uses: ilammy/msvc-dev-cmd@v1
 
+      - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
+        if: runner.os == 'Windows'
+
+      - run: vcpkg integrate install
+        if: runner.os == 'Windows'
+
+      - run: vcpkg install pcre --triplet x64-windows-static
+        if: runner.os == 'Windows'
+
       - uses: actions/setup-python@v2
         with:
           python-version: "3.x"
@@ -24,6 +33,11 @@ jobs:
 
       - name: Build wheels
         run: python python/make_wheels.py
+        if: runner.os != 'Windows'
+      
+      - name: Build wheels
+        run: python python/make_wheels.py --search-prefix C:/vcpkg/packages/pcre_x64-windows-static
+        if: runner.os == 'Windows'
         
       - uses: actions/upload-artifact@v2
         with:
