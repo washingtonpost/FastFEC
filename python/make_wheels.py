@@ -33,6 +33,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 SRC_DIR = os.path.join(CURRENT_DIR, "src", "fastfec")
 LIBRARY_DIR = os.path.join(PARENT_DIR, 'zig-out', 'lib')
+OUTPUT_DIR = "wheelhouse"
 
 class ReproducibleWheelFile(WheelFile):
     # Copied from Zig make_wheels.py
@@ -115,7 +116,11 @@ for target_platform, zig_target, wheel_platform in matrix:
         with open(library_file, 'rb') as f:
             contents[os.path.relpath(library_file, LIBRARY_DIR)] = f.read()
 
-    write_wheel("wheelhouse",
+    # Create output directory if needed
+    if not os.path.exists(OUTPUT_DIR):
+        os.mkdir(OUTPUT_DIR)
+    # Write the wheel
+    write_wheel(OUTPUT_DIR,
         name='FastFEC',
         version="0.0.5",
         tag=f'py3-none-{wheel_platform}',
