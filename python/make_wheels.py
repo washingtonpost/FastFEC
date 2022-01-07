@@ -26,7 +26,8 @@ matrix = [
     ('Linux', 'aarch64-linux', 'manylinux_2_17_aarch64.manylinux2014_aarch64'),
     ('Darwin', 'x86_64-macos', 'macosx_10_9_x86_64'),
     ('Darwin', 'aarch64-macos', 'macosx_11_0_arm64'),
-    ('Windows', 'x86_64-windows-msvc', 'win32')
+    ('Windows', 'x86_64-windows-msvc', 'win32'),
+    ('Windows', 'x86_64-windows-msvc', 'win_amd64'),
 ]
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
