@@ -1,0 +1,137 @@
+"""
+Build wheels for each platform possible via Zig cross-compilation.
+Why not use cibuildwheel? Using a custom Zig build extension is not
+easy to support within this system, and platform-specific bugs are
+hard to debug. This system should provide the same benefits of the
+release workflow, but for Python packaging.
+
+Inspired and heavily copied from:
+https://github.com/ziglang/zig-pypi/blob/main/make_wheels.py
+"""
+
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import time
+from email.message import EmailMessage
+from glob import glob
+from wheel.wheelfile import WheelFile
+from zipfile import ZipInfo, ZIP_DEFLATED
+
+matrix = [
+    # (platform, Zig target, wheel)
+    ('Linux', 'x86_64-linux', 'manylinux_2_12_x86_64.manylinux2010_x86_64'),
+    ('Linux', 'aarch64-linux', 'manylinux_2_17_aarch64.manylinux2014_aarch64'),
+    ('Darwin', 'x86_64-macos', 'macosx_10_9_x86_64'),
+    ('Darwin', 'aarch64-macos', 'macosx_11_0_arm64'),
+    ('Windows', 'x86_64-windows-msvc', 'win32')
+]
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PARENT_DIR = os.path.dirname(CURRENT_DIR)
+SRC_DIR = os.path.join(CURRENT_DIR, "src", "fastfec")
+LIBRARY_DIR = os.path.join(PARENT_DIR, 'zig-out', 'lib')
+
+class ReproducibleWheelFile(WheelFile):
+    # Copied from Zig make_wheels.py
+    def writestr(self, zinfo, *args, **kwargs):
+        if not isinstance(zinfo, ZipInfo):
+            raise ValueError("ZipInfo required")
+        zinfo.date_time = time.gmtime(time.time())[0:6] # Current time
+        zinfo.create_system = 3
+        super().writestr(zinfo, *args, **kwargs)
+
+def make_message(headers, payload=None):
+    # Copied from Zig make_wheels.py
+    msg = EmailMessage()
+    for name, value in headers.items():
+        if isinstance(value, list):
+            for value_part in value:
+                msg[name] = value_part
+        else:
+            msg[name] = value
+    if payload:
+        msg.set_payload(payload)
+    return msg
+
+def write_wheel_file(filename, contents):
+    # Copied from Zig make_wheels.py
+    with ReproducibleWheelFile(filename, 'w') as wheel:
+        for member_info, member_source in contents.items():
+            if not isinstance(member_info, ZipInfo):
+                member_info = ZipInfo(member_info)
+                member_info.external_attr = 0o644 << 16
+            member_info.file_size = len(member_source)
+            member_info.compress_type = ZIP_DEFLATED
+            wheel.writestr(member_info, bytes(member_source))
+    return filename
+
+def write_wheel(out_dir, *, name, version, tag, metadata, contents):
+    # Copied from Zig make_wheels.py
+    wheel_name = f'{name}-{version}-{tag}.whl'
+    dist_info  = f'{name}-{version}.dist-info'
+    return write_wheel_file(os.path.join(out_dir, wheel_name), {
+        **contents,
+        f'{dist_info}/METADATA': make_message({
+            'Metadata-Version': '2.1',
+            'Name': name,
+            'Version': version,
+            **metadata,
+        }),
+        f'{dist_info}/WHEEL': make_message({
+            'Wheel-Version': '1.0',
+            'Generator': 'fastfec make_wheels.py',
+            'Root-Is-Purelib': 'false',
+            'Tag': tag,
+        }),
+    })
+
+# Gather contents
+base_contents = {}
+for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
+    with open(path, 'rb') as f:
+        file_contents = f.read()
+    base_contents[os.path.relpath(path, SRC_DIR)] = file_contents
+
+current_platform = platform.system()
+for target_platform, zig_target, wheel_platform in matrix:
+    # Only run on compatible platforms
+    if current_platform != target_platform:
+        continue
+
+    # Compile the executable for the target platform
+    contents = base_contents.copy()
+    # First clear the target directory of any stray files
+    if os.path.exists(LIBRARY_DIR):
+        shutil.rmtree(LIBRARY_DIR)
+    # Compile! Requires ziglang==0.9.0 to be installed
+    subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true", f"-Dtarget={zig_target}"], cwd=PARENT_DIR)
+    # Collect compiled library files (extension .dylib|.so|.dll)
+    library_files = glob(os.path.join(LIBRARY_DIR, '*.dylib')) + glob(os.path.join(LIBRARY_DIR, '*.so')) + glob(os.path.join(LIBRARY_DIR, '*.dll'))
+    # Write the library file to the archive contents
+    for library_file in library_files:
+        with open(library_file, 'rb') as f:
+            contents[os.path.relpath(library_file, LIBRARY_DIR)] = f.read()
+
+    write_wheel("wheelhouse",
+        name='FastFEC',
+        version="0.0.5",
+        tag=f'py3-none-{wheel_platform}',
+        metadata={
+            'Summary': 'An extremely fast FEC filing parser written in C',
+            'Author': 'Washington Post News Engineering',
+            'License': 'MIT',
+            'Project-URL': [
+                'Homepage, https://github.com/washingtonpost/FastFEC',
+                'Source Code, https://github.com/washingtonpost/FastFEC',
+                'Bug Tracker, https://github.com/washingtonpost/FastFEC/issues',
+            ],
+            'Classifier': [
+                'License :: OSI Approved :: MIT License',
+            ],
+            'Requires-Python': '~=3.5',
+        },
+        contents=contents,
+    )
