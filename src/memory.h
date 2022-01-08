@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pcre.h>
+#include "export.h"
 #include "mappings.h"
 
 extern const size_t DEFAULT_STRING_SIZE;
@@ -44,6 +45,6 @@ struct persistent_memory_context
 };
 typedef struct persistent_memory_context PERSISTENT_MEMORY_CONTEXT;
 
-PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext();
+EXPORT PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext();
 
-void freePersistentMemoryContext(PERSISTENT_MEMORY_CONTEXT *context);
+EXPORT void freePersistentMemoryContext(PERSISTENT_MEMORY_CONTEXT *context);
