@@ -1,6 +1,8 @@
 name: Build Python
 
 on: [push, pull_request]
+branches:
+  - develop
 
 jobs:
   build_wheels:
