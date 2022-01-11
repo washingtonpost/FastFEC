@@ -14,6 +14,8 @@ from setuptools.command.build_ext import build_ext
 # get current directory
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
+with open(os.path.join(PARENT_DIR, 'README.md'), 'r') as f:
+    readme = f.read()
 
 def compile_library():
     subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true"], cwd=PARENT_DIR)
@@ -40,6 +42,8 @@ setup(
     name="fastfec",
     version="0.0.5",
     description="An extremely fast FEC filing parser written in C",
+    long_description=readme,
+    long_description_content_type='text/markdown',
     author="Washington Post News Engineering",
     license="MIT",
     url="https://github.com/washingtonpost/FastFEC",

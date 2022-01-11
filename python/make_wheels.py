@@ -35,7 +35,8 @@ SRC_DIR = os.path.join(CURRENT_DIR, "src", "fastfec")
 LIBRARY_DIR = os.path.join(PARENT_DIR, 'zig-out', 'lib')
 OUTPUT_DIR = "wheelhouse"
 PACKAGE_NAME = 'fastfec'
-
+with open(os.path.join(PARENT_DIR, 'README.md'), 'r') as f:
+    readme = f.read()
 class ReproducibleWheelFile(WheelFile):
     # Copied from Zig make_wheels.py
     def writestr(self, zinfo, *args, **kwargs):
@@ -70,7 +71,7 @@ def write_wheel_file(filename, contents):
             wheel.writestr(member_info, bytes(member_source))
     return filename
 
-def write_wheel(out_dir, *, name, version, tag, metadata, contents):
+def write_wheel(out_dir, *, name, version, tag, metadata, description, contents):
     # Copied from Zig make_wheels.py
     wheel_name = f'{name}-{version}-{tag}.whl'
     dist_info  = f'{name}-{version}.dist-info'
@@ -81,7 +82,7 @@ def write_wheel(out_dir, *, name, version, tag, metadata, contents):
             'Name': name,
             'Version': version,
             **metadata,
-        }),
+        }, description),
         f'{dist_info}/WHEEL': make_message({
             'Wheel-Version': '1.0',
             'Generator': 'fastfec make_wheels.py',
@@ -138,6 +139,8 @@ for target_platform, zig_target, wheel_platform in matrix:
                 'License :: OSI Approved :: MIT License',
             ],
             'Requires-Python': '~=3.5',
+            'Description-Content-Type': 'text/markdown'
         },
+        description=readme,
         contents=contents,
     )
