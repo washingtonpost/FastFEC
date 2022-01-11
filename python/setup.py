@@ -37,7 +37,7 @@ except ImportError:
     bdist_wheel = None
 
 setup(
-    name="FastFEC",
+    name="fastfec",
     version="0.0.5",
     description="An extremely fast FEC filing parser written in C",
     author="Washington Post News Engineering",

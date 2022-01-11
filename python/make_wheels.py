@@ -122,7 +122,7 @@ for target_platform, zig_target, wheel_platform in matrix:
         os.mkdir(OUTPUT_DIR)
     # Write the wheel
     write_wheel(OUTPUT_DIR,
-        name='FastFEC',
+        name='fastfec',
         version="0.0.5",
         tag=f'py3-none-{wheel_platform}',
         metadata={
