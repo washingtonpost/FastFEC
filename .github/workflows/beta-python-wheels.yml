@@ -60,7 +60,7 @@ jobs:
       run: sudo apt-get install -y rename
 
     - name: Append timestamp to version spec
-      run: rename "s/^fastfec-([0-9]+\.[0-9]+\.)([0-9\.]*)(.*)/fastfec-\$1.dev$(date +%s)\$2/s" *.whl
+      run: rename "s/^fastfec-([0-9]+\.[0-9]+\.)([0-9\.]*)(.*)/fastfec-\$1dev$(date +%s)\$3/s" *.whl
       working-directory: dist
 
     - name: Publish package to Test PyPI
