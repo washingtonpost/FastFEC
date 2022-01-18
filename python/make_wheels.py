@@ -17,34 +17,40 @@ import sys
 import time
 from email.message import EmailMessage
 from glob import glob
+from zipfile import ZIP_DEFLATED, ZipInfo
+
 from wheel.wheelfile import WheelFile
-from zipfile import ZipInfo, ZIP_DEFLATED
 
 matrix = [
     # (platform, Zig target, wheel)
-    ('Linux', 'x86_64-linux-gnu', 'manylinux1_x86_64'),
-    ('Linux', 'aarch64-linux-gnu', 'manylinux2014_aarch64'),
-    ('Darwin', 'x86_64-macos', 'macosx_10_9_x86_64'),
-    ('Darwin', 'aarch64-macos', 'macosx_11_0_arm64'),
-    ('Windows', 'x86_64-windows-msvc', 'win_amd64'),
+    ("Linux", "x86_64-linux-gnu", "manylinux1_x86_64"),
+    ("Linux", "aarch64-linux-gnu", "manylinux2014_aarch64"),
+    ("Darwin", "x86_64-macos", "macosx_10_9_x86_64"),
+    ("Darwin", "aarch64-macos", "macosx_11_0_arm64"),
+    ("Windows", "x86_64-windows-msvc", "win_amd64"),
 ]
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 SRC_DIR = os.path.join(CURRENT_DIR, "src", "fastfec")
-LIBRARY_DIR = os.path.join(PARENT_DIR, 'zig-out', 'lib')
+LIBRARY_DIR = os.path.join(PARENT_DIR, "zig-out", "lib")
 OUTPUT_DIR = "wheelhouse"
-PACKAGE_NAME = 'fastfec'
-with open(os.path.join(PARENT_DIR, 'README.md'), 'r') as f:
+PACKAGE_NAME = "fastfec"
+with open(os.path.join(PARENT_DIR, "README.md"), "r") as f:
     readme = f.read()
+with open(os.path.join(PARENT_DIR, "VERSION"), "r") as f:
+    version = f.read().strip()
+
+
 class ReproducibleWheelFile(WheelFile):
     # Copied from Zig make_wheels.py
     def writestr(self, zinfo, *args, **kwargs):
         if not isinstance(zinfo, ZipInfo):
             raise ValueError("ZipInfo required")
-        zinfo.date_time = time.gmtime(time.time())[0:6] # Current time
+        zinfo.date_time = time.gmtime(time.time())[0:6]  # Current time
         zinfo.create_system = 3
         super().writestr(zinfo, *args, **kwargs)
+
 
 def make_message(headers, payload=None):
     # Copied from Zig make_wheels.py
@@ -59,9 +65,10 @@ def make_message(headers, payload=None):
         msg.set_payload(payload)
     return msg
 
+
 def write_wheel_file(filename, contents):
     # Copied from Zig make_wheels.py
-    with ReproducibleWheelFile(filename, 'w') as wheel:
+    with ReproducibleWheelFile(filename, "w") as wheel:
         for member_info, member_source in contents.items():
             if not isinstance(member_info, ZipInfo):
                 member_info = ZipInfo(member_info)
@@ -71,30 +78,40 @@ def write_wheel_file(filename, contents):
             wheel.writestr(member_info, bytes(member_source))
     return filename
 
+
 def write_wheel(out_dir, *, name, version, tag, metadata, description, contents):
     # Copied from Zig make_wheels.py
-    wheel_name = f'{name}-{version}-{tag}.whl'
-    dist_info  = f'{name}-{version}.dist-info'
-    return write_wheel_file(os.path.join(out_dir, wheel_name), {
-        **contents,
-        f'{dist_info}/METADATA': make_message({
-            'Metadata-Version': '2.1',
-            'Name': name,
-            'Version': version,
-            **metadata,
-        }, description),
-        f'{dist_info}/WHEEL': make_message({
-            'Wheel-Version': '1.0',
-            'Generator': 'fastfec make_wheels.py',
-            'Root-Is-Purelib': 'false',
-            'Tag': tag,
-        }),
-    })
+    wheel_name = f"{name}-{version}-{tag}.whl"
+    dist_info = f"{name}-{version}.dist-info"
+    return write_wheel_file(
+        os.path.join(out_dir, wheel_name),
+        {
+            **contents,
+            f"{dist_info}/METADATA": make_message(
+                {
+                    "Metadata-Version": "2.1",
+                    "Name": name,
+                    "Version": version,
+                    **metadata,
+                },
+                description,
+            ),
+            f"{dist_info}/WHEEL": make_message(
+                {
+                    "Wheel-Version": "1.0",
+                    "Generator": "fastfec make_wheels.py",
+                    "Root-Is-Purelib": "false",
+                    "Tag": tag,
+                }
+            ),
+        },
+    )
+
 
 # Gather contents
 base_contents = {}
 for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         file_contents = f.read()
     base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = file_contents
 
@@ -110,36 +127,44 @@ for target_platform, zig_target, wheel_platform in matrix:
     if os.path.exists(LIBRARY_DIR):
         shutil.rmtree(LIBRARY_DIR)
     # Compile! Requires ziglang==0.9.0 to be installed
-    subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true", f"-Dtarget={zig_target}", *sys.argv[1:]], cwd=PARENT_DIR)
+    subprocess.call(
+        [sys.executable, "-m", "ziglang", "build", "-Dlib-only=true", f"-Dtarget={zig_target}", *sys.argv[1:]],
+        cwd=PARENT_DIR,
+    )
     # Collect compiled library files (extension .dylib|.so|.dll)
-    library_files = glob(os.path.join(LIBRARY_DIR, '*.dylib')) + glob(os.path.join(LIBRARY_DIR, '*.so')) + glob(os.path.join(LIBRARY_DIR, '*.dll'))
+    library_files = (
+        glob(os.path.join(LIBRARY_DIR, "*.dylib"))
+        + glob(os.path.join(LIBRARY_DIR, "*.so"))
+        + glob(os.path.join(LIBRARY_DIR, "*.dll"))
+    )
     # Write the library file to the archive contents
     for library_file in library_files:
-        with open(library_file, 'rb') as f:
+        with open(library_file, "rb") as f:
             contents[os.path.join(PACKAGE_NAME, os.path.relpath(library_file, LIBRARY_DIR))] = f.read()
 
     # Create output directory if needed
     if not os.path.exists(OUTPUT_DIR):
         os.mkdir(OUTPUT_DIR)
     # Write the wheel
-    write_wheel(OUTPUT_DIR,
-        name='fastfec',
-        version="0.0.5",
-        tag=f'py3-none-{wheel_platform}',
+    write_wheel(
+        OUTPUT_DIR,
+        name="fastfec",
+        version=version,
+        tag=f"py3-none-{wheel_platform}",
         metadata={
-            'Summary': 'An extremely fast FEC filing parser written in C',
-            'Author': 'Washington Post News Engineering',
-            'License': 'MIT',
-            'Project-URL': [
-                'Homepage, https://github.com/washingtonpost/FastFEC',
-                'Source Code, https://github.com/washingtonpost/FastFEC',
-                'Bug Tracker, https://github.com/washingtonpost/FastFEC/issues',
+            "Summary": "An extremely fast FEC filing parser written in C",
+            "Author": "Washington Post News Engineering",
+            "License": "MIT",
+            "Project-URL": [
+                "Homepage, https://github.com/washingtonpost/FastFEC",
+                "Source Code, https://github.com/washingtonpost/FastFEC",
+                "Bug Tracker, https://github.com/washingtonpost/FastFEC/issues",
             ],
-            'Classifier': [
-                'License :: OSI Approved :: MIT License',
+            "Classifier": [
+                "License :: OSI Approved :: MIT License",
             ],
-            'Requires-Python': '~=3.5',
-            'Description-Content-Type': 'text/markdown'
+            "Requires-Python": "~=3.5",
+            "Description-Content-Type": "text/markdown",
         },
         description=readme,
         contents=contents,

@@ -1,4 +1,4 @@
-name: Build Python
+name: Beta Build Python
 
 on:  
   pull_request:
@@ -46,3 +46,17 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
+
+  upload_all:
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: dist
+
+    - uses: pypa/gh-action-pypi-publish@v1.4.2
+      with:
+        user: __token__
+        password: ${{ secrets.test_pypi_token }}
