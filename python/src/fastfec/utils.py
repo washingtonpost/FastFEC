@@ -54,12 +54,14 @@ def find_fastfec_lib():
     """
     Scans for the fastfec shared library and returns the path of the found library
 
-    This method tries searching in the parent directory first but has a fallback to
-    the local zig build directory for development work.
+    This method tries searching in package directories, with a fallback to the local
+    zig build directory for development work.
     """
     prefixes = ["fastfec", "libfastfec"]
+
     suffixes = ["so", "dylib", "dll"]
     directories = [
+        SCRIPT_DIR,
         PARENT_DIR,
         os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
     ]

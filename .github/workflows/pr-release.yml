@@ -1,7 +1,7 @@
-name: Beta Release
+name: PR Release
 
-on:
-  push:
+on:  
+  pull_request:
     branches:
       - develop
 
@@ -26,10 +26,9 @@ jobs:
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-latest.so
       - run: zig build -Dwasm
       - run: mv zig-out/lib/fastfec.wasm libfastfec-latest.wasm
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/upload-artifact@v2
         with:
-          files: |
+          path: |
             fastfec-linux-x86_64-latest.zip
             libfastfec-linux-x86_64-latest.so
             libfastfec-linux-aarch64-latest.so
@@ -53,10 +52,9 @@ jobs:
       - run: zig build -Dtarget=aarch64-macos
       - run: zip -j fastfec-macos-aarch64-latest.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-aarch64-latest.dylib
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/upload-artifact@v2
         with:
-          files: |
+          path: |
             fastfec-macos-x86_64-latest.zip
             fastfec-macos-aarch64-latest.zip
             libfastfec-macos-x86_64-latest.dylib
@@ -81,9 +79,8 @@ jobs:
       - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-x86_64-latest.zip
       - run: mv zig-out/lib/fastfec.dll libfastfec-windows-x86_64-latest.dll
         shell: bash
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/upload-artifact@v2
         with:
-          files: |
+          path: |
             fastfec-windows-x86_64-latest.zip
             libfastfec-windows-x86_64-latest.dll

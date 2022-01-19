@@ -109,3 +109,11 @@ You can run the pre-commit hooks, including flake8, using `pre-commit run --all-
 **Linting with pylint**
 
 If you just want to lint the repo, you can run `pylint --rcfile=setup.cfg [FILES OR FOLDERS]`, e.g. `pylint --rcfile=setup.cfg src`.
+
+### Releases
+
+To build and install a release for your local computer, you can use `setup.py` in the traditional way.
+
+To coordinate multi-platform releases, there is a GitHub actions flow that uses the `make_wheels.py` script to build releases for multiple architectures at once using Zig. This script will manually invoke the Zig build process for a matrix of architectures and Python release names and create the resulting Python wheels manually.
+
+This approach is used rather than a more traditional setup to make use of Zig and not create unnecessary builds. The `make_wheels.py` script is inspired from [Zig's Python package](https://github.com/ziglang/zig-pypi) which has a similar approach.

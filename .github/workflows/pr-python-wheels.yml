@@ -1,0 +1,48 @@
+name: PR Build Python
+
+on:  
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
+        if: runner.os == 'Windows'
+
+      - run: vcpkg integrate install
+        if: runner.os == 'Windows'
+
+      - run: vcpkg install pcre --triplet x64-windows-static
+        if: runner.os == 'Windows'
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install Zig
+        run: python -m pip install ziglang==0.9.0 wheel==0.37.1
+
+      - name: Build wheels
+        run: python python/make_wheels.py
+        if: runner.os != 'Windows'
+      
+      - name: Build wheels
+        run: python python/make_wheels.py --search-prefix C:/vcpkg/packages/pcre_x64-windows-static
+        if: runner.os == 'Windows'
+        
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl

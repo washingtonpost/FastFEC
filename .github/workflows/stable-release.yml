@@ -9,6 +9,7 @@ jobs:
   build-linux:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - uses: goto-bus-stop/setup-zig@v1
@@ -37,6 +38,7 @@ jobs:
   build-macos:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - uses: goto-bus-stop/setup-zig@v1
@@ -64,6 +66,7 @@ jobs:
   build-windows:
     if: github.event.base_ref == 'refs/heads/main'
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
