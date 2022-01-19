@@ -1,7 +1,7 @@
-name: Beta Build Python
+name: PR Build Python
 
-on:
-  push:
+on:  
+  pull_request:
     branches:
       - develop
 
@@ -46,19 +46,3 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
-
-  upload_all:
-    needs: [build_wheels]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@v2
-      with:
-        name: artifact
-        path: dist
-
-    - name: Publish package to Test PyPI
-      uses: pypa/gh-action-pypi-publish@v1.4.2
-      with:
-        user: __token__
-        password: ${{ secrets.test_pypi_token }}
-        repository_url: https://test.pypi.org/legacy/
