@@ -688,12 +688,11 @@ void setVersion(FEC_CONTEXT *ctx, int start, int end)
 
 void parseHeader(FEC_CONTEXT *ctx)
 {
-  startHeaderRow(ctx, HEADER, csvExtension);
-
   // Check if the line starts with "/*"
   if (lineStartsWithLegacyHeader(ctx))
   {
     // Parse legacy header
+    startHeaderRow(ctx, HEADER, csvExtension);
     int scheduleCounts = 0; // init scheduleCounts to be false
     int firstField = 1;
 
