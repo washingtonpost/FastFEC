@@ -13,7 +13,7 @@ jobs:
         with:
           version: 0.9.0-dev.1675+3d528161c
       - name: Install system dependencies
-        run: sudo apt install -y libcurl4-openssl-dev libpcre++-dev
+        run: sudo apt install -y libcurl4-openssl-dev
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
