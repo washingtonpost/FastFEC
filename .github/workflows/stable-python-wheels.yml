@@ -7,7 +7,7 @@ on:
 
 jobs:
   build_wheels:
-    if: github.event.base_ref == 'refs/heads/main'
+    if: github.event.ref == 'refs/heads/main'
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -39,27 +39,27 @@ jobs:
       - name: Build wheels
         run: python python/make_wheels.py
         if: runner.os != 'Windows'
-      
+
       - name: Build wheels
         run: python python/make_wheels.py --search-prefix C:/vcpkg/packages/pcre_x64-windows-static
         if: runner.os == 'Windows'
-        
+
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
 
   upload_all:
-    if: github.event.base_ref == 'refs/heads/main'
+    if: github.event.ref == 'refs/heads/main'
     needs: [build_wheels]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/download-artifact@v2
-      with:
-        name: artifact
-        path: dist
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
 
-    - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.4.2
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_token }}
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_token }}

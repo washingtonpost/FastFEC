@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-linux:
-    if: github.event.base_ref == 'refs/heads/main'
+    if: github.event.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -36,7 +36,7 @@ jobs:
             libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
             libfastfec-${{ steps.get_version.outputs.VERSION }}.wasm
   build-macos:
-    if: github.event.base_ref == 'refs/heads/main'
+    if: github.event.ref == 'refs/heads/main'
     runs-on: macos-latest
     timeout-minutes: 20
     steps:
@@ -64,7 +64,7 @@ jobs:
             libfastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.dylib
             libfastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.dylib
   build-windows:
-    if: github.event.base_ref == 'refs/heads/main'
+    if: github.event.ref == 'refs/heads/main'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:

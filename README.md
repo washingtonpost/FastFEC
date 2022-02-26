@@ -1,6 +1,6 @@
 # FastFEC
 
-A C program to stream and parse FEC filings, writing output to CSV. This project is in early stages but works on a wide variety of filings and will benefit from additional rigorous testing.
+A C program to stream and parse FEC filings, writing output to CSV.
 
 ## Installation
 
