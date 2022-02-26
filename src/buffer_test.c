@@ -155,7 +155,7 @@ static char *testStringExpansion()
   // Read lines
   mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
   mu_assert("Expected line \"The cat\n\"", strcmp(s->str, "The cat\n") == 0);
-  mu_assert("Expected n 8", s->n == 8);
+  mu_assert("Expected n 16", s->n == 16);
 
   mu_assert("Expected line length 8", readLine(buffer, s, NULL) == 8);
   mu_assert("Expected line \"and the\n\"", strcmp(s->str, "and the\n") == 0);
