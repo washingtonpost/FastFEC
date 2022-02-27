@@ -9,7 +9,7 @@ jobs:
   meta-info:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "$GITHUB_CONTEXT"
+      - run: echo "$GITHUB_REF"
   build-linux:
     if: github.event.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
