@@ -19,7 +19,9 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
         shell: bash
-      - run: sudo apt install -y libcurl4-openssl-dev
+      - run: |
+          sudo apt-get update
+          sudo apt install -y libcurl4-openssl-dev
       - run: zig build
       - run: zip -j fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so

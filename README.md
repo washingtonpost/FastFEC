@@ -81,6 +81,7 @@ brew install pkg-config curl
 #### Ubuntu
 
 ```sh
+sudo apt-get update
 sudo apt install -y libcurl4-openssl-dev
 ```
 
