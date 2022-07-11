@@ -21,7 +21,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = pathlib.Path(SCRIPT_DIR).parent.absolute()
 
 # Buffer constants
-BUFFER_SIZE = 1024 * 1024
+BUFFER_SIZE = 4096
 
 # Callback function ctypes
 BUFFER_READ = CFUNCTYPE(c_size_t, POINTER(c_char), c_int, c_void_p)
