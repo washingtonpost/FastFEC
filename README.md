@@ -59,7 +59,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ### Build system
 
-[Zig](https://ziglang.org/) is used to build and compile the project. Download and install the latest version of Zig (>=9.0.0) by following the instructions on the website (you can verify it's working by typing `zig` in the terminal and seeing help commands).
+[Zig](https://ziglang.org/) is used to build and compile the project. Download and install the latest version of Zig (>=0.9.1) by following the instructions on the website (you can verify it's working by typing `zig` in the terminal and seeing help commands).
 
 ### Dependencies
 
@@ -81,6 +81,7 @@ brew install pkg-config curl
 #### Ubuntu
 
 ```sh
+sudo apt-get update
 sudo apt install -y libcurl4-openssl-dev
 ```
 

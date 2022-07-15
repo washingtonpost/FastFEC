@@ -2,5 +2,5 @@
 requires = [
     "setuptools",
     "wheel",
-    "ziglang==0.9.0"
+    "ziglang==0.9.1"
 ]
