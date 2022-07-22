@@ -21,11 +21,11 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = pathlib.Path(SCRIPT_DIR).parent.absolute()
 
 # Buffer constants
-BUFFER_SIZE = 4096
+BUFFER_SIZE = 1024 * 1024
 
 # Callback function ctypes
 BUFFER_READ = CFUNCTYPE(c_size_t, POINTER(c_char), c_int, c_void_p)
-CUSTOM_WRITE = CFUNCTYPE(None, c_char_p, c_char_p, c_char_p, c_int)
+CUSTOM_WRITE = CFUNCTYPE(None, c_char_p, c_char_p, POINTER(c_char), c_int)
 CUSTOM_LINE = CFUNCTYPE(None, c_char_p, c_char_p, c_char_p)
 
 
