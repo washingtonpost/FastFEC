@@ -85,3 +85,31 @@ def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
 
     with open(os.path.join(tmpdir, "SB23.csv")) as filing:
         assert len(filing.readlines()) == 36
+
+
+def test_filing_1606847_parse_as_files(tmpdir, filing_1606847):
+    """
+    Test that the FastFEC `parse_as_files` method outputs the correct files
+    and that they do not SEGFAULT.
+    """
+    with open(filing_1606847, "rb") as filing:
+        with FastFEC() as fastfec:
+            fastfec.parse_as_files(filing, tmpdir)
+
+    assert (
+        os.listdir(tmpdir).sort()
+        == [
+            "SA11AI.csv",
+            "TEXT.csv",
+            "SB29.csv",
+            "SB22.csv",
+            "SA15.csv",
+            "SA12.csv",
+            "header.csv",
+            "SB28A.csv",
+            "SB21B.csv",
+            "SA11C.csv",
+            "SA17.csv",
+            "F3XA.csv",
+        ].sort()
+    )
