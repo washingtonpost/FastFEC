@@ -1,5 +1,6 @@
 import datetime
 import os
+import pytest
 
 from fastfec import FastFEC
 
@@ -113,3 +114,17 @@ def test_filing_1606847_parse_as_files(tmpdir, filing_1606847):
             "F3XA.csv",
         ].sort()
     )
+
+def test_filing_1613679_malformed(tmpdir, filing_1613679_malformed):
+    """
+    Test that 1613679 with version number 2.4 raises an exception
+    upon failure to parse.
+    """
+    with pytest.raises(Exception) as exc_info:
+        with open(filing_1613679_malformed, "rb") as filing:
+            with FastFEC() as fastfec:
+                fastfec.parse_as_files(filing, tmpdir)
+
+    assert str(exc_info.value) == "FastFEC failed to parse."
+
+

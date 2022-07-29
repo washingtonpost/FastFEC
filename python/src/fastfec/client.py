@@ -173,6 +173,9 @@ class LibFastFEC:
         self.libfastfec.freeFecContext(fec_context)
         free_file_descriptors()
 
+        if result == -1:
+            raise Exception("FastFEC failed to parse.")
+
         return result
 
     def free(self):

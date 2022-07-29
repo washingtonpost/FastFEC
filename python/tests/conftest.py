@@ -30,7 +30,6 @@ def filing_1550126(get_fixture):
     """
     return get_fixture("1550126.fec")
 
-
 @pytest.fixture
 def filing_1550548(get_fixture):
     """
@@ -44,3 +43,10 @@ def filing_1606847(get_fixture):
     Returns the file path for 1606847.fec
     """
     return get_fixture("1606847.fec")
+
+@pytest.fixture
+def filing_1613679_malformed(get_fixture):
+    """
+    Returns the file path for 1613679_malformed.fec
+    """
+    return get_fixture("1613679_malformed.fec")
