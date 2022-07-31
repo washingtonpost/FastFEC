@@ -24,6 +24,8 @@ jobs:
         run: zig build
       - name: Run zig test
         run: zig build test
+      - name: Ensure mappings are up-to-date
+        run: python scripts/generate_mappings.py test
       - name: Install Python dependencies
         working-directory: python
         run: |

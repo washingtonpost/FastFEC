@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pcre.h>
+#include "pcre/pcre.h"
 #include "export.h"
 #include "mappings.h"
 

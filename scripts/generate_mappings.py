@@ -9,6 +9,7 @@ import csv
 import io
 import json
 import os
+import sys
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -65,6 +66,10 @@ type_enum = {
 
 
 if __name__ == "__main__":
+    test_mode = sys.argv[-1] == "test"
+    if test_mode:
+        print("Testing mappings")
+
     with open(os.path.join(script_dir, "mappings.json"), "r", encoding="utf8") as f:
         mappings_json = json.load(f)
     with open(os.path.join(script_dir, "types.json"), "r", encoding="utf8") as f:
@@ -73,7 +78,9 @@ if __name__ == "__main__":
     headers = []
     for form_type in mappings_json:
         for version in mappings_json[form_type]:
-            headers.append([version, form_type, list_to_csv(mappings_json[form_type][version])])
+            headers.append(
+                [version, form_type, list_to_csv(mappings_json[form_type][version])]
+            )
     header_table = generate_c_array("headers", 3, headers)
 
     types = []
@@ -86,7 +93,9 @@ if __name__ == "__main__":
                     raise ValueError("Expect to get a type")
                 if type_value == "date":
                     if type_mapping.get("format") != "%Y%m%d":
-                        raise ValueError(f'Unexpected date format: {type_mapping.get("format")}')
+                        raise ValueError(
+                            f'Unexpected date format: {type_mapping.get("format")}'
+                        )
                 elif type_value != "float":
                     raise ValueError(f"Unexpected type: {type_value}")
 
@@ -115,5 +124,20 @@ if __name__ == "__main__":
         type_table,
     )
 
-    with open(os.path.join(script_dir, "../src/mappings_generated.h"), "w", encoding="utf8") as f:
-        f.write(result)
+    if test_mode:
+        with open(
+            os.path.join(script_dir, "../src/mappings_generated.h"),
+            "r",
+            encoding="utf8",
+        ) as f:
+            assert (
+                result == f.read()
+            ), "Mappings outdated: Update by running `python scripts/generate_mappings.py`"
+            print("Mappings are up-to-date")
+    else:
+        with open(
+            os.path.join(script_dir, "../src/mappings_generated.h"),
+            "w",
+            encoding="utf8",
+        ) as f:
+            f.write(result)

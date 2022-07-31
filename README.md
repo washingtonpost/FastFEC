@@ -1,6 +1,6 @@
 # FastFEC
 
-A C program to stream and parse FEC filings, writing output to CSV.
+A C program to stream and parse [Federal Election Commission](https://www.fec.gov/) (FEC) filings, writing output to CSV.
 
 ## Installation
 
@@ -17,18 +17,17 @@ You can also build a binary yourself following the development instructions belo
 Once FastFEC has been installed, you can run the program by calling `fastfec` in your terminal:
 
 ```
-Usage: fastfec [flags] <id, file, or url> [output directory=output] [override id]
+Usage: fastfec [flags] <id or file> [output directory=output] [override id]
 ```
 
 - `[flags]`: optional flags which must come before other args; see below
-- `<id, file, or url>` is either
-  - a numeric ID, in which case the filing is streamed from the FEC website
+- `<file or id>` is either
   - a file, in which case the filing is read from disk at the specified local path
-  - a url, in which case the filing is streamed from the specified remote URL
+  - a numeric ID (only works with `--print-url`): prints the possible URLs the filing lives on the FEC docquery website
 - `[output directory]` is the folder in which CSV files will be written. By default, it is `output/`.
-- `[override id]` is an ID to use as the filing ID. If not specified, this ID is pulled out of the first parameter as a numeric component that can be found at the end of the path/URL.
+- `[override id]` is an ID to use as the filing ID. If not specified, this ID is pulled out of the first parameter as a numeric component that can be found at the end of the path.
 
-The CLI will download or read from disk the specified filing and then write output CSVs for each form type in the output directory. The paths of the outputted files are:
+The CLI will read the specified filing from disk and then write output CSVs for each form type in the output directory. The paths of the outputted files are:
 
 - `{output directory}/{filing id}/{form type}.csv`
 
@@ -46,14 +45,47 @@ The CLI supports the following flags:
 - `--silent` / `-s` : suppress all non-error output messages
 - `--warn` / `-w` : show warning messages (e.g. for rows with unexpected numbers of fields or field types that don't match exactly)
 - `--no-stdin` / `-x`: disable receiving piped input from other programs (stdin)
+- `--print-url` / `-p`: print URLs from docquery.fec.gov (cannot be specified with other flags)
 
 The short form of flags can be combined, e.g. `-is` would include filing IDs and suppress output.
 
 ### Examples
 
-`fastfec -s 13360 fastfec_output/`
+**Parsing a local filing**
 
-- This will run FastFEC in silent mode, download and parse filing ID 13360, and store the output in CSV files at `fastfec_output/13360/`.
+`fastfec -s 13360.fec fastfec_output/`
+
+- This will run FastFEC in silent mode, parse the local filing 13360.fec, and store the output in CSV files at `fastfec_output/13360/`.
+
+**Downloading and parsing a filing**
+
+Get the FEC filing URL needed:
+
+```sh
+fastfec -p 13360
+```
+
+If you have [`curl`](https://curl.se/download.html) installed, you can then run this command:
+
+```sh
+curl https://docquery.fec.gov/dcdev/posted/13360.fec | fastfec 13360
+```
+
+- This will download the filing with ID 13360 from the FEC's servers and stream/parse it, storing the output in CSV files at `output/13360/`
+
+If you don't have curl installed, you can also download the filing from the URL (https://docquery.fec.gov/dcdev/posted/13360.fec), save the file, and run (is equivalent to the above):
+
+```sh
+fastfec 13360.fec
+```
+
+## Benchmarks
+
+The following was performed on an M1 Macbook Air:
+
+| Filing        | Size  | Time   | Memory usage | CPU usage |
+| ------------- | ----- | ------ | ------------ | --------- |
+| `1464847.fec` | 8.4gb | 1m 42s | 1.7mb        | 98%       |
 
 ## Local development
 
@@ -63,36 +95,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ### Dependencies
 
-The following libraries are used:
-
-- curl (needed for the CLI, not the library)
-- pcre (only needed on Windows)
-
-Installing these libraries varies by OS:
-
-#### Mac OS X
-
-Ensure [Homebrew](https://brew.sh/) is installed and run the following `brew` command to install the libraries:
-
-```sh
-brew install pkg-config curl
-```
-
-#### Ubuntu
-
-```sh
-sudo apt-get update
-sudo apt install -y libcurl4-openssl-dev
-```
-
-#### Windows
-
-Install [vcpkg](https://vcpkg.io) and run the following:
-
-```sh
-vcpkg integrate install
-vcpkg install pcre curl --triplet x64-windows-static
-```
+FastFEC has no external C dependencies. [PCRE](./src/pcre/README) is bundled with the library to ensure compatibility with Zig's build system and cross-platform compilation.
 
 ### Building
 
@@ -102,26 +105,24 @@ From the root directory of the repo, run:
 zig build
 ```
 
-On Windows, you may have to supply additional arguments to locate vcpkg dependencies and ensure the msvc toolchain is used:
+- The above commands will output a binary at `zig-out/bin/fastfec` and a shared library file in the `zig-out/lib/` directory
+- If you want to only build the library, you can pass `-Dlib-only=true` as a build option following `zig build`
+- You can also compile for other operating systems via `-Dtarget=x86_64-windows` (see [here](https://ziglearn.org/chapter-3/#cross-compilation) for additional targets)
 
-```sh
-zig build --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
-```
+### Testing
 
-The above commands will output a binary at `zig-out/bin/fastfec` and a shared library file in the `zig-out/lib/` directory. If you want to only build the library, you can pass `-Dlib-only=true` as a build option following `zig build`.
+Currently, there's C tests for specific parsing/buffer/write/CLI functionality and Python integration tests.
 
-#### Time benchmarks
+- Running the C tests: `zig build test`
+- Running the Python tests:
+  ```sh
+  cd python
+  pip install -r requirements-dev.txt
+  tox -e py
+  ```
 
-Using massive `1464847.fec` (8.4gb) on an M1 MacBook Air
+See the [GitHub test workflow](./.github/workflows/test.yml) for more info
 
-- 1m 42s
-
-#### Testing
-
-Currently, there's only C tests for specific parsing/buffer/write functionality, but we hope to expand unit testing soon.
-
-To run the current tests: `zig build test`
-
-#### Scripts
+### Scripts
 
 `python scripts/generate_mappings.py`: A Python script to auto-generate C header files containing column header and type mappings

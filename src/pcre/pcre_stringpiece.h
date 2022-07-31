@@ -50,7 +50,7 @@
 #include <bits/type_traits.h>
 #endif
 
-#include <pcre.h>
+#include "pcre.h"
 
 namespace pcrecpp {
 
