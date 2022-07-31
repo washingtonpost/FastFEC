@@ -18,6 +18,7 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt install -y libcurl4-openssl-dev
+      # Linux/Wasm
       - run: zig build
       - run: zip -j fastfec-linux-x86_64-latest.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-latest.so
@@ -26,19 +27,19 @@ jobs:
       - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-latest.so
       - run: zig build -Dwasm
       - run: mv zig-out/lib/fastfec.wasm libfastfec-latest.wasm
-
+      # Mac
       - run: zig build -Dtarget=x86_64-macos
       - run: zip -j fastfec-macos-x86_64-latest.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-x86_64-latest.dylib
       - run: zig build -Dtarget=aarch64-macos
       - run: zip -j fastfec-macos-aarch64-latest.zip zig-out/bin/fastfec
       - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-aarch64-latest.dylib
-
+      # Windows
       - run: zig build -Dtarget=x86_64-windows
-      - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-x86_64-latest.zip
+      - run: zip -j fastfec-windows-x86_64-latest.zip zig-out/bin/fastfec.exe
       - run: mv zig-out/lib/fastfec.dll libfastfec-windows-x86_64-latest.dll
       - run: zig build -Dtarget=aarch64-windows
-      - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-aarch64-latest.zip
+      - run: zip -j fastfec-windows-aarch64-latest.zip zig-out/bin/fastfec.exe
       - run: mv zig-out/lib/fastfec.dll libfastfec-windows-aarch64-latest.dll
 
       - name: Release
