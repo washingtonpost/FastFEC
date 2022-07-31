@@ -9,7 +9,31 @@ on:
 
 jobs:
   build-for-beta-release:
-    uses: ./.github/workflows/_release.yml
+    steps:
+      - uses: ./.github/workflows/_release.yml
+        with:
+          version: latest
+
+  upload-beta-release:
+    needs: [build-for-beta-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            fastfec-linux-x86_64-latest.zip
+            libfastfec-linux-x86_64-latest.so
+            fastfec-linux-aarch64-latest.zip
+            libfastfec-linux-aarch64-latest.so
+            fastfec-macos-x86_64-latest.zip
+            libfastfec-macos-x86_64-latest.dylib
+            fastfec-macos-aarch64-latest.zip
+            libfastfec-macos-aarch64-latest.dylib
+            fastfec-windows-x86_64-latest.zip
+            libfastfec-windows-x86_64-latest.dll
+            fastfec-windows-aarch64-latest.zip
+            libfastfec-windows-aarch64-latest.dll
+            libfastfec-latest.wasm
 
   build-wheels-for-beta-release:
     uses: ./.github/workflows/_python-wheels.yml
