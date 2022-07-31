@@ -33,10 +33,10 @@ struct cli_context
   char *outputDirectory;
   // The filing ID
   char *fecId;
-  // The FEC URL from docquery (if requested)
-  char *fecUrl;
   // The normalized FEC file name
   char *fecName;
+  // The FEC URL from docquery (if requested)
+  char *fecUrl;
   // The backup FEC URL from docquery (if requested)
   char *fecBackupUrl;
   // Regex's

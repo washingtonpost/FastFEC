@@ -249,29 +249,37 @@ void freeCliContext(CLI_CONTEXT *ctx)
   if (ctx->outputDirectory)
   {
     free(ctx->outputDirectory);
+    ctx->outputDirectory = NULL;
   }
   if (ctx->fecId)
   {
     free(ctx->fecId);
-  }
-  if (ctx->fecUrl)
-  {
-    free(ctx->fecUrl);
+    ctx->fecId = NULL;
   }
   if (ctx->fecName)
   {
     free(ctx->fecName);
+    ctx->fecName = NULL;
+  }
+  if (ctx->fecUrl)
+  {
+    free(ctx->fecUrl);
+    ctx->fecUrl = NULL;
   }
   if (ctx->fecBackupUrl)
   {
     free(ctx->fecBackupUrl);
+    ctx->fecBackupUrl = NULL;
   }
   if (ctx->filingIdOnly)
   {
     pcre_free(ctx->filingIdOnly);
+    ctx->filingIdOnly = NULL;
   }
   if (ctx->extractNumber)
   {
     pcre_free(ctx->extractNumber);
+    ctx->extractNumber = NULL;
   }
+  free(ctx);
 }

@@ -108,6 +108,7 @@ const testIncludes = [_][]const u8{
     "src/encoding.c",
     "src/csv.c",
     "src/writer.c",
+    "src/cli.c"
 };
 const buildOptions = [_][]const u8{
     "-std=c11",
