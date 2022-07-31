@@ -1,6 +1,6 @@
 # FastFEC
 
-A C program to stream and parse FEC filings, writing output to CSV.
+A C program to stream and parse [Federal Election Commission](https://www.fec.gov/) (FEC) filings, writing output to CSV.
 
 ## Installation
 
@@ -17,14 +17,14 @@ You can also build a binary yourself following the development instructions belo
 Once FastFEC has been installed, you can run the program by calling `fastfec` in your terminal:
 
 ```
-Usage: fastfec [flags] <id, file, or url> [output directory=output] [override id]
+Usage: fastfec [flags] <id or file> [output directory=output] [override id]
 ```
 
 - `[flags]`: optional flags which must come before other args; see below
 - `<id, file, or url>` is either
   - a numeric ID, in which case the filing is streamed from the FEC website
   - a file, in which case the filing is read from disk at the specified local path
-  - a url, in which case the filing is streamed from the specified remote URL
+  - (URL support is blocked pending https://github.com/washingtonpost/FastFEC/issues/16)
 - `[output directory]` is the folder in which CSV files will be written. By default, it is `output/`.
 - `[override id]` is an ID to use as the filing ID. If not specified, this ID is pulled out of the first parameter as a numeric component that can be found at the end of the path/URL.
 
@@ -51,9 +51,18 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ### Examples
 
-`fastfec -s 13360 fastfec_output/`
+**Parsing a local filing**
 
-- This will run FastFEC in silent mode, download and parse filing ID 13360, and store the output in CSV files at `fastfec_output/13360/`.
+`fastfec -s 13360.fec fastfec_output/`
+
+- This will run FastFEC in silent mode, parse the local filing 13360.fec, and store the output in CSV files at `fastfec_output/13360/`.
+
+**Downloading and parsing a filing**
+
+`curl https://docquery.fec.gov/dcdev/posted/13360.fec | fastfec 13360`
+
+- This will download the filing with ID 13360 from the FEC's servers and stream/parse it, storing the output in CSV files at `output/13360/`
+- Ensure you have [`curl`](https://curl.se/download.html) installed before running this command
 
 ## Local development
 
@@ -63,36 +72,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 ### Dependencies
 
-The following libraries are used:
-
-- curl (needed for the CLI, not the library)
-- pcre (only needed on Windows)
-
-Installing these libraries varies by OS:
-
-#### Mac OS X
-
-Ensure [Homebrew](https://brew.sh/) is installed and run the following `brew` command to install the libraries:
-
-```sh
-brew install pkg-config curl
-```
-
-#### Ubuntu
-
-```sh
-sudo apt-get update
-sudo apt install -y libcurl4-openssl-dev
-```
-
-#### Windows
-
-Install [vcpkg](https://vcpkg.io) and run the following:
-
-```sh
-vcpkg integrate install
-vcpkg install pcre curl --triplet x64-windows-static
-```
+FastFEC has no dependencies.
 
 ### Building
 
@@ -100,12 +80,6 @@ From the root directory of the repo, run:
 
 ```sh
 zig build
-```
-
-On Windows, you may have to supply additional arguments to locate vcpkg dependencies and ensure the msvc toolchain is used:
-
-```sh
-zig build --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
 ```
 
 The above commands will output a binary at `zig-out/bin/fastfec` and a shared library file in the `zig-out/lib/` directory. If you want to only build the library, you can pass `-Dlib-only=true` as a build option following `zig build`.

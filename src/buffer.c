@@ -18,6 +18,11 @@ void freeBuffer(BUFFER *buffer)
   free(buffer);
 }
 
+size_t readBuffer(char *buffer, int want, FILE *file)
+{
+  return fread(buffer, 1, want, file);
+}
+
 size_t fillBuffer(BUFFER *buffer, void *data)
 {
   // Fill the buffer

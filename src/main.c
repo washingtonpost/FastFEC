@@ -1,300 +1,97 @@
-#include "urlopen.h"
 #include "encoding.h"
 #include "fec.h"
-#include <stdlib.h>
-#include <pcre.h>
-#include <string.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif
+#include "cli.h"
 
 #define BUFFERSIZE 65536
 
-const char *FLAG_FILING_ID = "--include-filing-id";
-const char FLAG_FILING_ID_SHORT = 'i';
-const char *FLAG_SILENT = "--silent";
-const char FLAG_SILENT_SHORT = 's';
-const char *FLAG_WARN = "--warn";
-const char FLAG_WARN_SHORT = 'w';
-const char *FLAG_DISABLE_STDIN = "--no-stdin";
-const char FLAG_DISABLE_STDIN_SHORT = 'x';
-
 void printUsage(char *argv[])
 {
-  fprintf(stderr, "\nUsage:\n    %s [flags] <id, file, or url> [output directory=output] [override id]\nor: [some command] | %s [flags] <id> [output directory=output]\n", argv[0], argv[0]);
+  fprintf(stderr, "\nUsage:\n    %s [flags] <id, file> [output directory=output] [override id]\nor: [some command] | %s [flags] <id> [output directory=output]\n", argv[0], argv[0]);
   fprintf(stderr, "\nOptional flags:\n");
   fprintf(stderr, "  %s, -%c: include a filing_id column at the beginning of\n                        every output CSV\n", FLAG_FILING_ID, FLAG_FILING_ID_SHORT);
   fprintf(stderr, "  %s, -%c        : suppress all stdout messages\n\n", FLAG_SILENT, FLAG_SILENT_SHORT);
   fprintf(stderr, "  %s, -%c        : show warning messages\n\n", FLAG_WARN, FLAG_WARN_SHORT);
   fprintf(stderr, "  %s, -%c        : disable piped input\n\n", FLAG_DISABLE_STDIN, FLAG_DISABLE_STDIN_SHORT);
+  fprintf(stderr, "  %s, -%c        : print URLs from docquery.fec.gov\n\n", FLAG_URL, FLAG_URL_SHORT);
 }
 
-/* Small main program to retrieve from a url using fgets and fread saving the
- * output to two test files (note the fgets method will corrupt binary files if
- * they contain 0 chars */
+void printUrl(CLI_CONTEXT *ctx, char *argv[])
+{
+  fprintf(stderr, "\nFEC docquery URLs:");
+  fprintf(stderr, "\n  Primary: %s", ctx->fecUrl);
+  fprintf(stderr, "\n  Secondary: %s", ctx->fecBackupUrl);
+  fprintf(stderr, "\n\nTry downloading the first URL. If that fails, try the second one.\n");
+  fprintf(stderr, "\nIf you have curl (https://curl.se/download.html) installed, you\ncan download and parse a filing with:\n");
+  fprintf(stderr, "\n  curl %s | %s %s\n\n", ctx->fecUrl, argv[0], ctx->fecId);
+}
+
 int main(int argc, char *argv[])
 {
-  int piped = !isatty(fileno(stdin));
-  int flagOffset = 0;
+  // Determine whether the input is piped
+  int isPiped = !isatty(fileno(stdin));
 
-  URL_FILE *handle;
-  const char *url;
+  // Parse the arguments into a CLI context
+  CLI_CONTEXT *cli = newCliContext();
+  parseArgs(cli, isPiped, argc, argv);
 
-  if (argc < 2)
+  // Print usage and exit
+  if (cli->shouldPrintUsage)
   {
-    printUsage(argv);
-    exit(1);
-  }
-
-  // Regexes and constants for URL handling
-  const char *error;
-  int errorOffset;
-  pcre *filingIdOnly = pcre_compile("^\\s*([0-9]+)\\s*$", 0, &error, &errorOffset, NULL);
-  if (filingIdOnly == NULL)
-  {
-    fprintf(stderr, "PCRE filing ID compilation failed at offset %d: %s\n", errorOffset, error);
-    exit(1);
-  }
-  pcre *extractNumber = pcre_compile("^.*?([0-9]+)(\\.[^\\.]+)?\\s*$", 0, &error, &errorOffset, NULL);
-  if (extractNumber == NULL)
-  {
-    fprintf(stderr, "PCRE number extraction compilation failed at offset %d: %s\n", errorOffset, error);
-    exit(1);
-  }
-
-  // Try to extract flags
-  int includeFilingId = 0;
-  int silent = 0;
-  int warn = 0;
-  while (argv[1 + flagOffset][0] == '-')
-  {
-    if (strcmp(argv[1 + flagOffset], FLAG_FILING_ID) == 0)
+    // Determine additional messages to print
+    if (cli->shouldPrintSpecifyFilingId)
     {
-      includeFilingId = 1;
-      flagOffset++;
+      fprintf(stderr, "Please specify a filing ID manually\n");
     }
-    else if (strcmp(argv[1 + flagOffset], FLAG_SILENT) == 0)
+    else if (cli->shouldPrintUrlOnly)
     {
-      silent = 1;
-      flagOffset++;
+      fprintf(stderr, "If printing docquery URLs, please specify no additional flags\n");
     }
-    else if (strcmp(argv[1 + flagOffset], FLAG_WARN) == 0)
-    {
-      warn = 1;
-      flagOffset++;
-    }
-    else if (strcmp(argv[1 + flagOffset], FLAG_DISABLE_STDIN) == 0)
-    {
-      piped = 0;
-      flagOffset++;
-    }
-    else
-    {
-      // Try to extract flags in short form
-      int matched = 0;
-      for (int i = 1; i < strlen(argv[1 + flagOffset]); i++)
-      {
-        if (argv[1 + flagOffset][i] == FLAG_FILING_ID_SHORT)
-        {
-          includeFilingId = 1;
-          matched = 1;
-        }
-        else if (argv[1 + flagOffset][i] == FLAG_SILENT_SHORT)
-        {
-          silent = 1;
-          matched = 1;
-        }
-        else if (argv[1 + flagOffset][i] == FLAG_WARN_SHORT)
-        {
-          warn = 1;
-          matched = 1;
-        }
-        else if (argv[1 + flagOffset][i] == FLAG_DISABLE_STDIN_SHORT)
-        {
-          piped = 0;
-          matched = 1;
-        }
-        else
-        {
-          printUsage(argv);
-          exit(1);
-        }
-      }
 
-      if (matched)
-      {
-        flagOffset++;
-      }
-      else
-      {
-        printUsage(argv);
-        exit(1);
-      }
-    }
-  }
-
-  const char *docqueryUrl = "https://docquery.fec.gov/dcdev/posted/";
-  const char *docqueryUrlAlt = "https://docquery.fec.gov/paper/posted/";
-
-  url = piped ? NULL : argv[1 + flagOffset];
-
-  // Strings that will carry the decoded values for the filing URL and ID,
-  // where URL can be a local file or a remote URL
-  char *fecUrl = NULL;
-  char *fecBackupUrl = NULL;
-  char *fecId = NULL;
-  char *outputDirectory = malloc(8);
-  strcpy(outputDirectory, "output/");
-  char *fecExtension = ".fec";
-  if (argc > 2 + flagOffset)
-  {
-    outputDirectory = realloc(outputDirectory, strlen(argv[2 + flagOffset]) + 1);
-    strcpy(outputDirectory, argv[2 + flagOffset]);
-
-    // Ensure output directory ends with a trailing slash
-    if (outputDirectory[strlen(outputDirectory) - 1] != '/')
-    {
-      outputDirectory = realloc(outputDirectory, strlen(outputDirectory) + 2);
-      strcat(outputDirectory, "/");
-    }
-  }
-
-  // Pull out ID/override ID parameter, depending on how input is piped
-  if (piped)
-  {
-    if (argc > 1 + flagOffset)
-    {
-      fecId = malloc(strlen(argv[1 + flagOffset]) + 1);
-      strcpy(fecId, argv[1 + flagOffset]);
-    }
-    else
-    {
-      printUsage(argv);
-      exit(1);
-    }
-  }
-  else
-  {
-    if (argc > 3 + flagOffset)
-    {
-      fecId = malloc(strlen(argv[3 + flagOffset]) + 1);
-      strcpy(fecId, argv[3 + flagOffset]);
-    }
-  }
-
-  // Check URL format and grab matching ID
-  int matches[6];
-  if (!piped && (pcre_exec(filingIdOnly, NULL, url, strlen(url), 0, 0, matches, 3) >= 0))
-  {
-    // URL is a purely numeric filing ID
-    int start = matches[0];
-    int end = matches[1];
-
-    // Initialize FEC id
-    fecId = malloc(end - start + 1);
-    strncpy(fecId, url + start, end - start);
-    fecId[end - start] = '\0';
-
-    // Initialize FEC URL (and backup URL)
-    fecUrl = malloc(strlen(docqueryUrl) + strlen(fecId) + strlen(fecExtension) + 1);
-    strcpy(fecUrl, docqueryUrl);
-    strcat(fecUrl, fecId);
-    strcat(fecUrl, fecExtension);
-    fecUrl[strlen(fecUrl)] = '\0';
-    fecBackupUrl = malloc(strlen(docqueryUrlAlt) + strlen(fecId) + strlen(fecExtension) + 1);
-    strcpy(fecBackupUrl, docqueryUrlAlt);
-    strcat(fecBackupUrl, fecId);
-    strcat(fecBackupUrl, fecExtension);
-  }
-  else if (!piped)
-  {
-    // URL is a local file or a remote URL
-    fecUrl = malloc(strlen(url) + 1);
-    strcpy(fecUrl, url);
-    fecUrl[strlen(fecUrl)] = '\0';
-
-    // Try to extract the ID from the URL
-    if (fecId == NULL && pcre_exec(extractNumber, NULL, fecUrl, strlen(fecUrl), 0, 0, matches, 6) >= 0)
-    {
-      int start = matches[2];
-      int end = matches[3];
-
-      // Initialize FEC id
-      fecId = malloc(end - start + 1);
-      strncpy(fecId, url + start, end - start);
-      fecId[end - start] = '\0';
-    }
-  }
-
-  if (fecId == NULL)
-  {
-    fprintf(stderr, "Please specify a filing ID manually\n");
     printUsage(argv);
 
-    // Clear associated memory
-    free(outputDirectory);
-    if (fecUrl != NULL)
-    {
-      free(fecUrl);
-    }
-    if (fecBackupUrl != NULL)
-    {
-      free(fecBackupUrl);
-    }
-    pcre_free(filingIdOnly);
-    pcre_free(extractNumber);
-
+    freeCliContext(cli);
     exit(1);
   }
 
-  if (!silent)
+  // Print docquery URLs and exit (successfully)
+  if (cli->printUrl)
   {
-    printf("About to parse filing ID %s\n", fecId);
+    printUrl(cli, argv);
+    exit(0);
   }
-  if (piped)
+
+  // Run the program
+  if (!cli->silent)
   {
-    if (!silent)
+    printf("About to parse filing ID %s\n", cli->fecId);
+  }
+  if (cli->piped)
+  {
+    if (!cli->silent)
     {
       printf("Using stdin\n");
     }
   }
   else
   {
-    if (!silent)
+    if (!cli->silent)
     {
-      printf("Trying URL: %s\n", fecUrl);
+      printf("Trying filename: %s\n", cli->fecName);
     }
   }
 
-  handle = piped ? url_fopen_stdin() : url_fopen(fecUrl, "r", NULL);
+  // Get the file handle from stdin or the passed in filename
+  FILE *handle = cli->piped ? stdin : fopen(cli->fecName, "r");
   if (!handle)
   {
-    if (fecBackupUrl != NULL)
-    {
-      if (!silent)
-      {
-        printf("Couldn't open URL %s\n", fecUrl);
-        printf("Trying backup URL: %s\n", fecBackupUrl);
-      }
-      handle = url_fopen(fecBackupUrl, "r", NULL);
-
-      if (!handle)
-      {
-        fprintf(stderr, "Couldn't open URL: %s\n", fecBackupUrl);
-        return 2;
-      }
-    }
-    else
-    {
-      fprintf(stderr, "Couldn't open URL %s\n", fecUrl);
-      return 2;
-    }
+    fprintf(stderr, "Couldn't open file: %s\n", cli->fecName);
+    return 2;
   }
 
   // Initialize persistent memory context
   PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
   // Initialize FEC context
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&url_readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, NULL, 1, handle, fecId, outputDirectory, includeFilingId, silent, warn);
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, NULL, 1, handle, cli->fecId, cli->outputDirectory, cli->includeFilingId, cli->silent, cli->warn);
 
   // Parse the fec file
   int fecParseResult = parseFec(fec);
@@ -302,24 +99,13 @@ int main(int argc, char *argv[])
   // Clear up memory
   freeFecContext(fec);
   freePersistentMemoryContext(persistentMemory);
-  pcre_free(filingIdOnly);
-  pcre_free(extractNumber);
-  free(outputDirectory);
-  if (fecUrl != NULL)
-  {
-    free(fecUrl);
-  }
-  if (fecBackupUrl != NULL)
-  {
-    free(fecBackupUrl);
-  }
-  if (fecId != NULL)
-  {
-    free(fecId);
-  }
+  freeCliContext(cli);
 
   // Close file handles
-  url_fclose(handle);
+  if (!cli->piped)
+  {
+    fclose(handle);
+  }
 
   if (!fecParseResult)
   {
@@ -327,7 +113,7 @@ int main(int argc, char *argv[])
     return 3;
   }
 
-  if (!silent)
+  if (!cli->silent)
   {
     printf("Done; parsing successful!\n");
   }
