@@ -70,7 +70,7 @@ static char *testCliShowUsage2()
   const int argc = sizeof(argv) / sizeof(argv[0]);
   parseArgs(cli, 0, argc, argv);
 
-  // Unknown flag
+  // No args
   mu_assert("Expected print usage", cli->shouldPrintUsage == 1);
 
   freeCliContext(cli);
@@ -86,7 +86,7 @@ static char *testCliShowSpecifyFilingId()
   const int argc = sizeof(argv) / sizeof(argv[0]);
   parseArgs(cli, 0, argc, argv);
 
-  // Unknown flag
+  // No discernable filing id
   mu_assert("Expected print usage", cli->shouldPrintUsage == 1);
   mu_assert("Expected specify filing id", cli->shouldPrintSpecifyFilingId == 1);
 
@@ -103,7 +103,6 @@ static char *testCliSilentWarnPipedIncludeFilingId()
   const int argc = sizeof(argv) / sizeof(argv[0]);
   parseArgs(cli, 1, argc, argv);
 
-  // Unknown flag
   mu_assert("Expected piped", cli->piped == 1);
   mu_assert("Expected include filing id", cli->includeFilingId == 1);
   mu_assert("Expected silent", cli->silent == 1);
@@ -125,7 +124,6 @@ static char *testCliPipedNoStdin()
   const int argc = sizeof(argv) / sizeof(argv[0]);
   parseArgs(cli, 1, argc, argv);
 
-  // Unknown flag
   mu_assert("Expected piped", cli->piped == 0);
   mu_assert("Expected include filing id", cli->includeFilingId == 1);
   mu_assert("Expected silent", cli->silent == 1);
