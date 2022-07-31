@@ -9,10 +9,9 @@ on:
 
 jobs:
   build-for-beta-release:
-    steps:
-      - uses: ./.github/workflows/_release.yml
-        with:
-          version: latest
+    uses: ./.github/workflows/_release.yml
+    with:
+      version: latest
 
   upload-beta-release:
     needs: [build-for-beta-release]

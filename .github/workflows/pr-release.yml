@@ -9,10 +9,9 @@ on:
 
 jobs:
   build-for-pr-release:
-    steps:
-      - uses: ./.github/workflows/_release.yml
-        with:
-          version: latest
+    uses: ./.github/workflows/_release.yml
+    with:
+      version: latest
 
   upload-pr-release:
     needs: [build-for-pr-release]
