@@ -59,7 +59,7 @@ The short form of flags can be combined, e.g. `-is` would include filing IDs and
 
 **Downloading and parsing a filing**
 
-Get the docquery URL needed:
+Get the FEC filing URL needed:
 
 ```sh
 fastfec -p 13360

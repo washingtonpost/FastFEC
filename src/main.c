@@ -17,9 +17,9 @@ void printUsage(char *argv[])
 
 void printUrl(CLI_CONTEXT *ctx, char *argv[])
 {
-  fprintf(stderr, "\nFEC docquery URLs:");
+  fprintf(stderr, "\nFEC filing URLs:");
   fprintf(stderr, "\n  Primary: %s", ctx->fecUrl);
-  fprintf(stderr, "\n  Secondary: %s", ctx->fecBackupUrl);
+  fprintf(stderr, "\n  Converted paper: %s", ctx->fecBackupUrl);
   fprintf(stderr, "\n\nTry downloading the first URL. If that fails, try the second one.\n");
   fprintf(stderr, "\nIf you have curl (https://curl.se/download.html) installed, you\ncan download and parse a filing with:\n");
   fprintf(stderr, "\n  curl %s | %s %s\n\n", ctx->fecUrl, argv[0], ctx->fecId);
