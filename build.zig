@@ -21,6 +21,7 @@ pub fn build(b: *std.build.Builder) !void {
         fastfec_cli.linkLibC();
 
         fastfec_cli.addCSourceFiles(&libSources, &buildOptions);
+        fastfec_cli.addCSourceFiles(&pcreSources, &buildOptions);
         fastfec_cli.addCSourceFiles(&.{
             "src/cli.c",
             "src/main.c",
@@ -35,6 +36,7 @@ pub fn build(b: *std.build.Builder) !void {
         fastfec_lib.install();
         fastfec_lib.linkLibC();
         fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
+        fastfec_lib.addCSourceFiles(&pcreSources, &buildOptions);
     } else if (wasm) {
         // Wasm library build step
         const fastfec_wasm = b.addSharedLibrary("fastfec", null, .unversioned);
@@ -44,6 +46,7 @@ pub fn build(b: *std.build.Builder) !void {
         fastfec_wasm.install();
         fastfec_wasm.linkLibC();
         fastfec_wasm.addCSourceFiles(&libSources, &buildOptions);
+        fastfec_wasm.addCSourceFiles(&pcreSources, &buildOptions);
         fastfec_wasm.addCSourceFile("src/wasm.c", &buildOptions);
     }
 
@@ -54,6 +57,7 @@ pub fn build(b: *std.build.Builder) !void {
         const subtest_exe = b.addExecutable(base_file, null);
         subtest_exe.linkLibC();
         subtest_exe.addCSourceFiles(&testIncludes, &buildOptions);
+        subtest_exe.addCSourceFiles(&pcreSources, &buildOptions);
         subtest_exe.addCSourceFile(test_file, &buildOptions);
         const subtest_cmd = subtest_exe.run();
         if (prev_test_step != null) {
@@ -73,6 +77,8 @@ const libSources = [_][]const u8{
     "src/csv.c",
     "src/writer.c",
     "src/fec.c",
+};
+const pcreSources = [_][]const u8{
     "src/pcre/pcre_chartables.c",
     "src/pcre/pcre_byte_order.c",
     "src/pcre/pcre_compile.c",
