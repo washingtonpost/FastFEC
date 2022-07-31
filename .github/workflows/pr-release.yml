@@ -1,88 +1,15 @@
+# Create draft PR releases on pull requests to develop
+
 name: PR Release
 
-on:  
+on:
   pull_request:
     branches:
       - develop
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - uses: goto-bus-stop/setup-zig@v1
-        with:
-          version: 0.9.1
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::latest
-        shell: bash
-      - run: |
-          sudo apt-get update
-          sudo apt install -y libcurl4-openssl-dev
-      - run: zig build
-      - run: zip -j fastfec-linux-x86_64-latest.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-latest.so
-      - run: zig build -Dlib-only=true -Dtarget=aarch64-linux
-      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-latest.so
-      - run: zig build -Dwasm
-      - run: mv zig-out/lib/fastfec.wasm libfastfec-latest.wasm
-      - uses: actions/upload-artifact@v2
-        with:
-          path: |
-            fastfec-linux-x86_64-latest.zip
-            libfastfec-linux-x86_64-latest.so
-            libfastfec-linux-aarch64-latest.so
-            libfastfec-latest.wasm
-  build-macos:
-    runs-on: macos-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - uses: goto-bus-stop/setup-zig@v1
-        with:
-          version: 0.9.1
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::latest
-        shell: bash
-      - run: brew install pkg-config curl
-      - run: zig build
-      - run: zip -j fastfec-macos-x86_64-latest.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-x86_64-latest.dylib
-      - run: zig build -Dtarget=aarch64-macos
-      - run: zip -j fastfec-macos-aarch64-latest.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-aarch64-latest.dylib
-      - uses: actions/upload-artifact@v2
-        with:
-          path: |
-            fastfec-macos-x86_64-latest.zip
-            fastfec-macos-aarch64-latest.zip
-            libfastfec-macos-x86_64-latest.dylib
-            libfastfec-macos-aarch64-latest.dylib
-  build-windows:
-    runs-on: windows-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
-      - uses: goto-bus-stop/setup-zig@v1
-        with:
-          version: 0.9.1
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::latest
-        shell: bash
-      - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
-      - run: vcpkg integrate install
-      - run: vcpkg install pcre curl --triplet x64-windows-static
-      - run: zig build --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
-      - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-x86_64-latest.zip
-      - run: mv zig-out/lib/fastfec.dll libfastfec-windows-x86_64-latest.dll
-        shell: bash
-      - uses: actions/upload-artifact@v2
-        with:
-          path: |
-            fastfec-windows-x86_64-latest.zip
-            libfastfec-windows-x86_64-latest.dll
+  build-for-pr-release:
+    uses: ./.github/workflows/_release.yml
+
+  build-wheels-for-pr-release:
+    uses: ./.github/workflows/_python-wheels.yml

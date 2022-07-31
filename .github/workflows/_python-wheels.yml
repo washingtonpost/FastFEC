@@ -1,0 +1,23 @@
+# A reusable workflow for building cross-platform Python wheels
+
+on: workflow_call
+
+jobs:
+  build-wheels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install Zig
+        run: python -m pip install ziglang==0.9.1 wheel==0.37.1
+
+      - name: Build wheels
+        run: python python/make_wheels.py
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl

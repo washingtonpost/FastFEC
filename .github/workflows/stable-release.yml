@@ -1,3 +1,5 @@
+# Create new stable releases on version spec tagged pushes to main
+
 name: Stable Release
 
 on:
@@ -6,89 +8,26 @@ on:
       - "*.*.*"
 
 jobs:
-  build-linux:
+  build-for-stable-release:
     if: github.event.base_ref == 'refs/heads/main'
+    uses: ./.github/workflows/_release.yml
+
+  build-wheels-for-stable-release:
+    if: github.event.base_ref == 'refs/heads/main'
+    uses: ./.github/workflows/_python-wheels.yml
+
+  upload-wheels-for-stable-release:
+    if: github.event.base_ref == 'refs/heads/main'
+    needs: [build_wheels]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v2
-      - uses: goto-bus-stop/setup-zig@v1
+      - uses: actions/download-artifact@v2
         with:
-          version: 0.9.1
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-        shell: bash
-      - run: |
-          sudo apt-get update
-          sudo apt install -y libcurl4-openssl-dev
-      - run: zig build
-      - run: zip -j fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
-      - run: zig build -Dlib-only=true -Dtarget=aarch64-linux
-      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
-      - run: zig build -Dwasm
-      - run: mv zig-out/lib/fastfec.wasm libfastfec-${{ steps.get_version.outputs.VERSION }}.wasm
-      - name: Release
-        uses: softprops/action-gh-release@v1
+          name: artifact
+          path: dist
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
-          files: |
-            fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
-            libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
-            libfastfec-${{ steps.get_version.outputs.VERSION }}.wasm
-  build-macos:
-    if: github.event.base_ref == 'refs/heads/main'
-    runs-on: macos-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - uses: goto-bus-stop/setup-zig@v1
-        with:
-          version: 0.9.1
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-        shell: bash
-      - run: brew install pkg-config curl
-      - run: zig build
-      - run: zip -j fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.dylib
-      - run: zig build -Dtarget=aarch64-macos
-      - run: zip -j fastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.dylib
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-            fastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.dylib
-            libfastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.dylib
-  build-windows:
-    if: github.event.base_ref == 'refs/heads/main'
-    runs-on: windows-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
-      - uses: goto-bus-stop/setup-zig@v1
-        with:
-          version: 0.9.1
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-        shell: bash
-      - run: c:; cd \vcpkg; git pull; .\bootstrap-vcpkg.bat
-      - run: vcpkg integrate install
-      - run: vcpkg install pcre curl --triplet x64-windows-static
-      - run: zig build --search-prefix C:/vcpkg/packages/pcre_x64-windows-static --search-prefix C:/vcpkg/packages/curl_x64-windows-static --search-prefix C:/vcpkg/packages/zlib_x64-windows-static -Dtarget=x86_64-windows-msvc
-      - run: Compress-Archive zig-out/bin/fastfec.exe fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-      - run: mv zig-out/lib/fastfec.dll libfastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.dll
-        shell: bash
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.dll
+          user: __token__
+          password: ${{ secrets.pypi_token }}
