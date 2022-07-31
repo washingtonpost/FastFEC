@@ -78,6 +78,22 @@ static char *testCliShowUsage2()
   return 0;
 }
 
+static char *testCliShowUsage3()
+{
+  CLI_CONTEXT *cli = newCliContext();
+
+  const char *argv[] = {"fastfec", "--include-filing-id"};
+  const int argc = sizeof(argv) / sizeof(argv[0]);
+  parseArgs(cli, 0, argc, argv);
+
+  // No args
+  mu_assert("Expected print usage", cli->shouldPrintUsage == 1);
+
+  freeCliContext(cli);
+
+  return 0;
+}
+
 static char *testCliShowSpecifyFilingId()
 {
   CLI_CONTEXT *cli = newCliContext();
@@ -144,6 +160,7 @@ static char *all_tests()
   mu_run_test(testCliPrintUrl);
   mu_run_test(testCliShowUsage1);
   mu_run_test(testCliShowUsage2);
+  mu_run_test(testCliShowUsage3);
   mu_run_test(testCliShowSpecifyFilingId);
   mu_run_test(testCliSilentWarnPipedIncludeFilingId);
   mu_run_test(testCliPipedNoStdin);

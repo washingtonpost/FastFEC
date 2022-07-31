@@ -56,7 +56,7 @@ void parseArgs(CLI_CONTEXT *ctx, int isPiped, int argc, char *argv[])
   }
 
   // Try to extract flags
-  while (argv[1 + flagOffset][0] == '-')
+  while (1 + flagOffset < argc && argv[1 + flagOffset][0] == '-')
   {
     if (strcmp(argv[1 + flagOffset], FLAG_FILING_ID) == 0)
     {
@@ -134,6 +134,12 @@ void parseArgs(CLI_CONTEXT *ctx, int isPiped, int argc, char *argv[])
   }
 
   // Set the name
+  if (flagOffset + 1 >= argc)
+  {
+    // Ensure there's more args to pull from
+    ctx->shouldPrintUsage = 1;
+    return;
+  }
   ctx->name = ctx->piped ? NULL : argv[1 + flagOffset];
 
   // Strings that will carry decoded values for filing name/id
