@@ -51,7 +51,7 @@ jobs:
 
   upload-wheels-for-stable-release:
     if: github.event.base_ref == 'refs/heads/main'
-    needs: [build_wheels]
+    needs: [build-wheels-for-stable-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v2
