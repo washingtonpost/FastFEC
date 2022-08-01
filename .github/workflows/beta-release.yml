@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: softprops/action-gh-release@v1
         with:
+          tag_name: latest
           files: |
             fastfec-linux-x86_64-latest.zip
             libfastfec-linux-x86_64-latest.so
