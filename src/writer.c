@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include "compat.h"
 
 #ifndef PATH_MAX_LENGTH
 #define PATH_MAX_LENGTH 4096 /* # chars in a path name including nul */
@@ -38,7 +39,7 @@ int mkdir_p(const char *path)
   /* Iterate the string */
   for (p = _path + 1; *p; p++)
   {
-    if (*p == '/')
+    if (*p == DIR_SEPARATOR_CHAR)
     {
       /* Temporarily truncate */
       *p = '\0';
@@ -54,7 +55,7 @@ int mkdir_p(const char *path)
           return -1;
       }
 
-      *p = '/';
+      *p = DIR_SEPARATOR_CHAR;
     }
   }
 
@@ -76,11 +77,11 @@ int mkdir_p(const char *path)
 // Adapted from https://stackoverflow.com/a/32496721
 void normalize_filename(char *filename)
 {
-  char *current_pos = strchr(filename, '/');
+  char *current_pos = strchr(filename, DIR_SEPARATOR_CHAR);
   while (current_pos)
   {
     *current_pos = '-';
-    current_pos = strchr(current_pos, '/');
+    current_pos = strchr(current_pos, DIR_SEPARATOR_CHAR);
   }
 }
 
@@ -222,7 +223,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
     mkdir_p(fullpath);
 
     // Add the normalized filename to path
-    strcat(fullpath, "/");
+    strcat(fullpath, DIR_SEPARATOR);
     char *normalizedFilename = malloc(strlen(filename) + 1);
     strcpy(normalizedFilename, filename);
     normalize_filename(normalizedFilename);

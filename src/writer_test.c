@@ -163,7 +163,7 @@ int main(int argc, char **argv)
   {
     printf("ALL TESTS PASSED\n");
   }
-  printf("Tests run: %d\n", tests_run);
+  printf("Tests run: %d\n\n", tests_run);
 
   return result != 0;
 }
