@@ -44,13 +44,13 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->f99TextStart = pcre_compile("^\\s*\\[BEGIN ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
   if (ctx->f99TextStart == NULL)
   {
-    fprintf(stderr, "PCRE f99 text start compilation failed at offset %d: %s\n", errorOffset, error);
+    fprintf(stderr, "Regex f99 text start compilation failed at offset %d: %s\n", errorOffset, error);
     exit(1);
   }
   ctx->f99TextEnd = pcre_compile("^\\s*\\[END ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
   if (ctx->f99TextEnd == NULL)
   {
-    fprintf(stderr, "PCRE f99 text end compilation failed at offset %d: %s\n", errorOffset, error);
+    fprintf(stderr, "Regex f99 text end compilation failed at offset %d: %s\n", errorOffset, error);
     exit(1);
   }
 
