@@ -23,11 +23,12 @@ from wheel.wheelfile import WheelFile
 
 matrix = [
     # (platform, Zig target, wheel)
-    ("Linux", "x86_64-linux-gnu", "manylinux1_x86_64"),
-    ("Linux", "aarch64-linux-gnu", "manylinux2014_aarch64"),
+    ("Linux", "x86_64-linux", "manylinux1_x86_64"),
+    ("Linux", "aarch64-linux", "manylinux2014_aarch64"),
     ("Darwin", "x86_64-macos", "macosx_10_9_x86_64"),
     ("Darwin", "aarch64-macos", "macosx_11_0_arm64"),
-    ("Windows", "x86_64-windows-msvc", "win_amd64"),
+    ("Windows", "x86_64-windows", "win_amd64"),
+    ("Windows", "aarch64-windows", "win_arm64"),
 ]
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -113,7 +114,9 @@ base_contents = {}
 for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
     with open(path, "rb") as f:
         file_contents = f.read()
-    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = file_contents
+    base_contents[
+        os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))
+    ] = file_contents
 
 current_platform = platform.system()
 for target_platform, zig_target, wheel_platform in matrix:
@@ -126,9 +129,17 @@ for target_platform, zig_target, wheel_platform in matrix:
     # First clear the target directory of any stray files
     if os.path.exists(LIBRARY_DIR):
         shutil.rmtree(LIBRARY_DIR)
-    # Compile! Requires ziglang==0.9.0 to be installed
+    # Compile! Requires ziglang==0.9.1 to be installed
     subprocess.call(
-        [sys.executable, "-m", "ziglang", "build", "-Dlib-only=true", f"-Dtarget={zig_target}", *sys.argv[1:]],
+        [
+            sys.executable,
+            "-m",
+            "ziglang",
+            "build",
+            "-Dlib-only=true",
+            f"-Dtarget={zig_target}",
+            *sys.argv[1:],
+        ],
         cwd=PARENT_DIR,
     )
     # Collect compiled library files (extension .dylib|.so|.dll)
@@ -140,7 +151,9 @@ for target_platform, zig_target, wheel_platform in matrix:
     # Write the library file to the archive contents
     for library_file in library_files:
         with open(library_file, "rb") as f:
-            contents[os.path.join(PACKAGE_NAME, os.path.relpath(library_file, LIBRARY_DIR))] = f.read()
+            contents[
+                os.path.join(PACKAGE_NAME, os.path.relpath(library_file, LIBRARY_DIR))
+            ] = f.read()
 
     # Create output directory if needed
     if not os.path.exists(OUTPUT_DIR):
