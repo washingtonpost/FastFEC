@@ -9,41 +9,31 @@ on:
 
 jobs:
   build-for-stable-release:
-    runs-on: ubuntu-latest
     if: github.event.base_ref == 'refs/heads/main'
-    steps:
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::latest
-        shell: bash
-      - uses: ./.github/workflows/_release.yml
-        with:
-          version: ${{ steps.get_version.outputs.VERSION }}
+    uses: ./.github/workflows/_release.yml
+    with:
+      version: ${{ github.ref_name }}
 
   upload-stable-release:
     needs: [build-for-stable-release]
     runs-on: ubuntu-latest
     steps:
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::latest
-        shell: bash
       - uses: softprops/action-gh-release@v1
         with:
           files: |
-            fastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-linux-x86_64-${{ steps.get_version.outputs.VERSION }}.so
-            fastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-linux-aarch64-${{ steps.get_version.outputs.VERSION }}.so
-            fastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-macos-x86_64-${{ steps.get_version.outputs.VERSION }}.dylib
-            fastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-macos-aarch64-${{ steps.get_version.outputs.VERSION }}.dylib
-            fastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-windows-x86_64-${{ steps.get_version.outputs.VERSION }}.dll
-            fastfec-windows-aarch64-${{ steps.get_version.outputs.VERSION }}.zip
-            libfastfec-windows-aarch64-${{ steps.get_version.outputs.VERSION }}.dll
-            libfastfec-${{ steps.get_version.outputs.VERSION }}.wasm
+            fastfec-linux-x86_64-${{ github.ref_name }}.zip
+            libfastfec-linux-x86_64-${{ github.ref_name }}.so
+            fastfec-linux-aarch64-${{ github.ref_name }}.zip
+            libfastfec-linux-aarch64-${{ github.ref_name }}.so
+            fastfec-macos-x86_64-${{ github.ref_name }}.zip
+            libfastfec-macos-x86_64-${{ github.ref_name }}.dylib
+            fastfec-macos-aarch64-${{ github.ref_name }}.zip
+            libfastfec-macos-aarch64-${{ github.ref_name }}.dylib
+            fastfec-windows-x86_64-${{ github.ref_name }}.zip
+            libfastfec-windows-x86_64-${{ github.ref_name }}.dll
+            fastfec-windows-aarch64-${{ github.ref_name }}.zip
+            libfastfec-windows-aarch64-${{ github.ref_name }}.dll
+            libfastfec-${{ github.ref_name }}.wasm
 
   build-wheels-for-stable-release:
     if: github.event.base_ref == 'refs/heads/main'
@@ -51,7 +41,7 @@ jobs:
 
   upload-wheels-for-stable-release:
     if: github.event.base_ref == 'refs/heads/main'
-    needs: [build_wheels]
+    needs: [build-wheels-for-stable-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v2
