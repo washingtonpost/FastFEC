@@ -31,6 +31,10 @@ matrix = [
     ("Windows", "aarch64-windows", "win_arm64"),
 ]
 
+if len(sys.argv) == 2:
+    # If an arg is passed, filter the matrix for only the specified target
+    matrix = [row for row in matrix if row[1] == sys.argv[1].strip()]
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 SRC_DIR = os.path.join(CURRENT_DIR, "src", "fastfec")
@@ -134,7 +138,6 @@ for target_platform, zig_target, wheel_platform in matrix:
             "build",
             "-Dlib-only=true",
             f"-Dtarget={zig_target}",
-            *sys.argv[1:],
         ],
         cwd=PARENT_DIR,
     )

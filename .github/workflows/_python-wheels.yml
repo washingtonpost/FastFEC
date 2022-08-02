@@ -16,6 +16,10 @@ jobs:
   build-wheels:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [linux, macos, windows]
+        architecture: [x86_64, aarch64]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -26,14 +30,19 @@ jobs:
         run: python -m pip install ziglang==0.9.1 wheel==0.37.1
 
       - name: Build wheels
-        run: python python/make_wheels.py
+        run: python python/make_wheels.py ${{ matrix.architecture }}-${{ matrix.os }}
 
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
 
+  upload-wheels-to-pypi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [build-wheels]
+    if: inputs.publishToPyPI || inputs.publishToTestPyPI
+    steps:
       - uses: actions/download-artifact@v2
-        if: inputs.publishToPyPI || inputs.publishToTestPyPI
         with:
           name: artifact
           path: dist
