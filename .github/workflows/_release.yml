@@ -46,7 +46,6 @@ jobs:
       - run: zig build -Dtarget=aarch64-windows
       - run: zip -j fastfec-windows-aarch64-${{ inputs.version }}.zip zig-out/bin/fastfec.exe
       - run: mv zig-out/lib/fastfec.dll libfastfec-windows-aarch64-${{ inputs.version }}.dll
-          steps:
       - uses: actions/upload-artifact@v2
         with:
           path: |
