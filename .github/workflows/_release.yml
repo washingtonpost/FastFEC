@@ -36,7 +36,7 @@ jobs:
               "linux": {
                 "libExt": "so",
                 "libName": "libfastfec",
-                "exeExt": ".exe"
+                "exeExt": ""
               },
               "mac": {
                 "libExt": "dylib",
@@ -46,7 +46,7 @@ jobs:
               "windows": {
                 "libExt": "dll",
                 "libName": "fastfec",
-                "exeExt": ""
+                "exeExt": ".exe"
               },
               "wasm": {
                 "libExt": "wasm",
