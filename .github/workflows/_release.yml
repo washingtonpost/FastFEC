@@ -6,6 +6,10 @@ on:
       version:
         required: true
         type: string
+      uploadRelease:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-for-release:
@@ -42,3 +46,38 @@ jobs:
       - run: zig build -Dtarget=aarch64-windows
       - run: zip -j fastfec-windows-aarch64-${{ inputs.version }}.zip zig-out/bin/fastfec.exe
       - run: mv zig-out/lib/fastfec.dll libfastfec-windows-aarch64-${{ inputs.version }}.dll
+          steps:
+      - uses: actions/upload-artifact@v2
+        with:
+          path: |
+            fastfec-linux-x86_64-${{ inputs.version }}.zip
+            libfastfec-linux-x86_64-${{ inputs.version }}.so
+            fastfec-linux-aarch64-${{ inputs.version }}.zip
+            libfastfec-linux-aarch64-${{ inputs.version }}.so
+            fastfec-macos-x86_64-${{ inputs.version }}.zip
+            libfastfec-macos-x86_64-${{ inputs.version }}.dylib
+            fastfec-macos-aarch64-${{ inputs.version }}.zip
+            libfastfec-macos-aarch64-${{ inputs.version }}.dylib
+            fastfec-windows-x86_64-${{ inputs.version }}.zip
+            libfastfec-windows-x86_64-${{ inputs.version }}.dll
+            fastfec-windows-aarch64-${{ inputs.version }}.zip
+            libfastfec-windows-aarch64-${{ inputs.version }}.dll
+            libfastfec-${{ inputs.version }}.wasm
+      - uses: softprops/action-gh-release@v1
+        if: uploadRelease
+        with:
+          tag_name: ${{ inputs.version }}
+          files: |
+            fastfec-linux-x86_64-${{ inputs.version }}.zip
+            libfastfec-linux-x86_64-${{ inputs.version }}.so
+            fastfec-linux-aarch64-${{ inputs.version }}.zip
+            libfastfec-linux-aarch64-${{ inputs.version }}.so
+            fastfec-macos-x86_64-${{ inputs.version }}.zip
+            libfastfec-macos-x86_64-${{ inputs.version }}.dylib
+            fastfec-macos-aarch64-${{ inputs.version }}.zip
+            libfastfec-macos-aarch64-${{ inputs.version }}.dylib
+            fastfec-windows-x86_64-${{ inputs.version }}.zip
+            libfastfec-windows-x86_64-${{ inputs.version }}.dll
+            fastfec-windows-aarch64-${{ inputs.version }}.zip
+            libfastfec-windows-aarch64-${{ inputs.version }}.dll
+            libfastfec-${{ inputs.version }}.wasm

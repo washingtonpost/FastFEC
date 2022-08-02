@@ -1,6 +1,16 @@
 # A reusable workflow for building cross-platform Python wheels
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      publishToPyPI:
+        required: false
+        default: false
+        type: boolean
+      publishToTestPyPI:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-wheels:
@@ -21,3 +31,24 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
+
+      - uses: actions/download-artifact@v2
+        if: publishToPyPI || publishToTestPyPI
+        with:
+          name: artifact
+          path: dist
+
+      - name: Publish package to PyPI
+        if: publishToPyPI
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_token }}
+
+      - name: Publish package to Test PyPI
+        if: publishToTestPyPI
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{ secrets.test_pypi_token }}
+          repository_url: https://test.pypi.org/legacy/
