@@ -19,6 +19,7 @@ jobs:
       matrix:
         python-version: [3.8]
     steps:
+      - uses: actions/checkout@v2
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
