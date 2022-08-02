@@ -12,25 +12,17 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: 0.9.1
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt install -y libcurl4-openssl-dev
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Run zig build
-        run: zig build
       - name: Run zig test
         run: zig build test
       - name: Ensure mappings are up-to-date
         run: python scripts/generate_mappings.py test
       - name: Install Python dependencies
         working-directory: python
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt
       - name: Run Python Tests
         working-directory: python
         run: tox -e py
