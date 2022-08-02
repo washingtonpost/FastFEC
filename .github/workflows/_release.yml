@@ -26,9 +26,6 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: 0.9.1
-      - run: |
-          sudo apt-get update
-          sudo apt install -y libcurl4-openssl-dev
       - name: Get output paths
         uses: kanga333/variable-mapper@master
         id: map
