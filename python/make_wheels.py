@@ -120,10 +120,6 @@ for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
 
 current_platform = platform.system()
 for target_platform, zig_target, wheel_platform in matrix:
-    # Only run on compatible platforms
-    if current_platform != target_platform:
-        continue
-
     # Compile the executable for the target platform
     contents = base_contents.copy()
     # First clear the target directory of any stray files
