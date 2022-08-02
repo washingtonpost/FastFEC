@@ -33,20 +33,20 @@ jobs:
           path: ./wheelhouse/*.whl
 
       - uses: actions/download-artifact@v2
-        if: publishToPyPI || publishToTestPyPI
+        if: inputs.publishToPyPI || inputs.publishToTestPyPI
         with:
           name: artifact
           path: dist
 
       - name: Publish package to PyPI
-        if: publishToPyPI
+        if: inputs.publishToPyPI
         uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__
           password: ${{ secrets.pypi_token }}
 
       - name: Publish package to Test PyPI
-        if: publishToTestPyPI
+        if: inputs.publishToTestPyPI
         uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__

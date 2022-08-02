@@ -63,7 +63,7 @@ jobs:
             libfastfec-windows-aarch64-${{ inputs.version }}.dll
             libfastfec-${{ inputs.version }}.wasm
       - uses: softprops/action-gh-release@v1
-        if: uploadRelease
+        if: inputs.uploadRelease
         with:
           tag_name: ${{ inputs.version }}
           files: |
