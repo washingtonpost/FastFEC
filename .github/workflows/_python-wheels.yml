@@ -34,6 +34,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
+          name: wheels
           path: ./wheelhouse/*.whl
 
   upload-wheels-to-pypi:
@@ -44,11 +45,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v2
         with:
-          name: artifact
+          name: wheels
           path: dist
-
-      - name: Remove non-wheel artifacts
-        run: find . -type f ! -name "dist/*.whl" -exec rm -rf {} \;
 
       - name: Publish package to PyPI
         if: inputs.publishToPyPI
