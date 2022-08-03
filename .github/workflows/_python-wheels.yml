@@ -34,6 +34,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
+          name: wheels
           path: ./wheelhouse/*.whl
 
   upload-wheels-to-pypi:
@@ -44,7 +45,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v2
         with:
-          name: artifact
+          name: wheels
           path: dist
 
       - name: Publish package to PyPI
