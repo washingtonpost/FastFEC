@@ -47,6 +47,9 @@ jobs:
           name: artifact
           path: dist
 
+      - name: Remove non-wheel artifacts
+        run: find . -type f ! -name "dist/*.whl" -exec rm -rf {} \;
+
       - name: Publish package to PyPI
         if: inputs.publishToPyPI
         uses: pypa/gh-action-pypi-publish@v1.4.2
