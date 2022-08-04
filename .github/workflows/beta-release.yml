@@ -18,4 +18,5 @@ jobs:
     uses: ./.github/workflows/_python-wheels.yml
     with:
       publishToTestPyPI: true
+    secrets:
       pypiToken: ${{ secrets.TEST_PYPI_TOKEN }}
