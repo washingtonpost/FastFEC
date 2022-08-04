@@ -14,10 +14,8 @@ on:
     secrets:
       TEST_PYPI_TOKEN:
         required: false
-        type: string
       PYPI_TOKEN:
         required: false
-        type: string
 
 jobs:
   build-wheels:
