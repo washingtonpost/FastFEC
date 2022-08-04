@@ -20,5 +20,4 @@ jobs:
     uses: ./.github/workflows/_python-wheels.yml
     with:
       publishToPyPI: true
-    secrets:
-      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+    secrets: inherit
