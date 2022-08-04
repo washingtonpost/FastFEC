@@ -11,6 +11,9 @@ on:
         required: false
         default: false
         type: boolean
+      pypiToken:
+        required: false
+        type: string
 
 jobs:
   build-wheels:
@@ -53,12 +56,12 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+          password: ${{ inputs.pypiToken }}
 
       - name: Publish package to Test PyPI
         if: inputs.publishToTestPyPI
         uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
+          password: ${{ inputs.pypiToken }}
           repository_url: https://test.pypi.org/legacy/

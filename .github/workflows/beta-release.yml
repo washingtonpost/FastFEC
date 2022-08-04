@@ -18,3 +18,4 @@ jobs:
     uses: ./.github/workflows/_python-wheels.yml
     with:
       publishToTestPyPI: true
+      pypiToken: secrets.TEST_PYPI_TOKEN
