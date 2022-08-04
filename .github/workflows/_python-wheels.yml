@@ -11,11 +11,6 @@ on:
         required: false
         default: false
         type: boolean
-    secrets:
-      TEST_PYPI_TOKEN:
-        required: false
-      PYPI_TOKEN:
-        required: false
 
 jobs:
   build-wheels:
