@@ -19,4 +19,4 @@ jobs:
     with:
       publishToTestPyPI: true
     secrets:
-      pypiToken: ${{ secrets.TEST_PYPI_TOKEN }}
+      TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}

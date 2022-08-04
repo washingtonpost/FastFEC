@@ -21,4 +21,4 @@ jobs:
     with:
       publishToPyPI: true
     secrets:
-      pypiToken: ${{ secrets.PYPI_TOKEN }}
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
