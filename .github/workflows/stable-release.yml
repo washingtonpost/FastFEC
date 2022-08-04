@@ -8,49 +8,16 @@ on:
       - "*.*.*"
 
 jobs:
-  build-for-stable-release:
+  build-and-upload-stable-release:
     if: github.event.base_ref == 'refs/heads/main'
     uses: ./.github/workflows/_release.yml
     with:
       version: ${{ github.ref_name }}
+      uploadRelease: true
 
-  upload-stable-release:
-    needs: [build-for-stable-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            fastfec-linux-x86_64-${{ github.ref_name }}.zip
-            libfastfec-linux-x86_64-${{ github.ref_name }}.so
-            fastfec-linux-aarch64-${{ github.ref_name }}.zip
-            libfastfec-linux-aarch64-${{ github.ref_name }}.so
-            fastfec-macos-x86_64-${{ github.ref_name }}.zip
-            libfastfec-macos-x86_64-${{ github.ref_name }}.dylib
-            fastfec-macos-aarch64-${{ github.ref_name }}.zip
-            libfastfec-macos-aarch64-${{ github.ref_name }}.dylib
-            fastfec-windows-x86_64-${{ github.ref_name }}.zip
-            libfastfec-windows-x86_64-${{ github.ref_name }}.dll
-            fastfec-windows-aarch64-${{ github.ref_name }}.zip
-            libfastfec-windows-aarch64-${{ github.ref_name }}.dll
-            libfastfec-${{ github.ref_name }}.wasm
-
-  build-wheels-for-stable-release:
+  build-and-upload-stable-wheels:
     if: github.event.base_ref == 'refs/heads/main'
     uses: ./.github/workflows/_python-wheels.yml
-
-  upload-wheels-for-stable-release:
-    if: github.event.base_ref == 'refs/heads/main'
-    needs: [build-wheels-for-stable-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: artifact
-          path: dist
-
-      - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.4.2
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_token }}
+    with:
+      publishToPyPI: true
+    secrets: inherit

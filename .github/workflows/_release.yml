@@ -6,39 +6,95 @@ on:
       version:
         required: true
         type: string
+      uploadRelease:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-for-release:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [linux, macos, windows]
+        architecture: [x86_64, aarch64]
+        include:
+          - os: wasm
     steps:
       - uses: actions/checkout@v2
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: 0.9.1
-      - run: |
-          sudo apt-get update
-          sudo apt install -y libcurl4-openssl-dev
-      # Linux/Wasm
-      - run: zig build
-      - run: zip -j fastfec-linux-x86_64-${{ inputs.version }}.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-x86_64-${{ inputs.version }}.so
-      - run: zig build -Dtarget=aarch64-linux
-      - run: zip -j fastfec-linux-aarch64-${{ inputs.version }}.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.so libfastfec-linux-aarch64-${{ inputs.version }}.so
-      - run: zig build -Dwasm
-      - run: mv zig-out/lib/fastfec.wasm libfastfec-${{ inputs.version }}.wasm
-      # Mac
-      - run: zig build -Dtarget=x86_64-macos
-      - run: zip -j fastfec-macos-x86_64-${{ inputs.version }}.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-x86_64-${{ inputs.version }}.dylib
-      - run: zig build -Dtarget=aarch64-macos
-      - run: zip -j fastfec-macos-aarch64-${{ inputs.version }}.zip zig-out/bin/fastfec
-      - run: mv zig-out/lib/libfastfec.dylib libfastfec-macos-aarch64-${{ inputs.version }}.dylib
-      # Windows
-      - run: zig build -Dtarget=x86_64-windows
-      - run: zip -j fastfec-windows-x86_64-${{ inputs.version }}.zip zig-out/bin/fastfec.exe
-      - run: mv zig-out/lib/fastfec.dll libfastfec-windows-x86_64-${{ inputs.version }}.dll
-      - run: zig build -Dtarget=aarch64-windows
-      - run: zip -j fastfec-windows-aarch64-${{ inputs.version }}.zip zig-out/bin/fastfec.exe
-      - run: mv zig-out/lib/fastfec.dll libfastfec-windows-aarch64-${{ inputs.version }}.dll
+      - name: Get output paths
+        uses: kanga333/variable-mapper@master
+        id: map
+        with:
+          key: "${{ matrix.os }}"
+          map: |
+            {
+              "linux": {
+                "libExt": "so",
+                "libName": "libfastfec",
+                "exeExt": ""
+              },
+              "mac": {
+                "libExt": "dylib",
+                "libName": "libfastfec",
+                "exeExt": ""
+              },
+              "windows": {
+                "libExt": "dll",
+                "libName": "fastfec",
+                "exeExt": ".exe"
+              },
+              "wasm": {
+                "libExt": "wasm",
+                "libName": "fastfec",
+                "exeExt": ""
+              }
+            }
+          export_to: output
+      - name: Build target
+        if: matrix.os != 'wasm'
+        run: zig build -Dtarget=${{ matrix.architecture }}-${{ matrix.os }}
+      - name: Build target (wasm)
+        if: matrix.os == 'wasm'
+        run: zig build -Dwasm
+      - name: Zip output executable
+        if: matrix.os != 'wasm'
+        run: zip -j fastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.zip zig-out/bin/fastfec${{ steps.map.outputs.exeExt }}
+      - name: Move output library
+        if: matrix.os != 'wasm'
+        run: mv zig-out/lib/${{ steps.map.outputs.libName }}.${{ steps.map.outputs.libExt }} libfastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
+      - name: Move output library (wasm)
+        if: matrix.os == 'wasm'
+        run: mv zig-out/lib/${{ steps.map.outputs.libName }}.${{ steps.map.outputs.libExt }} libfastfec-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        if: matrix.os != 'wasm'
+        with:
+          path: |
+            fastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.zip
+            libfastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
+      - name: Upload artifacts (wasm)
+        uses: actions/upload-artifact@v2
+        if: matrix.os == 'wasm'
+        with:
+          path: |
+            libfastfec-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
+      - name: GitHub release
+        uses: softprops/action-gh-release@v1
+        if: inputs.uploadRelease && matrix.os != 'wasm'
+        with:
+          tag_name: ${{ inputs.version }}
+          files: |
+            fastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.zip
+            libfastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
+      - name: GitHub release (wasm)
+        uses: softprops/action-gh-release@v1
+        if: inputs.uploadRelease && matrix.os == 'wasm'
+        with:
+          tag_name: ${{ inputs.version }}
+          files: |
+            libfastfec-${{ inputs.version }}.${{ steps.map.outputs.libExt }}

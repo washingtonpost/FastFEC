@@ -1,11 +1,25 @@
 # A reusable workflow for building cross-platform Python wheels
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      publishToPyPI:
+        required: false
+        default: false
+        type: boolean
+      publishToTestPyPI:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-wheels:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [linux, macos, windows]
+        architecture: [x86_64, aarch64]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -16,8 +30,35 @@ jobs:
         run: python -m pip install ziglang==0.9.1 wheel==0.37.1
 
       - name: Build wheels
-        run: python python/make_wheels.py
+        run: python python/make_wheels.py ${{ matrix.architecture }}-${{ matrix.os }}
 
       - uses: actions/upload-artifact@v2
         with:
+          name: wheels
           path: ./wheelhouse/*.whl
+
+  upload-wheels-to-pypi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [build-wheels]
+    if: inputs.publishToPyPI || inputs.publishToTestPyPI
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: wheels
+          path: dist
+
+      - name: Publish package to PyPI
+        if: inputs.publishToPyPI
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Publish package to Test PyPI
+        if: inputs.publishToTestPyPI
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/

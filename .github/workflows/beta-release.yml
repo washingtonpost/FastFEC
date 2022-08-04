@@ -8,48 +8,14 @@ on:
       - develop
 
 jobs:
-  build-for-beta-release:
+  build-and-upload-beta-release:
     uses: ./.github/workflows/_release.yml
     with:
       version: latest
+      uploadRelease: true
 
-  upload-beta-release:
-    needs: [build-for-beta-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: softprops/action-gh-release@v1
-        with:
-          tag_name: latest
-          files: |
-            fastfec-linux-x86_64-latest.zip
-            libfastfec-linux-x86_64-latest.so
-            fastfec-linux-aarch64-latest.zip
-            libfastfec-linux-aarch64-latest.so
-            fastfec-macos-x86_64-latest.zip
-            libfastfec-macos-x86_64-latest.dylib
-            fastfec-macos-aarch64-latest.zip
-            libfastfec-macos-aarch64-latest.dylib
-            fastfec-windows-x86_64-latest.zip
-            libfastfec-windows-x86_64-latest.dll
-            fastfec-windows-aarch64-latest.zip
-            libfastfec-windows-aarch64-latest.dll
-            libfastfec-latest.wasm
-
-  build-wheels-for-beta-release:
+  build-and-upload-beta-wheels:
     uses: ./.github/workflows/_python-wheels.yml
-
-  upload-wheels-for-beta-release:
-    needs: [build-wheels-for-beta-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: artifact
-          path: dist
-
-      - name: Publish package to Test PyPI
-        uses: pypa/gh-action-pypi-publish@v1.4.2
-        with:
-          user: __token__
-          password: ${{ secrets.test_pypi_token }}
-          repository_url: https://test.pypi.org/legacy/
+    with:
+      publishToTestPyPI: true
+    secrets: inherit
