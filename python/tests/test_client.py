@@ -67,7 +67,9 @@ def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
             "SB23.csv",
             "header.csv",
             "SB21B.csv",
-            "F3XA.csv", "SA11AI.csv", ].sort()
+            "F3XA.csv",
+            "SA11AI.csv",
+        ].sort()
     )
 
     with open(os.path.join(tmpdir, "header.csv")) as filing:
