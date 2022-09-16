@@ -89,12 +89,12 @@ int isParseDone(PARSE_CONTEXT *parseContext)
   return (c == 0) || (c == '\n');
 }
 
-void lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart, int formEnd)
+int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart, int formEnd)
 {
   if ((ctx->formType != NULL) && (strncmp(ctx->formType, parseContext->line->str + formStart, formEnd - formStart) == 0))
   {
     // Type mappings are unchanged from before; can return early
-    return;
+    return 1;
   }
 
   // Clear last form type information if present
@@ -183,14 +183,14 @@ void lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart
         freeString(headersCsv);
 
         // Done; return
-        return;
+        return 1;
       }
     }
   }
 
   // Unmatched — error
   fprintf(stderr, "Error: Unmatched for version %s and form type %s\n", ctx->version, ctx->formType);
-  exit(1);
+  return 0;
 }
 
 void writeSubstrToWriter(FEC_CONTEXT *ctx, WRITE_CONTEXT *writeContext, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
@@ -520,6 +520,7 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
 // Return 1 if successful, or 0 if the line is not fully
 // specified. Return 2 if there was a warning but it was
 // still successful and the next line has already been grabbed.
+// Return 3 if we encountered a mappings error.
 int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
 {
   // Parse fields
@@ -542,7 +543,10 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       stripWhitespace(&parseContext);
       formStart = parseContext.start;
       formEnd = parseContext.end;
-      lookupMappings(ctx, &parseContext, formStart, formEnd);
+      if (!lookupMappings(ctx, &parseContext, formStart, formEnd))
+      {
+        return 3;
+      }
 
       // Set filename if null to form type
       if (filename == NULL)
@@ -686,7 +690,7 @@ void setVersion(FEC_CONTEXT *ctx, int start, int end)
   ctx->useAscii28 = !useCommaVersion;
 }
 
-void parseHeader(FEC_CONTEXT *ctx)
+int parseHeader(FEC_CONTEXT *ctx)
 {
   // Check if the line starts with "/*"
   if (lineStartsWithLegacyHeader(ctx))
@@ -807,7 +811,10 @@ void parseHeader(FEC_CONTEXT *ctx)
           setVersion(ctx, parseContext.start, parseContext.end);
 
           // Parse the header now that version is known
-          parseLine(ctx, HEADER, 1);
+          if (parseLine(ctx, HEADER, 1) == 3)
+          {
+            return 0;
+          }
         }
       }
       if (parseContext.columnIndex == 2 && isFecSecondColumn)
@@ -816,8 +823,7 @@ void parseHeader(FEC_CONTEXT *ctx)
         setVersion(ctx, parseContext.start, parseContext.end);
 
         // Parse the header now that version is known
-        parseLine(ctx, HEADER, 1);
-        return;
+        return parseLine(ctx, HEADER, 1) != 3;
       }
 
       if (isParseDone(&parseContext))
@@ -827,6 +833,7 @@ void parseHeader(FEC_CONTEXT *ctx)
       advanceField(&parseContext);
     }
   }
+  return 1;
 }
 
 int parseFec(FEC_CONTEXT *ctx)
@@ -839,7 +846,10 @@ int parseFec(FEC_CONTEXT *ctx)
   }
 
   // Parse the header
-  parseHeader(ctx);
+  if (!parseHeader(ctx))
+  {
+    return 0;
+  }
 
   // Loop through parsing the entire file, line by
   // line.
