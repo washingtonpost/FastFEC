@@ -23,8 +23,8 @@ from wheel.wheelfile import WheelFile
 
 matrix = [
     # (platform, Zig target, wheel)
-    ("Linux", "x86_64-linux", "manylinux1_x86_64"),
-    ("Linux", "aarch64-linux", "manylinux2014_aarch64"),
+    ("Linux", "x86_64-linux-gnu", "manylinux1_x86_64"),
+    ("Linux", "aarch64-linux-gnu", "manylinux2014_aarch64"),
     ("Darwin", "x86_64-macos", "macosx_10_9_x86_64"),
     ("Darwin", "aarch64-macos", "macosx_11_0_arm64"),
     ("Windows", "x86_64-windows", "win_amd64"),
