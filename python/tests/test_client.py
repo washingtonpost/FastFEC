@@ -1,5 +1,6 @@
 import datetime
 import os
+import pytest
 
 from fastfec import FastFEC
 
@@ -58,7 +59,7 @@ def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
     """
     with open(filing_1550548, "rb") as filing:
         with FastFEC() as fastfec:
-            fastfec.parse_as_files(filing, tmpdir)
+            assert fastfec.parse_as_files(filing, tmpdir) == 1
 
     assert (
         os.listdir(tmpdir).sort()
@@ -94,7 +95,7 @@ def test_filing_1606847_parse_as_files(tmpdir, filing_1606847):
     """
     with open(filing_1606847, "rb") as filing:
         with FastFEC() as fastfec:
-            fastfec.parse_as_files(filing, tmpdir)
+            assert fastfec.parse_as_files(filing, tmpdir) == 1
 
     assert (
         os.listdir(tmpdir).sort()
@@ -113,3 +114,13 @@ def test_filing_1606847_parse_as_files(tmpdir, filing_1606847):
             "F3XA.csv",
         ].sort()
     )
+
+
+def test_filing_with_invalid_version_does_not_exit_1(tmpdir, filing_invalid_version):
+    """
+    Test that FastFEC does not exit the whole process trying to parse 1606026.fec
+    but that it does return a non-1 error code.
+    """
+    with open(filing_invalid_version, "rb") as filing:
+        with FastFEC() as fastfec:
+            assert fastfec.parse_as_files(filing, tmpdir) != 1

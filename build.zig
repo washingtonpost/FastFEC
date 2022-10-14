@@ -2,6 +2,18 @@ const std = @import("std");
 const builtin = @import("builtin");
 const CrossTarget = std.zig.CrossTarget;
 
+pub fn linkPcre(vendored_pcre: bool, libExe: *std.build.LibExeObjStep) void {
+    if (vendored_pcre) {
+        libExe.addCSourceFiles(&pcreSources, &buildOptions);
+    } else {
+        if (builtin.os.tag == .windows) {
+            libExe.linkSystemLibrary("pcre");
+        } else {
+            libExe.linkSystemLibrary("libpcre");
+        }
+    }
+}
+
 pub fn build(b: *std.build.Builder) !void {
     b.setPreferredReleaseMode(.ReleaseFast);
     const target = b.standardTargetOptions(.{});
@@ -10,6 +22,7 @@ pub fn build(b: *std.build.Builder) !void {
     const lib_only: bool = b.option(bool, "lib-only", "Only compile the library") orelse false;
     const skip_lib: bool = b.option(bool, "skip-lib", "Skip compiling the library") orelse false;
     const wasm: bool = b.option(bool, "wasm", "Compile the wasm library") orelse false;
+    const vendored_pcre: bool = b.option(bool, "vendored-pcre", "Use vendored pcre") orelse true;
 
     // Main build step
     if (!lib_only and !wasm) {
@@ -21,7 +34,7 @@ pub fn build(b: *std.build.Builder) !void {
         fastfec_cli.linkLibC();
 
         fastfec_cli.addCSourceFiles(&libSources, &buildOptions);
-        fastfec_cli.addCSourceFiles(&pcreSources, &buildOptions);
+        linkPcre(vendored_pcre, fastfec_cli);
         fastfec_cli.addCSourceFiles(&.{
             "src/cli.c",
             "src/main.c",
@@ -36,7 +49,7 @@ pub fn build(b: *std.build.Builder) !void {
         fastfec_lib.install();
         fastfec_lib.linkLibC();
         fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
-        fastfec_lib.addCSourceFiles(&pcreSources, &buildOptions);
+        linkPcre(vendored_pcre, fastfec_lib);
     } else if (wasm) {
         // Wasm library build step
         const fastfec_wasm = b.addSharedLibrary("fastfec", null, .unversioned);
@@ -46,7 +59,7 @@ pub fn build(b: *std.build.Builder) !void {
         fastfec_wasm.install();
         fastfec_wasm.linkLibC();
         fastfec_wasm.addCSourceFiles(&libSources, &buildOptions);
-        fastfec_wasm.addCSourceFiles(&pcreSources, &buildOptions);
+        linkPcre(vendored_pcre, fastfec_wasm);
         fastfec_wasm.addCSourceFile("src/wasm.c", &buildOptions);
     }
 
@@ -57,7 +70,7 @@ pub fn build(b: *std.build.Builder) !void {
         const subtest_exe = b.addExecutable(base_file, null);
         subtest_exe.linkLibC();
         subtest_exe.addCSourceFiles(&testIncludes, &buildOptions);
-        subtest_exe.addCSourceFiles(&pcreSources, &buildOptions);
+        linkPcre(vendored_pcre, subtest_exe);
         subtest_exe.addCSourceFile(test_file, &buildOptions);
         const subtest_cmd = subtest_exe.run();
         if (prev_test_step != null) {
@@ -102,14 +115,7 @@ const pcreSources = [_][]const u8{
     "src/pcre/pcre_xclass.c",
 };
 const tests = [_][]const u8{ "src/buffer_test.c", "src/csv_test.c", "src/writer_test.c", "src/cli_test.c" };
-const testIncludes = [_][]const u8{
-    "src/buffer.c",
-    "src/memory.c",
-    "src/encoding.c",
-    "src/csv.c",
-    "src/writer.c",
-    "src/cli.c"
-};
+const testIncludes = [_][]const u8{ "src/buffer.c", "src/memory.c", "src/encoding.c", "src/csv.c", "src/writer.c", "src/cli.c" };
 const buildOptions = [_][]const u8{
     "-std=c11",
     "-pedantic",
