@@ -12,6 +12,11 @@ pub fn linkPcre(vendored_pcre: bool, libExe: *std.build.LibExeObjStep) void {
             libExe.linkSystemLibrary("libpcre");
         }
     }
+    if (libExe.target.isDarwin()) {
+      // useful for package maintainers
+      // see https://github.com/ziglang/zig/issues/13388
+      libExe.headerpad_max_install_names = true;
+    }
 }
 
 pub fn build(b: *std.build.Builder) !void {
@@ -45,6 +50,11 @@ pub fn build(b: *std.build.Builder) !void {
         // Library build step
         const fastfec_lib = b.addSharedLibrary("fastfec", null, .unversioned);
         fastfec_lib.setTarget(target);
+        if (fastfec_lib.target.isDarwin()) {
+          // useful for package maintainers
+          // see https://github.com/ziglang/zig/issues/13388
+          fastfec_lib.headerpad_max_install_names = true;
+        }
         fastfec_lib.setBuildMode(mode);
         fastfec_lib.install();
         fastfec_lib.linkLibC();
