@@ -29,6 +29,10 @@ pub fn build(b: *std.build.Builder) !void {
         const fastfec_cli = b.addExecutable("fastfec", null);
         fastfec_cli.setTarget(target);
         fastfec_cli.setBuildMode(mode);
+        if (fastfec_cli.target.isDarwin()) {
+            // useful for package maintainers
+            fastfec_cli.headerpad_max_install_names = true;
+        }
         fastfec_cli.install();
 
         fastfec_cli.linkLibC();
@@ -46,6 +50,10 @@ pub fn build(b: *std.build.Builder) !void {
         const fastfec_lib = b.addSharedLibrary("fastfec", null, .unversioned);
         fastfec_lib.setTarget(target);
         fastfec_lib.setBuildMode(mode);
+        if (fastfec_lib.target.isDarwin()) {
+            // useful for package maintainers
+            fastfec_lib.headerpad_max_install_names = true;
+        }
         fastfec_lib.install();
         fastfec_lib.linkLibC();
         fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
