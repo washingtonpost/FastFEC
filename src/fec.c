@@ -25,6 +25,14 @@ void ctxWarn(FEC_CONTEXT *ctx, const char *message, ...)
   va_end(args);
 }
 
+void freeSafe(void *ptr)
+{
+  if (ptr != NULL)
+  {
+    free(ptr);
+  }
+}
+
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
@@ -71,22 +79,10 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
 void freeFecContext(FEC_CONTEXT *ctx)
 {
   freeBuffer(ctx->buffer);
-  if (ctx->version)
-  {
-    free(ctx->version);
-  }
-  if (ctx->f99Text)
-  {
-    free(ctx->f99Text);
-  }
-  if (ctx->formType != NULL)
-  {
-    free(ctx->formType);
-  }
-  if (ctx->types != NULL)
-  {
-    free(ctx->types);
-  }
+  freeSafe(ctx->version);
+  freeSafe(ctx->f99Text);
+  freeSafe(ctx->formType);
+  freeSafe(ctx->types);
   pcre_free(ctx->f99TextStart);
   pcre_free(ctx->f99TextEnd);
   freeWriteContext(ctx->writeContext);
@@ -109,10 +105,7 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
   }
 
   // Clear last form type information if present
-  if (ctx->formType != NULL)
-  {
-    free(ctx->formType);
-  }
+  freeSafe(ctx->formType);
   // Set last form type to store it for later
   ctx->formType = malloc(formEnd - formStart + 1);
   strncpy(ctx->formType, parseContext->line->str + formStart, formEnd - formStart);
@@ -130,10 +123,7 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
         // Matched form type
         ctx->headers = (char *)(headers[i][2]);
         STRING *headersCsv = fromString(ctx->headers);
-        if (ctx->types != NULL)
-        {
-          free(ctx->types);
-        }
+        freeSafe(ctx->types);
         ctx->numFields = 0;
         ctx->types = malloc(strlen(ctx->headers) + 1); // at least as big as it needs to be
 
