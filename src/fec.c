@@ -47,6 +47,33 @@ pcre *_compileRegex(const char *pattern)
   return regex;
 }
 
+int lineContainsF99Start(FEC_CONTEXT *ctx)
+{
+  static pcre *regex = NULL;
+  if (regex == NULL)
+  {
+    regex = _compileRegex("^\\s*\\[BEGIN ?TEXT\\]\\s*$");
+  }
+  return _lineReMatch(ctx, regex);
+}
+
+int lineContainsF99End(FEC_CONTEXT *ctx)
+{
+  static pcre *regex = NULL;
+  if (regex == NULL)
+  {
+    regex = _compileRegex("^\\s*\\[END ?TEXT\\]\\s*$");
+  }
+  return _lineReMatch(ctx, regex);
+}
+
+int _lineReMatch(FEC_CONTEXT *ctx, pcre *regex)
+{
+  char *str = ctx->persistentMemory->line->str;
+  int len = ctx->currentLineLength;
+  return pcre_exec(regex, NULL, str, len, 0, 0, NULL, 0) >= 0;
+}
+
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
@@ -69,9 +96,6 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
   ctx->warn = warn;
-
-  ctx->f99TextStart = _compileRegex("^\\s*\\[BEGIN ?TEXT\\]\\s*$");
-  ctx->f99TextEnd = _compileRegex("^\\s*\\[END ?TEXT\\]\\s*$");
   return ctx;
 }
 
@@ -82,8 +106,6 @@ void freeFecContext(FEC_CONTEXT *ctx)
   freeSafe(ctx->f99Text);
   freeSafe(ctx->formType);
   freeSafe(ctx->types);
-  pcre_free(ctx->f99TextStart);
-  pcre_free(ctx->f99TextEnd);
   freeWriteContext(ctx->writeContext);
   free(ctx);
 }
@@ -460,7 +482,7 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
     if (f99Mode)
     {
       // See if we have reached the end boundary
-      if (pcre_exec(ctx->f99TextEnd, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      if (lineContainsF99End(ctx))
       {
         f99Mode = 0;
         break;
@@ -485,9 +507,8 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
     if (lineMightStartWithF99(ctx))
     {
       // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
-      if (pcre_exec(ctx->f99TextStart, NULL, ctx->persistentMemory->line->str, ctx->currentLineLength, 0, 0, NULL, 0) >= 0)
+      if (lineContainsF99Start(ctx))
       {
-        // Set f99 mode
         f99Mode = 1;
         continue;
       }

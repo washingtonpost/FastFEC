@@ -37,10 +37,6 @@ struct fec_context
   int numFields;
   char *headers; // pointer to static CSV header row info
   char *types;   // dynamically allocated string where each char indicates types
-
-  // Special regex
-  pcre *f99TextStart;
-  pcre *f99TextEnd;
 };
 typedef struct fec_context FEC_CONTEXT;
 
