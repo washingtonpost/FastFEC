@@ -33,6 +33,20 @@ void freeSafe(void *ptr)
   }
 }
 
+pcre *_compileRegex(const char *pattern)
+{
+  pcre *regex;
+  const char *error;
+  int errorOffset;
+  regex = pcre_compile(pattern, PCRE_CASELESS, &error, &errorOffset, NULL);
+  if (regex == NULL)
+  {
+    fprintf(stderr, "Regex '%s' compilation failed at offset %d: %s\n", pattern, errorOffset, error);
+    exit(1);
+  }
+  return regex;
+}
+
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
@@ -56,23 +70,8 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->silent = silent;
   ctx->warn = warn;
 
-  // Compile regexes
-  const char *error;
-  int errorOffset;
-
-  ctx->f99TextStart = pcre_compile("^\\s*\\[BEGIN ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
-  if (ctx->f99TextStart == NULL)
-  {
-    fprintf(stderr, "Regex f99 text start compilation failed at offset %d: %s\n", errorOffset, error);
-    exit(1);
-  }
-  ctx->f99TextEnd = pcre_compile("^\\s*\\[END ?TEXT\\]\\s*$", PCRE_CASELESS, &error, &errorOffset, NULL);
-  if (ctx->f99TextEnd == NULL)
-  {
-    fprintf(stderr, "Regex f99 text end compilation failed at offset %d: %s\n", errorOffset, error);
-    exit(1);
-  }
-
+  ctx->f99TextStart = _compileRegex("^\\s*\\[BEGIN ?TEXT\\]\\s*$");
+  ctx->f99TextEnd = _compileRegex("^\\s*\\[END ?TEXT\\]\\s*$");
   return ctx;
 }
 
