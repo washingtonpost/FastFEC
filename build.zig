@@ -114,8 +114,22 @@ const pcreSources = [_][]const u8{
     "src/pcre/pcre_version.c",
     "src/pcre/pcre_xclass.c",
 };
-const tests = [_][]const u8{ "src/buffer_test.c", "src/csv_test.c", "src/writer_test.c", "src/cli_test.c" };
-const testIncludes = [_][]const u8{ "src/buffer.c", "src/memory.c", "src/encoding.c", "src/csv.c", "src/writer.c", "src/cli.c" };
+const tests = [_][]const u8{
+    "src/buffer_test.c",
+    "src/csv_test.c",
+    "src/writer_test.c",
+    "src/cli_test.c",
+    "src/fec_test.c",
+};
+const testIncludes = [_][]const u8{
+    "src/buffer.c",
+    "src/memory.c",
+    "src/encoding.c",
+    "src/csv.c",
+    "src/writer.c",
+    "src/cli.c",
+    "src/fec.c"
+};
 const buildOptions = [_][]const u8{
     "-std=c11",
     "-pedantic",

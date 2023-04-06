@@ -11,9 +11,6 @@ char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
 char *FEC_VERSION_NUMBER = "fec_ver_#";
 char *FEC = "FEC";
 
-char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
-int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
-
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
   FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
@@ -668,26 +665,30 @@ void setVersion(FEC_CONTEXT *ctx, int start, int end)
   // Add null terminator
   ctx->version[end - start] = 0;
   ctx->versionLength = end - start;
+  ctx->useAscii28 = versionUsesAscii28(ctx->version);
+}
 
-  // Calculate whether to use ascii28 or not based on version
-  char *dot = strchr(ctx->version, '.');
-  int useCommaVersion = 0;
-  if (dot != NULL)
+// Calculate whether the version uses ASCII 28 or comma as a delimeter
+int versionUsesAscii28(char *version)
+{
+  const static char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
+  const static int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
+  char *dot = strchr(version, '.');
+  if (dot == NULL)
   {
-    // Check text of left of the dot to get main version
-    int dotIndex = (int)(dot - ctx->version);
-
-    for (int i = 0; i < NUM_COMMA_FEC_VERSIONS; i++)
+    return 1;
+  }
+  // Check text of left of the dot to get major version
+  int dotIndex = (int)(dot - version);
+  for (int i = 0; i < NUM_COMMA_FEC_VERSIONS; i++)
+  {
+    int isMatch = strncmp(version, COMMA_FEC_VERSIONS[i], dotIndex) == 0;
+    if (isMatch)
     {
-      if (strncmp(ctx->version, COMMA_FEC_VERSIONS[i], dotIndex) == 0)
-      {
-        useCommaVersion = 1;
-        break;
-      }
+      return 0;
     }
   }
-
-  ctx->useAscii28 = !useCommaVersion;
+  return 1;
 }
 
 int parseHeader(FEC_CONTEXT *ctx)
