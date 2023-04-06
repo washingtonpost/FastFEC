@@ -5,11 +5,25 @@
 #include "mappings.h"
 #include "buffer.h"
 #include <string.h>
+#include <stdarg.h>
 
 char *HEADER = "header";
 char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
 char *FEC_VERSION_NUMBER = "fec_ver_#";
 char *FEC = "FEC";
+
+void ctxWarn(FEC_CONTEXT *ctx, const char *message, ...)
+{
+  va_list args;
+  va_start(args, message);
+
+  if (ctx->warn)
+  {
+    fprintf(stderr, "Warning: ");
+    vfprintf(stderr, message, args);
+  }
+  va_end(args);
+}
 
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
@@ -229,10 +243,7 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
   if (end - start != 8)
   {
     // Could not parse date, write string as is and log warning
-    if (ctx->warn)
-    {
-      fprintf(stderr, "Warning: Date fields must be exactly 8 chars long, not %d\n", end - start);
-    }
+    ctxWarn(ctx, "Date fields must be exactly 8 chars long, not %d\n", end - start);
     writeSubstr(ctx, filename, extension, start, end, field);
     return;
   }
@@ -253,10 +264,7 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, in
   if (doubleStr == conversionFloat)
   {
     // Could not convert to a float, write string as is and log warning
-    if (ctx->warn)
-    {
-      fprintf(stderr, "Warning: Could not parse float field\n");
-    }
+    ctxWarn(ctx, "Could not parse float field\n");
     writeSubstr(ctx, filename, extension, start, end, field);
     return;
   }
@@ -585,15 +593,12 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       else
       {
         // Warning: column exceeding row length
-        if (ctx->warn)
+        ctxWarn(ctx, "Unexpected column in %s (%d): ", ctx->formType, parseContext.columnIndex);
+        for (int i = parseContext.start; i < parseContext.end; i++)
         {
-          fprintf(stderr, "Unexpected column in %s (%d): ", ctx->formType, parseContext.columnIndex);
-          for (int i = parseContext.start; i < parseContext.end; i++)
-          {
-            fprintf(stderr, "%c", ctx->persistentMemory->line->str[i]);
-          }
-          fprintf(stderr, "\n");
+          ctxWarn(ctx, "%c", ctx->persistentMemory->line->str[i]);
         }
+        ctxWarn(ctx, "\n");
         // Default to string type
         type = 's';
       }
@@ -640,10 +645,8 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
     // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      if (ctx->warn)
-      {
-        fprintf(stderr, "Warning: mismatched number of fields (%d vs %d) (%s)\nLine: %s\n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType, parseContext.line->str);
-      }
+      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType);
+      ctxWarn(ctx, "'%s'\n", parseContext.line->str);
       // 2 indicates we won't grab the line again
       writeNewline(ctx->writeContext, filename, csvExtension);
       endLine(ctx->writeContext, ctx->types);
