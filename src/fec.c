@@ -704,152 +704,163 @@ int versionUsesAscii28(char *version)
   return 1;
 }
 
-int parseHeader(FEC_CONTEXT *ctx)
+// Returns 0 on failure, 1 on success
+int parseHeaderLegacy(FEC_CONTEXT *ctx)
 {
-  // Check if the line starts with "/*"
-  if (lineStartsWithLegacyHeader(ctx))
+  startHeaderRow(ctx, HEADER, csvExtension);
+  int scheduleCounts = 0; // init scheduleCounts to be false
+  int firstField = 1;
+
+  // Use a local buffer to store header values
+  WRITE_CONTEXT bufferWriteContext;
+  initializeLocalWriteContext(&bufferWriteContext, ctx->persistentMemory->bufferLine);
+
+  // Until the line starts with "/*" again, read lines
+  while (1)
   {
-    // Parse legacy header
-    startHeaderRow(ctx, HEADER, csvExtension);
-    int scheduleCounts = 0; // init scheduleCounts to be false
-    int firstField = 1;
-
-    // Use a local buffer to store header values
-    WRITE_CONTEXT bufferWriteContext;
-    initializeLocalWriteContext(&bufferWriteContext, ctx->persistentMemory->bufferLine);
-
-    // Until the line starts with "/*" again, read lines
-    while (1)
+    if (grabLine(ctx) == 0)
     {
-      if (grabLine(ctx) == 0)
+      break;
+    }
+    if (lineStartsWithLegacyHeader(ctx))
+    {
+      break;
+    }
+
+    // Turn the line into lowercase
+    lineToLowerCase(ctx);
+
+    // Check if the line starts with "schedule_counts"
+    if (lineStartsWithScheduleCounts(ctx))
+    {
+      scheduleCounts = 1;
+    }
+    else
+    {
+      // Grab key value from "key=value" (strip whitespace)
+      int i = 0;
+      consumeWhitespace(ctx, &i);
+      int keyStart = i;
+      int keyEnd = consumeUntil(ctx, &i, '=');
+      // Jump over '='
+      i++;
+      consumeWhitespace(ctx, &i);
+      int valueStart = i;
+      int valueEnd = consumeUntil(ctx, &i, 0);
+
+      // Gather field metrics for CSV writing
+      FIELD_INFO headerField = {.num_quotes = 0, .num_commas = 0};
+      for (int i = keyStart; i < keyEnd; i++)
       {
-        break;
+        processFieldChar(ctx->persistentMemory->line->str[i], &headerField);
       }
-      if (lineStartsWithLegacyHeader(ctx))
+      FIELD_INFO valueField = {.num_quotes = 0, .num_commas = 0};
+      for (int i = valueStart; i < valueEnd; i++)
       {
-        break;
+        processFieldChar(ctx->persistentMemory->line->str[i], &valueField);
       }
 
-      // Turn the line into lowercase
-      lineToLowerCase(ctx);
-
-      // Check if the line starts with "schedule_counts"
-      if (lineStartsWithScheduleCounts(ctx))
+      // Write commas as needed (only before fields that aren't first)
+      if (!firstField)
       {
-        scheduleCounts = 1;
+        writeDelimeter(ctx->writeContext, HEADER, csvExtension);
+        writeDelimeter(&bufferWriteContext, NULL, NULL);
+      }
+      firstField = 0;
+
+      // Write schedule counts prefix if set
+      if (scheduleCounts)
+      {
+        writeString(ctx->writeContext, HEADER, csvExtension, SCHEDULE_COUNTS);
+      }
+
+      // If we match the FEC version column, set the version
+      if (strncmp(ctx->persistentMemory->line->str + keyStart, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
+      {
+        setVersion(ctx, valueStart, valueEnd);
+      }
+
+      // Write the key/value pair
+      writeSubstr(ctx, HEADER, csvExtension, keyStart, keyEnd, &headerField);
+      // Write the value to a buffer to be written later
+      writeSubstrToWriter(ctx, &bufferWriteContext, NULL, NULL, valueStart, valueEnd, &valueField);
+    }
+  }
+  writeNewline(ctx->writeContext, HEADER, csvExtension);
+  endLine(ctx->writeContext, ctx->types);
+  startDataRow(ctx, HEADER, csvExtension); // output the filing id if we have it
+  writeString(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
+  writeNewline(ctx->writeContext, HEADER, csvExtension); // end with newline
+  endLine(ctx->writeContext, ctx->types);
+  return 1;
+}
+
+// Returns 0 on failure, 1 on success
+int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
+{
+  // Parse fields
+  PARSE_CONTEXT parseContext;
+  FIELD_INFO fieldInfo;
+  initParseContext(ctx, &parseContext, &fieldInfo);
+
+  int isFecSecondColumn = 0;
+
+  // Iterate through fields
+  while (!isParseDone(&parseContext))
+  {
+    readField(ctx, &parseContext);
+
+    if (parseContext.columnIndex == 1)
+    {
+      // Check if the second column is "FEC"
+      if (strncmp(ctx->persistentMemory->line->str + parseContext.start, FEC, strlen(FEC)) == 0)
+      {
+        isFecSecondColumn = 1;
       }
       else
       {
-        // Grab key value from "key=value" (strip whitespace)
-        int i = 0;
-        consumeWhitespace(ctx, &i);
-        int keyStart = i;
-        int keyEnd = consumeUntil(ctx, &i, '=');
-        // Jump over '='
-        i++;
-        consumeWhitespace(ctx, &i);
-        int valueStart = i;
-        int valueEnd = consumeUntil(ctx, &i, 0);
-
-        // Gather field metrics for CSV writing
-        FIELD_INFO headerField = {.num_quotes = 0, .num_commas = 0};
-        for (int i = keyStart; i < keyEnd; i++)
-        {
-          processFieldChar(ctx->persistentMemory->line->str[i], &headerField);
-        }
-        FIELD_INFO valueField = {.num_quotes = 0, .num_commas = 0};
-        for (int i = valueStart; i < valueEnd; i++)
-        {
-          processFieldChar(ctx->persistentMemory->line->str[i], &valueField);
-        }
-
-        // Write commas as needed (only before fields that aren't first)
-        if (!firstField)
-        {
-          writeDelimeter(ctx->writeContext, HEADER, csvExtension);
-          writeDelimeter(&bufferWriteContext, NULL, NULL);
-        }
-        firstField = 0;
-
-        // Write schedule counts prefix if set
-        if (scheduleCounts)
-        {
-          writeString(ctx->writeContext, HEADER, csvExtension, SCHEDULE_COUNTS);
-        }
-
-        // If we match the FEC version column, set the version
-        if (strncmp(ctx->persistentMemory->line->str + keyStart, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
-        {
-          setVersion(ctx, valueStart, valueEnd);
-        }
-
-        // Write the key/value pair
-        writeSubstr(ctx, HEADER, csvExtension, keyStart, keyEnd, &headerField);
-        // Write the value to a buffer to be written later
-        writeSubstrToWriter(ctx, &bufferWriteContext, NULL, NULL, valueStart, valueEnd, &valueField);
-      }
-    }
-    writeNewline(ctx->writeContext, HEADER, csvExtension);
-    endLine(ctx->writeContext, ctx->types);
-    startDataRow(ctx, HEADER, csvExtension); // output the filing id if we have it
-    writeString(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
-    writeNewline(ctx->writeContext, HEADER, csvExtension); // end with newline
-    endLine(ctx->writeContext, ctx->types);
-  }
-  else
-  {
-    // Not a multiline legacy header — must be using a more recent version
-
-    // Parse fields
-    PARSE_CONTEXT parseContext;
-    FIELD_INFO fieldInfo;
-    initParseContext(ctx, &parseContext, &fieldInfo);
-
-    int isFecSecondColumn = 0;
-
-    // Iterate through fields
-    while (!isParseDone(&parseContext))
-    {
-      readField(ctx, &parseContext);
-
-      if (parseContext.columnIndex == 1)
-      {
-        // Check if the second column is "FEC"
-        if (strncmp(ctx->persistentMemory->line->str + parseContext.start, FEC, strlen(FEC)) == 0)
-        {
-          isFecSecondColumn = 1;
-        }
-        else
-        {
-          // If not, the second column is the version
-          setVersion(ctx, parseContext.start, parseContext.end);
-
-          // Parse the header now that version is known
-          if (parseLine(ctx, HEADER, 1) == 3)
-          {
-            return 0;
-          }
-        }
-      }
-      if (parseContext.columnIndex == 2 && isFecSecondColumn)
-      {
-        // Set the version
+        // If not, the second column is the version
         setVersion(ctx, parseContext.start, parseContext.end);
 
         // Parse the header now that version is known
-        return parseLine(ctx, HEADER, 1) != 3;
+        if (parseLine(ctx, HEADER, 1) == 3)
+        {
+          return 0;
+        }
       }
-
-      if (isParseDone(&parseContext))
-      {
-        break;
-      }
-      advanceField(&parseContext);
     }
+    if (parseContext.columnIndex == 2 && isFecSecondColumn)
+    {
+      // Set the version
+      setVersion(ctx, parseContext.start, parseContext.end);
+
+      // Parse the header now that version is known
+      return parseLine(ctx, HEADER, 1) != 3;
+    }
+
+    if (isParseDone(&parseContext))
+    {
+      break;
+    }
+    advanceField(&parseContext);
   }
   return 1;
 }
 
+// Returns 0 on failure, 1 on success
+int parseHeader(FEC_CONTEXT *ctx)
+{
+  if (lineStartsWithLegacyHeader(ctx))
+  {
+    return parseHeaderLegacy(ctx);
+  }
+  else
+  {
+    return parseHeaderNonLegacy(ctx);
+  }
+}
+
+// Returns 0 on failure, 1 on success
 int parseFec(FEC_CONTEXT *ctx)
 {
   int skipGrabLine = 0;
