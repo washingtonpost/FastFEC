@@ -4,6 +4,16 @@
 #include "writer.h"
 #include "string_utils.h"
 
+void initParseContext(PARSE_CONTEXT *parseContext, STRING *line, FIELD_INFO *fieldInfo)
+{
+  parseContext->line = line;
+  parseContext->fieldInfo = fieldInfo;
+  parseContext->position = 0;
+  parseContext->start = 0;
+  parseContext->end = 0;
+  parseContext->columnIndex = 0;
+}
+
 int isParseDone(PARSE_CONTEXT *parseContext)
 {
   char c = parseContext->line->str[parseContext->position];

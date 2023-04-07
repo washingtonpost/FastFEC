@@ -9,13 +9,9 @@ int tests_run = 0;
 // Quick helper method to init parse contexts for testing
 void initParseContextWithLine(PARSE_CONTEXT *parseContext, FIELD_INFO *fieldInfo, STRING *line)
 {
-  parseContext->line = line;
-  parseContext->fieldInfo = NULL;
-  parseContext->position = 0;
-  parseContext->columnIndex = 0;
   fieldInfo->num_commas = 0;
   fieldInfo->num_quotes = 0;
-  parseContext->fieldInfo = fieldInfo;
+  initParseContext(parseContext, line, fieldInfo);
 }
 
 static char *testCsvReading()

@@ -142,12 +142,7 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
 
         // Initialize a parse context for reading each header field
         PARSE_CONTEXT headerFields;
-        headerFields.line = headersCsv;
-        headerFields.fieldInfo = NULL;
-        headerFields.position = 0;
-        headerFields.start = 0;
-        headerFields.end = 0;
-        headerFields.columnIndex = 0;
+        initParseContext(&headerFields, headersCsv, NULL);
 
         // Iterate each field and build up the type info
         while (!isParseDone(&headerFields))
@@ -355,16 +350,6 @@ int consumeUntil(STRING *line, int *i, char c)
   return finalNonwhitespace;
 }
 
-void initParseContext(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, FIELD_INFO *fieldInfo)
-{
-  parseContext->line = ctx->persistentMemory->line;
-  parseContext->fieldInfo = fieldInfo;
-  parseContext->position = 0;
-  parseContext->start = 0;
-  parseContext->end = 0;
-  parseContext->columnIndex = 0;
-}
-
 void readField(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext)
 {
   // Reset field info
@@ -480,7 +465,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
   // Parse fields
   PARSE_CONTEXT parseContext;
   FIELD_INFO fieldInfo;
-  initParseContext(ctx, &parseContext, &fieldInfo);
+  initParseContext(&parseContext, ctx->persistentMemory->line, &fieldInfo);
 
   // Log the indices on the line where the form version is specified
   int formStart;
@@ -716,7 +701,7 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
   // Parse fields
   PARSE_CONTEXT parseContext;
   FIELD_INFO fieldInfo;
-  initParseContext(ctx, &parseContext, &fieldInfo);
+  initParseContext(&parseContext, ctx->persistentMemory->line, &fieldInfo);
 
   int isFecSecondColumn = 0;
 

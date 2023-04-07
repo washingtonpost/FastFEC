@@ -21,6 +21,8 @@ struct parse_context
 };
 typedef struct parse_context PARSE_CONTEXT;
 
+void initParseContext(PARSE_CONTEXT *parseContext, STRING *line, FIELD_INFO *fieldInfo);
+
 void processFieldChar(char c, FIELD_INFO *info);
 
 void writeDelimeter(WRITE_CONTEXT *context, char *filename, const char *extension);
