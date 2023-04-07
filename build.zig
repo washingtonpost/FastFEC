@@ -138,4 +138,7 @@ const buildOptions = [_][]const u8{
     "-Wall",
     "-W",
     "-Wno-missing-field-initializers",
+    // The string literals in mappings_generated.h are super long, which gives us
+    // warnings, but this isn't actually a problem unless we used som ancient compiler.
+    "-Wno-overlength-strings",
 };

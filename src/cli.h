@@ -45,7 +45,7 @@ struct cli_context
 };
 typedef struct cli_context CLI_CONTEXT;
 
-CLI_CONTEXT *newCliContext();
+CLI_CONTEXT *newCliContext(void);
 
 void parseArgs(CLI_CONTEXT *context, int piped, int argc, char *argv[]);
 

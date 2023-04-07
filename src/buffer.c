@@ -47,7 +47,7 @@ int readLine(BUFFER *buffer, STRING *string, void *data)
   }
 
   // Read through the buffer character by character to fill a line.
-  int n = 0;
+  size_t n = 0;
   int stringStart = 0;
   int start = buffer->bufferPos;
   while (1)

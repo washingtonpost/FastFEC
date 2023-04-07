@@ -300,7 +300,7 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
     if (context->useCustomLine)
     {
       // Write to custom line function
-      int newPosition = context->customLineBufferPosition + nchars;
+      size_t newPosition = context->customLineBufferPosition + nchars;
       if (newPosition + 1 > context->customLineBuffer->n)
       {
         growStringTo(context->customLineBuffer, newPosition + 1);
@@ -314,7 +314,7 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
   else
   {
     // Write to local buffer
-    int newPosition = context->localBufferPosition + nchars;
+    size_t newPosition = context->localBufferPosition + nchars;
     if (newPosition + 1 > context->localBuffer->n)
     {
       growStringTo(context->localBuffer, newPosition + 1);
