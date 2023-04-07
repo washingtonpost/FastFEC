@@ -1,5 +1,5 @@
 import datetime
-import os
+from pathlib import Path
 
 from fastfec import FastFEC
 
@@ -49,69 +49,63 @@ def test_filing_1550126_line_callback(filing_1550126):
         assert disbursement_data["payee_street_1"] == "1111 Lake Ter"
 
 
-def test_filing_1550548_parse_as_files(tmpdir, filing_1550548):
+def test_filing_1550548_parse_as_files(tmp_path: Path, filing_1550548):
     """Test that the FastFEC `parse_as_files` method outputs the correct files
     and that they are the correct length.
     """
     with open(filing_1550548, "rb") as filing, FastFEC() as fastfec:
-        assert fastfec.parse_as_files(filing, tmpdir) == 1
+        assert fastfec.parse_as_files(filing, tmp_path) == 1
 
-    assert (
-        os.listdir(tmpdir).sort()
-        == [
-            "SB23.csv",
-            "header.csv",
-            "SB21B.csv",
-            "F3XA.csv",
-            "SA11AI.csv",
-        ].sort()
-    )
+    assert {str(p.name) for p in tmp_path.iterdir()} == {
+        "SB23.csv",
+        "header.csv",
+        "SB21B.csv",
+        "F3XA.csv",
+        "SA11AI.csv",
+    }
 
-    with open(os.path.join(tmpdir, "header.csv")) as filing:
+    with open(tmp_path / "header.csv") as filing:
         assert len(filing.readlines()) == 2
 
-    with open(os.path.join(tmpdir, "F3XA.csv")) as filing:
+    with open(tmp_path / "F3XA.csv") as filing:
         assert len(filing.readlines()) == 2
 
-    with open(os.path.join(tmpdir, "SA11AI.csv")) as filing:
+    with open(tmp_path / "SA11AI.csv") as filing:
         assert len(filing.readlines()) == 77
 
-    with open(os.path.join(tmpdir, "SB21B.csv")) as filing:
+    with open(tmp_path / "SB21B.csv") as filing:
         assert len(filing.readlines()) == 8
 
-    with open(os.path.join(tmpdir, "SB23.csv")) as filing:
+    with open(tmp_path / "SB23.csv") as filing:
         assert len(filing.readlines()) == 36
 
 
-def test_filing_1606847_parse_as_files(tmpdir, filing_1606847):
+def test_filing_1606847_parse_as_files(tmp_path: Path, filing_1606847):
     """Test that the FastFEC `parse_as_files` method outputs the correct files
     and that they do not SEGFAULT.
     """
     with open(filing_1606847, "rb") as filing, FastFEC() as fastfec:
-        assert fastfec.parse_as_files(filing, tmpdir) == 1
+        assert fastfec.parse_as_files(filing, tmp_path) == 1
 
-    assert (
-        os.listdir(tmpdir).sort()
-        == [
-            "SA11AI.csv",
-            "TEXT.csv",
-            "SB29.csv",
-            "SB22.csv",
-            "SA15.csv",
-            "SA12.csv",
-            "header.csv",
-            "SB28A.csv",
-            "SB21B.csv",
-            "SA11C.csv",
-            "SA17.csv",
-            "F3XA.csv",
-        ].sort()
-    )
+    assert {str(p.name) for p in tmp_path.iterdir()} == {
+        "SA11AI.csv",
+        "TEXT.csv",
+        "SB29.csv",
+        "SB22.csv",
+        "SA15.csv",
+        "SA12.csv",
+        "header.csv",
+        "SB28A.csv",
+        "SB21B.csv",
+        "SA11C.csv",
+        "SA17.csv",
+        "F3XA.csv",
+    }
 
 
-def test_filing_with_invalid_version_does_not_exit_1(tmpdir, filing_invalid_version):
+def test_filing_with_invalid_version_does_not_exit_1(tmp_path, filing_invalid_version):
     """Test that FastFEC does not exit the whole process trying to parse 1606026.fec
     but that it does return a non-1 error code.
     """
     with open(filing_invalid_version, "rb") as filing, FastFEC() as fastfec:
-        assert fastfec.parse_as_files(filing, tmpdir) != 1
+        assert fastfec.parse_as_files(filing, tmp_path) != 1
