@@ -4,6 +4,12 @@
 #include "writer.h"
 #include "string_utils.h"
 
+int isParseDone(PARSE_CONTEXT *parseContext)
+{
+  char c = parseContext->line->str[parseContext->position];
+  return (c == 0) || (c == '\n');
+}
+
 void processFieldChar(char c, FIELD_INFO *info)
 {
   if (info)

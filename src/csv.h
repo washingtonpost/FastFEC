@@ -47,3 +47,6 @@ void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, S
 // Trim whitespace by adjusting start and end pointers in
 // write context
 void stripWhitespace(PARSE_CONTEXT *context);
+
+// The parse is done if a newline or NULL is encountered
+int isParseDone(PARSE_CONTEXT *parseContext);

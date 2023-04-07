@@ -109,13 +109,6 @@ void freeFecContext(FEC_CONTEXT *ctx)
   free(ctx);
 }
 
-int isParseDone(PARSE_CONTEXT *parseContext)
-{
-  // The parse is done if a newline is encountered or EOF
-  char c = parseContext->line->str[parseContext->position];
-  return (c == 0) || (c == '\n');
-}
-
 int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart, int formEnd)
 {
   if ((ctx->formType != NULL) && (strncmp(ctx->formType, parseContext->line->str + formStart, formEnd - formStart) == 0))
