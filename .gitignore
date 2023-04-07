@@ -5,7 +5,7 @@
 bin
 *.test
 *.fec
-!python/tests/fixtures/*.fec
+!python/tests/cases/**/*.fec
 output/
 env/
 zig-cache

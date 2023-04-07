@@ -120,6 +120,7 @@ class LibFastFEC:
 
         # Custom open method
         def open_output_file(filename, *args, **kwargs):
+            filename = filename.replace("/", "-")
             filename = os.path.join(output_directory, filename)
             output_file = pathlib.Path(filename)
             output_file.parent.mkdir(exist_ok=True, parents=True)

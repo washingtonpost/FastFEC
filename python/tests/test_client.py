@@ -1,111 +1,167 @@
-import datetime
-from pathlib import Path
+from __future__ import annotations
 
+import configparser
+import csv
+import datetime
+import shutil
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import pytest
 from fastfec import FastFEC
 
-
-def test_filing_1550126_line_callback(filing_1550126):
-    """Test the FastFEC line-by-line callback functionality, in addition
-    to the package's ability to parse summary, contribution and
-    disbursement rows.
-    """
-    with open(filing_1550126, "rb") as filing, FastFEC() as fastfec:
-        parsed = list(fastfec.parse(filing))
-        assert len(parsed) == 25
-
-        # Test the summary data parse
-        summary_form, summary_data = parsed[1]
-        assert len(summary_data) == 93
-        assert summary_form == "F3A"
-        assert summary_data["filer_committee_id_number"] == "C00772335"
-        assert summary_data["committee_name"] == "Jeffrey Buongiorno for US Congress"
-        assert summary_data["election_date"] == ""
-        assert summary_data["coverage_from_date"] == datetime.date(2021, 7, 1)
-        assert summary_data["col_a_total_contributions_no_loans"] == 4239.0
-        assert summary_data["col_b_total_disbursements"] == 9229.09
-
-        # Test the contribution data parse
-        contribution_form, contribution_data = parsed[2]
-        assert len(contribution_data) == 45
-        assert contribution_form == "SA11AI"
-        assert contribution_data["filer_committee_id_number"] == "C00772335"
-        assert contribution_data["transaction_id"] == "SA11AI.4265"
-        assert contribution_data["entity_type"] == "IND"
-        assert contribution_data["contributor_last_name"] == "barbariniweil"
-        assert contribution_data["contributor_first_name"] == "dale"
-        assert contribution_data["contribution_date"] == datetime.date(2021, 8, 5)
-        assert contribution_data["contribution_amount"] == 1000.0
-        assert contribution_data["reference_code"] is None
-
-        # Test the disbursement data parse
-        disbursement_form, disbursement_data = parsed[8]
-        assert len(disbursement_data) == 44
-        assert disbursement_form == "SB17"
-        assert disbursement_data["expenditure_date"] == datetime.date(2021, 9, 10)
-        assert disbursement_data["expenditure_amount"] == 2000.0
-        assert disbursement_data["entity_type"] == "IND"
-        assert disbursement_data["payee_state"] == "FL"
-        assert disbursement_data["election_code"] == "P2022"
-        assert disbursement_data["payee_street_1"] == "1111 Lake Ter"
+_THIS_DIR = Path(__file__).parent
+CASES_DIR = _THIS_DIR / "cases"
 
 
-def test_filing_1550548_parse_as_files(tmp_path: Path, filing_1550548):
-    """Test that the FastFEC `parse_as_files` method outputs the correct files
-    and that they are the correct length.
-    """
-    with open(filing_1550548, "rb") as filing, FastFEC() as fastfec:
-        assert fastfec.parse_as_files(filing, tmp_path) == 1
+@dataclass
+class CaseConfig:
+    description: str = ""
+    skip: bool = False
+    skip_reason: str = ""
+    x_fail: bool = False  # The test is currently broken.
+    x_fail_reason: str = ""
+    x_parse_fail: bool = False  # We expect to fail to parse this filing
 
-    assert {str(p.name) for p in tmp_path.iterdir()} == {
-        "SB23.csv",
-        "header.csv",
-        "SB21B.csv",
-        "F3XA.csv",
-        "SA11AI.csv",
-    }
+    @classmethod
+    def from_ini_file(cls, path: Path) -> CaseConfig:
+        config = cls()
+        if not path.exists():
+            return config
 
-    with open(tmp_path / "header.csv") as filing:
-        assert len(filing.readlines()) == 2
-
-    with open(tmp_path / "F3XA.csv") as filing:
-        assert len(filing.readlines()) == 2
-
-    with open(tmp_path / "SA11AI.csv") as filing:
-        assert len(filing.readlines()) == 77
-
-    with open(tmp_path / "SB21B.csv") as filing:
-        assert len(filing.readlines()) == 8
-
-    with open(tmp_path / "SB23.csv") as filing:
-        assert len(filing.readlines()) == 36
-
-
-def test_filing_1606847_parse_as_files(tmp_path: Path, filing_1606847):
-    """Test that the FastFEC `parse_as_files` method outputs the correct files
-    and that they do not SEGFAULT.
-    """
-    with open(filing_1606847, "rb") as filing, FastFEC() as fastfec:
-        assert fastfec.parse_as_files(filing, tmp_path) == 1
-
-    assert {str(p.name) for p in tmp_path.iterdir()} == {
-        "SA11AI.csv",
-        "TEXT.csv",
-        "SB29.csv",
-        "SB22.csv",
-        "SA15.csv",
-        "SA12.csv",
-        "header.csv",
-        "SB28A.csv",
-        "SB21B.csv",
-        "SA11C.csv",
-        "SA17.csv",
-        "F3XA.csv",
-    }
+        parser = configparser.ConfigParser()
+        parser.read(path)
+        section = parser["case"]
+        keys_present = set(section.keys())
+        keys_allowed = set(config.__dataclass_fields__.keys())
+        extra = keys_present - keys_allowed
+        if extra:
+            raise ValueError(
+                f"Unexpected keys in {path}: {extra}\n Allowed: {keys_allowed}",
+            )
+        config.description = section.get("description", config.description)
+        config.skip = section.getboolean("skip", config.skip)
+        config.skip_reason = section.get("skip_reason", config.skip_reason)
+        config.x_fail = section.getboolean("x_fail", config.x_fail)
+        config.x_fail_reason = section.get("x_fail_reason", config.x_fail_reason)
+        config.x_parse_fail = section.getboolean("x_parse_fail", config.x_parse_fail)
+        return config
 
 
-def test_filing_with_invalid_version_does_not_exit_1(tmp_path, filing_invalid_version):
-    """Test that FastFEC does not exit the whole process trying to parse 1606026.fec
-    but that it does return a non-1 error code.
-    """
-    with open(filing_invalid_version, "rb") as filing, FastFEC() as fastfec:
-        assert fastfec.parse_as_files(filing, tmp_path) != 1
+class Case:
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.name = path.name
+        self.fec_path = path / "src.fec"
+        self.expected_dir = path / "expected"
+
+        config = CaseConfig.from_ini_file(path / "config.ini")
+        self.description = config.description
+        self.skip = config.skip
+        self.skip_reason = config.skip_reason
+        self.x_fail = config.x_fail
+        self.x_fail_reason = config.x_fail_reason
+        self.x_parse_fail = config.x_parse_fail
+
+
+def case_to_param(case: Case):
+    marks = [
+        pytest.mark.skipif(case.skip, reason=case.skip_reason),
+        pytest.mark.xfail(case.x_fail, reason=case.x_fail_reason),
+    ]
+    return pytest.param(case, id=case.name, marks=marks)
+
+
+ALL_TEST_CASES = [Case(path) for path in CASES_DIR.iterdir()]
+ALL_TEST_CASE_PARAMS = [case_to_param(case) for case in ALL_TEST_CASES]
+
+
+@pytest.fixture(scope="module", params=ALL_TEST_CASE_PARAMS)
+def case(request):
+    return request.param
+
+
+@pytest.fixture()
+def fastfec():
+    with FastFEC() as fastfec:
+        yield fastfec
+
+
+def test_parse_as_files(case: Case, fastfec):
+    with open(case.fec_path, "rb") as filing:
+        output_dir = case.path / "output"
+        try:
+            shutil.rmtree(output_dir)
+        except FileNotFoundError:
+            pass
+        code = fastfec.parse_as_files(filing, output_dir)
+        if case.x_parse_fail:
+            assert code != 1
+            return
+        assert code == 1
+        assert_dir_contents_equal(output_dir, case.expected_dir)
+
+
+def test_parse(case: Case, fastfec):
+    with open(case.fec_path, "rb") as filing:
+        lines = fastfec.parse(filing)
+        if case.x_parse_fail:
+            assert list(lines) == []
+            return
+        with CsvReaders.from_dir(case.expected_dir) as readers:
+            for form, data in lines:
+                data = {k: coerce_to_string(v) for k, v in data.items()}
+                expected = readers[form].next_record()
+                assert data == expected
+            for reader in readers.values():
+                assert reader.is_empty()
+
+
+def coerce_to_string(v: Any):
+    if isinstance(v, datetime.date):
+        return v.strftime("%Y-%m-%d")
+    elif isinstance(v, float):
+        return f"{v:.2f}"
+    else:
+        return v
+
+
+class CsvReader:
+    def __init__(self, path: Path) -> None:
+        self.file = open(path, newline="")
+        self.reader = csv.DictReader(self.file)
+
+    def next_record(self):
+        return next(self.reader)
+
+    def is_empty(self) -> bool:
+        try:
+            self.next_record()
+        except StopIteration:
+            return True
+        return False
+
+
+class CsvReaders(dict[str, CsvReader]):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        for reader in self.values():
+            reader.file.close()
+
+    @classmethod
+    def from_dir(cls, dir: Path):
+        d = {path.stem: CsvReader(path) for path in dir.iterdir()}
+        return cls(d)
+
+
+def assert_dir_contents_equal(dir1: Path, dir2: Path):
+    if not dir1.exists() and not dir2.exists():
+        return
+    dir1_filenames = {p.name for p in dir1.iterdir()}
+    dir2_filenames = {p.name for p in dir2.iterdir()}
+    assert dir1_filenames == dir2_filenames
+    for filename in dir1_filenames:
+        assert (dir1 / filename).read_text() == (dir2 / filename).read_text()
