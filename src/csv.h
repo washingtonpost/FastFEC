@@ -31,15 +31,17 @@ void writeNewline(WRITE_CONTEXT *context, char *filename, const char *extension)
 
 static inline int endOfField(char c);
 
-// Read a field from a file delimited by the character with the
-// ascii code 28. If both the start and end of the field are `"`
-// then return the field contents inside the quotes.
-void readAscii28Field(PARSE_CONTEXT *parseContext);
+// Read a field, either delimted by ascii28 or comma.
 
+// For ascii28:
+// If both the start and end of the field are `"`
+// then return the field contents inside the quotes.
+
+// For comma::
 // Read a CSV field in-place, modifying line and returning start and
 // end positions of the unescaped field. Since CSV fields are always
 // longer escaped than not, this will always work in-place.
-void readCsvField(PARSE_CONTEXT *parseContext);
+void readField(PARSE_CONTEXT *parseContext, int useAscii28);
 
 // Advance past the delimeter and increase the column index
 void advanceField(PARSE_CONTEXT *parseContext);

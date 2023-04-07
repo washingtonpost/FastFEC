@@ -151,6 +151,22 @@ void readCsvField(PARSE_CONTEXT *parseContext)
   stripQuotes(parseContext);
 }
 
+void readField(PARSE_CONTEXT *parseContext, int useAscii28)
+{
+  // Reset field info
+  parseContext->fieldInfo->num_quotes = 0;
+  parseContext->fieldInfo->num_commas = 0;
+
+  if (useAscii28)
+  {
+    readAscii28Field(parseContext);
+  }
+  else
+  {
+    readCsvField(parseContext);
+  }
+}
+
 void advanceField(PARSE_CONTEXT *context)
 {
   context->columnIndex++;

@@ -350,22 +350,6 @@ int consumeUntil(STRING *line, int *i, char c)
   return finalNonwhitespace;
 }
 
-void readField(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext)
-{
-  // Reset field info
-  parseContext->fieldInfo->num_quotes = 0;
-  parseContext->fieldInfo->num_commas = 0;
-
-  if (ctx->currentLineHasAscii28)
-  {
-    readAscii28Field(parseContext);
-  }
-  else
-  {
-    readCsvField(parseContext);
-  }
-}
-
 void startHeaderRow(FEC_CONTEXT *ctx, char *filename)
 {
   // Write the filing ID header, if includeFilingId is specified
@@ -474,7 +458,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
   // Iterate through fields
   while (!isParseDone(&parseContext))
   {
-    readField(ctx, &parseContext);
+    readField(&parseContext, ctx->currentLineHasAscii28);
     if (parseContext.columnIndex == 0)
     {
       // Set the form version to the first column
@@ -708,8 +692,7 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
   // Iterate through fields
   while (!isParseDone(&parseContext))
   {
-    readField(ctx, &parseContext);
-
+    readField(&parseContext, ctx->currentLineHasAscii28);
     if (parseContext.columnIndex == 1)
     {
       // Check if the second column is "FEC"
