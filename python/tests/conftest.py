@@ -8,9 +8,7 @@ FIXTURE_DIR = os.path.join(_TEST_FOLDER, "fixtures")
 
 @pytest.fixture(scope="session")
 def get_fixture():
-    """
-    Fetch locally stored fixture files.
-    """
+    """Fetch locally stored fixture files."""
 
     def _get_fixture(filename, load=False):
         filepath = os.path.join(FIXTURE_DIR, filename)
@@ -23,31 +21,25 @@ def get_fixture():
     return _get_fixture
 
 
-@pytest.fixture
+@pytest.fixture()
 def filing_1550126(get_fixture):
-    """
-    Returns the file path for 1550126.fec
-    """
+    """Returns the file path for 1550126.fec."""
     return get_fixture("1550126.fec")
 
 
-@pytest.fixture
+@pytest.fixture()
 def filing_1550548(get_fixture):
-    """
-    Returns the file path for 1550548.fec
-    """
+    """Returns the file path for 1550548.fec."""
     return get_fixture("1550548.fec")
 
-@pytest.fixture
+
+@pytest.fixture()
 def filing_1606847(get_fixture):
-    """
-    Returns the file path for 1606847.fec
-    """
+    """Returns the file path for 1606847.fec."""
     return get_fixture("1606847.fec")
 
-@pytest.fixture
+
+@pytest.fixture()
 def filing_invalid_version(get_fixture):
-    """
-    Returns the file path for filing_invalid_version.fec
-    """
+    """Returns the file path for filing_invalid_version.fec."""
     return get_fixture("filing_invalid_version.fec")
