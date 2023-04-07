@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "csv.h"
 #include "writer.h"
+#include "string_utils.h"
 
 void processFieldChar(char c, FIELD_INFO *info)
 {
@@ -180,14 +181,9 @@ void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, S
   }
 }
 
-int isWhitespaceChar(char c)
-{
-  return (c == ' ') || (c == '\t') || (c == '\n');
-}
-
 int isWhitespace(PARSE_CONTEXT *context, int position)
 {
-  return isWhitespaceChar(context->line->str[position]);
+  return strIsWhitespace(context->line->str[position]);
 }
 
 void stripWhitespace(PARSE_CONTEXT *context)

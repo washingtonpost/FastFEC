@@ -4,6 +4,7 @@
 #include "csv.h"
 #include "mappings.h"
 #include "buffer.h"
+#include "string_utils.h"
 #include <string.h>
 #include <stdarg.h>
 
@@ -35,10 +36,9 @@ void freeSafe(void *ptr)
 
 pcre *_compileRegex(const char *pattern)
 {
-  pcre *regex;
   const char *error;
   int errorOffset;
-  regex = pcre_compile(pattern, PCRE_CASELESS, &error, &errorOffset, NULL);
+  pcre *regex = pcre_compile(pattern, PCRE_CASELESS, &error, &errorOffset, NULL);
   if (regex == NULL)
   {
     fprintf(stderr, "Regex '%s' compilation failed at offset %d: %s\n", pattern, errorOffset, error);
@@ -214,18 +214,12 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
   fprintf(stderr, "Error: Unmatched for version %s and form type %s\n", ctx->version, ctx->formType);
   return 0;
 }
-
-void writeSubstrToWriter(FEC_CONTEXT *ctx, WRITE_CONTEXT *writeContext, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
+void ctxWriteSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
 {
-  writeField(writeContext, filename, extension, ctx->persistentMemory->line, start, end, field);
+  writeField(ctx->writeContext, filename, CSV_EXTENSION, ctx->persistentMemory->line, start, end, field);
 }
 
-void writeSubstr(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
-{
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, end, field);
-}
-
-void writeQuotedCsvField(FEC_CONTEXT *ctx, char *filename, const char *extension, char *line, int length)
+void writeQuotedCsvField(FEC_CONTEXT *ctx, char *filename, char *line, int length)
 {
   for (int i = 0; i < length; i++)
   {
@@ -233,18 +227,18 @@ void writeQuotedCsvField(FEC_CONTEXT *ctx, char *filename, const char *extension
     if (c == '"')
     {
       // Write two quotes since the field is quoted
-      writeChar(ctx->writeContext, filename, extension, '"');
-      writeChar(ctx->writeContext, filename, extension, '"');
+      writeChar(ctx->writeContext, filename, CSV_EXTENSION, '"');
+      writeChar(ctx->writeContext, filename, CSV_EXTENSION, '"');
     }
     else
     {
-      writeChar(ctx->writeContext, filename, extension, c);
+      writeChar(ctx->writeContext, filename, CSV_EXTENSION, c);
     }
   }
 }
 
 // Write a date field by separating the output with dashes
-void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
+void writeDateField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
 {
   if (start == end)
   {
@@ -255,18 +249,18 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, const char *extension, int
   {
     // Could not parse date, write string as is and log warning
     ctxWarn(ctx, "Date fields must be exactly 8 chars long, not %d\n", end - start);
-    writeSubstr(ctx, filename, extension, start, end, field);
+    ctxWriteSubstr(ctx, filename, start, end, field);
     return;
   }
 
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start, start + 4, field);
-  writeChar(ctx->writeContext, filename, extension, '-');
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start + 4, start + 6, field);
-  writeChar(ctx->writeContext, filename, extension, '-');
-  writeSubstrToWriter(ctx, ctx->writeContext, filename, extension, start + 6, start + 8, field);
+  ctxWriteSubstr(ctx, filename, start, start + 4, field);
+  writeChar(ctx->writeContext, filename, CSV_EXTENSION, '-');
+  ctxWriteSubstr(ctx, filename, start + 4, start + 6, field);
+  writeChar(ctx->writeContext, filename, CSV_EXTENSION, '-');
+  ctxWriteSubstr(ctx, filename, start + 6, start + 8, field);
 }
 
-void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, int start, int end, FIELD_INFO *field)
+void writeFloatField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
 {
   char *doubleStr;
   char *conversionFloat = ctx->persistentMemory->line->str + start;
@@ -276,12 +270,12 @@ void writeFloatField(FEC_CONTEXT *ctx, char *filename, const char *extension, in
   {
     // Could not convert to a float, write string as is and log warning
     ctxWarn(ctx, "Could not parse float field\n");
-    writeSubstr(ctx, filename, extension, start, end, field);
+    ctxWriteSubstr(ctx, filename, start, end, field);
     return;
   }
 
   // Write the value
-  writeDouble(ctx->writeContext, filename, extension, value);
+  writeDouble(ctx->writeContext, filename, value);
 }
 
 // Grab a line from the input file.
@@ -305,113 +299,66 @@ int grabLine(FEC_CONTEXT *ctx)
   return 1;
 }
 
-char lowercaseTable[256] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
-    64, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 91, 92, 93, 94, 95,
-    96, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 123, 124, 125, 126, 127,
-    128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-    144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
-    160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
-    176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
-    192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
-    208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
-    224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
-    240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
-
-void lineToLowerCase(FEC_CONTEXT *ctx)
-{
-  // Convert the line to lower case
-  char *c = ctx->persistentMemory->line->str;
-  while (*c)
-  {
-    *c = lowercaseTable[(int)*c];
-    c++;
-  }
-}
-
 // Check if the line starts with the prefix
-int lineStartsWith(FEC_CONTEXT *ctx, const char *prefix, const int prefixLength)
+int lineStartsWith(STRING *line, const char *prefix)
 {
-  return ctx->persistentMemory->line->n >= prefixLength && strncmp(ctx->persistentMemory->line->str, prefix, prefixLength) == 0;
+  size_t prefixLength = strlen(prefix);
+  return line->n >= prefixLength && strncmp(line->str, prefix, prefixLength) == 0;
 }
 
 // Return whether the line starts with "/*"
-int lineStartsWithLegacyHeader(FEC_CONTEXT *ctx)
+int lineStartsWithLegacyHeader(STRING *line)
 {
-  return lineStartsWith(ctx, "/*", 2);
-}
-
-// Return whether the line starts with "schedule_counts"
-int lineStartsWithScheduleCounts(FEC_CONTEXT *ctx)
-{
-  return lineStartsWith(ctx, "schedule_counts", 15);
+  return lineStartsWith(line, "/*");
 }
 
 // Return whether the line starts with the '[' character (ignoring whitespace)
-int lineMightStartWithF99(FEC_CONTEXT *ctx)
+int lineMightStartWithF99(STRING *line)
 {
   int i = 0;
-  while (i < ctx->persistentMemory->line->n && isWhitespaceChar(ctx->persistentMemory->line->str[i]))
+  while (i < line->n && strIsWhitespace(line->str[i]))
   {
     i++;
   }
-  return ctx->persistentMemory->line->str[i] == '[';
+  return line->str[i] == '[';
 }
 
-// Return whether the line contains non-whitespace characters
-int lineContainsNonwhitespace(FEC_CONTEXT *ctx)
+// Consume whitespace, advancing a position index at the same time
+void consumeWhitespace(STRING *line, int *i)
 {
-  int i = 0;
-  while (i < ctx->persistentMemory->line->n && isWhitespaceChar(ctx->persistentMemory->line->str[i]))
+  while (*i < line->n)
   {
-    i++;
-  }
-  return ctx->persistentMemory->line->str[i] != 0;
-}
-
-// Consume whitespace, advancing a position pointer at the same time
-void consumeWhitespace(FEC_CONTEXT *ctx, int *position)
-{
-  while (*position < ctx->persistentMemory->line->n)
-  {
-    if ((ctx->persistentMemory->line->str[*position] == ' ') || (ctx->persistentMemory->line->str[*position] == '\t'))
-    {
-      (*position)++;
-    }
-    else
+    char c = line->str[*i];
+    int isWhitespace = (c != ' ') && (c != '\t');
+    if (!isWhitespace)
     {
       break;
     }
+    (*i)++;
   }
 }
 
 // Consume characters until the specified character is reached.
 // Returns the position of the final character consumed excluding
 // trailing whitespace.
-int consumeUntil(FEC_CONTEXT *ctx, int *position, char c)
+int consumeUntil(STRING *line, int *i, char c)
 {
   // Store the last non-whitespace character
-  int finalNonwhitespace = *position;
-  while (*position < ctx->persistentMemory->line->n)
+  int finalNonwhitespace = *i;
+  while (*i < line->n)
   {
     // Grab the current character
-    char current = ctx->persistentMemory->line->str[*position];
+    char current = line->str[*i];
     if ((current == c) || (current == 0))
     {
       // If the character is the one we're looking for, break
       break;
     }
-    else if ((current != ' ') && (current != '\t') && (current != '\n'))
+    else if (!strIsWhitespace(current))
     {
-      // If the character is not whitespace, advance finalNonwhitespace
-      finalNonwhitespace = (*position) + 1;
+      finalNonwhitespace = (*i) + 1;
     }
-    (*position)++;
+    (*i)++;
   }
   return finalNonwhitespace;
 }
@@ -442,23 +389,23 @@ void readField(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext)
   }
 }
 
-void startHeaderRow(FEC_CONTEXT *ctx, char *filename, const char *extension)
+void startHeaderRow(FEC_CONTEXT *ctx, char *filename)
 {
   // Write the filing ID header, if includeFilingId is specified
   if (ctx->includeFilingId)
   {
-    writeString(ctx->writeContext, filename, extension, "filing_id");
-    writeDelimeter(ctx->writeContext, filename, extension);
+    writeString(ctx->writeContext, filename, CSV_EXTENSION, "filing_id");
+    writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
   }
 }
 
-void startDataRow(FEC_CONTEXT *ctx, char *filename, const char *extension)
+void startDataRow(FEC_CONTEXT *ctx, char *filename)
 {
   // Write the filing ID value, if includeFilingId is specified
   if (ctx->includeFilingId)
   {
-    writeString(ctx->writeContext, filename, extension, ctx->filingId);
-    writeDelimeter(ctx->writeContext, filename, extension);
+    writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->filingId);
+    writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
   }
 }
 
@@ -494,17 +441,17 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
         // Write the delimeter at the beginning and a quote character
         // (the csv field will always be escaped so we can stream write
         // without having to calculate whether it's escaped later).
-        writeDelimeter(ctx->writeContext, filename, csvExtension);
-        writeChar(ctx->writeContext, filename, csvExtension, '"');
+        writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
+        writeChar(ctx->writeContext, filename, CSV_EXTENSION, '"');
         first = 0;
       }
 
-      writeQuotedCsvField(ctx, filename, csvExtension, ctx->persistentMemory->line->str, ctx->currentLineLength);
+      writeQuotedCsvField(ctx, filename, ctx->persistentMemory->line->str, ctx->currentLineLength);
       continue;
     }
 
     // See if line begins with f99 text boundary by first seeing if it starts with "["
-    if (lineMightStartWithF99(ctx))
+    if (lineMightStartWithF99(ctx->persistentMemory->line))
     {
       // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
       if (lineContainsF99Start(ctx))
@@ -518,7 +465,7 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
         return 0;
       }
     }
-    else if (lineContainsNonwhitespace(ctx))
+    else if (strContainsNonWhitespace(ctx->persistentMemory->line->str, ctx->persistentMemory->line->n))
     {
       // The line should only contain non-whitespace that starts
       // f99 text
@@ -526,7 +473,7 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
     }
   }
   // Successful extraction, end the quote delimiter
-  writeChar(ctx->writeContext, filename, csvExtension, '"');
+  writeChar(ctx->writeContext, filename, CSV_EXTENSION, '"');
   return 1;
 }
 
@@ -576,22 +523,22 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       if (parseContext.columnIndex == 1)
       {
         // Write header if necessary
-        if (getFile(ctx->writeContext, filename, csvExtension) == 1)
+        if (getFile(ctx->writeContext, filename, CSV_EXTENSION) == 1)
         {
           // File is newly opened, write headers
-          startHeaderRow(ctx, filename, csvExtension);
-          writeString(ctx->writeContext, filename, csvExtension, ctx->headers);
-          writeNewline(ctx->writeContext, filename, csvExtension);
+          startHeaderRow(ctx, filename);
+          writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->headers);
+          writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
           endLine(ctx->writeContext, ctx->types);
         }
 
         // Write form type
-        startDataRow(ctx, filename, csvExtension);
-        writeString(ctx->writeContext, filename, csvExtension, ctx->formType);
+        startDataRow(ctx, filename);
+        writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->formType);
       }
 
       // Write delimeter
-      writeDelimeter(ctx->writeContext, filename, csvExtension);
+      writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
 
       // Get the type of the current field and write accordingly
       char type;
@@ -617,17 +564,17 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       if (type == 's')
       {
         // String
-        writeSubstr(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        ctxWriteSubstr(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
       }
       else if (type == 'd')
       {
         // Date
-        writeDateField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        writeDateField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
       }
       else if (type == 'f')
       {
         // Float
-        writeFloatField(ctx, filename, csvExtension, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        writeFloatField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
       }
       else
       {
@@ -658,14 +605,14 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType);
       ctxWarn(ctx, "'%s'\n", parseContext.line->str);
       // 2 indicates we won't grab the line again
-      writeNewline(ctx->writeContext, filename, csvExtension);
+      writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
       endLine(ctx->writeContext, ctx->types);
       return 2;
     }
   }
 
   // Parsing successful
-  writeNewline(ctx->writeContext, filename, csvExtension);
+  writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
   endLine(ctx->writeContext, ctx->types);
   return 1;
 }
@@ -707,7 +654,7 @@ int versionUsesAscii28(char *version)
 // Returns 0 on failure, 1 on success
 int parseHeaderLegacy(FEC_CONTEXT *ctx)
 {
-  startHeaderRow(ctx, HEADER, csvExtension);
+  startHeaderRow(ctx, HEADER);
   int scheduleCounts = 0; // init scheduleCounts to be false
   int firstField = 1;
 
@@ -722,16 +669,16 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
     {
       break;
     }
-    if (lineStartsWithLegacyHeader(ctx))
+    STRING *line = ctx->persistentMemory->line;
+    if (lineStartsWithLegacyHeader(line))
     {
       break;
     }
 
-    // Turn the line into lowercase
-    lineToLowerCase(ctx);
+    strToLowerCase(line->str);
 
     // Check if the line starts with "schedule_counts"
-    if (lineStartsWithScheduleCounts(ctx))
+    if (lineStartsWith(line, "schedule_counts"))
     {
       scheduleCounts = 1;
     }
@@ -739,31 +686,31 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
     {
       // Grab key value from "key=value" (strip whitespace)
       int i = 0;
-      consumeWhitespace(ctx, &i);
+      consumeWhitespace(line, &i);
       int keyStart = i;
-      int keyEnd = consumeUntil(ctx, &i, '=');
+      int keyEnd = consumeUntil(line, &i, '=');
       // Jump over '='
       i++;
-      consumeWhitespace(ctx, &i);
+      consumeWhitespace(line, &i);
       int valueStart = i;
-      int valueEnd = consumeUntil(ctx, &i, 0);
+      int valueEnd = consumeUntil(line, &i, 0);
 
       // Gather field metrics for CSV writing
       FIELD_INFO headerField = {.num_quotes = 0, .num_commas = 0};
       for (int i = keyStart; i < keyEnd; i++)
       {
-        processFieldChar(ctx->persistentMemory->line->str[i], &headerField);
+        processFieldChar(line->str[i], &headerField);
       }
       FIELD_INFO valueField = {.num_quotes = 0, .num_commas = 0};
       for (int i = valueStart; i < valueEnd; i++)
       {
-        processFieldChar(ctx->persistentMemory->line->str[i], &valueField);
+        processFieldChar(line->str[i], &valueField);
       }
 
       // Write commas as needed (only before fields that aren't first)
       if (!firstField)
       {
-        writeDelimeter(ctx->writeContext, HEADER, csvExtension);
+        writeDelimeter(ctx->writeContext, HEADER, CSV_EXTENSION);
         writeDelimeter(&bufferWriteContext, NULL, NULL);
       }
       firstField = 0;
@@ -771,26 +718,26 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
       // Write schedule counts prefix if set
       if (scheduleCounts)
       {
-        writeString(ctx->writeContext, HEADER, csvExtension, SCHEDULE_COUNTS);
+        writeString(ctx->writeContext, HEADER, CSV_EXTENSION, SCHEDULE_COUNTS);
       }
 
       // If we match the FEC version column, set the version
-      if (strncmp(ctx->persistentMemory->line->str + keyStart, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
+      if (strncmp(line->str + keyStart, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
       {
         setVersion(ctx, valueStart, valueEnd);
       }
 
       // Write the key/value pair
-      writeSubstr(ctx, HEADER, csvExtension, keyStart, keyEnd, &headerField);
+      ctxWriteSubstr(ctx, HEADER, keyStart, keyEnd, &headerField);
       // Write the value to a buffer to be written later
-      writeSubstrToWriter(ctx, &bufferWriteContext, NULL, NULL, valueStart, valueEnd, &valueField);
+      writeField(&bufferWriteContext, NULL, NULL, ctx->persistentMemory->line, valueStart, valueEnd, &valueField);
     }
   }
-  writeNewline(ctx->writeContext, HEADER, csvExtension);
+  writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION);
   endLine(ctx->writeContext, ctx->types);
-  startDataRow(ctx, HEADER, csvExtension); // output the filing id if we have it
-  writeString(ctx->writeContext, HEADER, csvExtension, bufferWriteContext.localBuffer->str);
-  writeNewline(ctx->writeContext, HEADER, csvExtension); // end with newline
+  startDataRow(ctx, HEADER); // output the filing id if we have it
+  writeString(ctx->writeContext, HEADER, CSV_EXTENSION, bufferWriteContext.localBuffer->str);
+  writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION); // end with newline
   endLine(ctx->writeContext, ctx->types);
   return 1;
 }
@@ -850,7 +797,7 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 // Returns 0 on failure, 1 on success
 int parseHeader(FEC_CONTEXT *ctx)
 {
-  if (lineStartsWithLegacyHeader(ctx))
+  if (lineStartsWithLegacyHeader(ctx->persistentMemory->line))
   {
     return parseHeaderLegacy(ctx);
   }

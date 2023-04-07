@@ -2,7 +2,7 @@
 
 #include "memory.h"
 
-static const char csvExtension[] = ".csv";
+static const char CSV_EXTENSION[] = ".csv";
 
 typedef void (*CustomWriteFunction)(char *filename, char *extension, char *contents, int numBytes);
 
@@ -62,6 +62,6 @@ void writeString(WRITE_CONTEXT *context, char *filename, const char *extension, 
 
 void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, char c);
 
-void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, double d);
+void writeDouble(WRITE_CONTEXT *context, char *filename, double d);
 
 void freeWriteContext(WRITE_CONTEXT *context);

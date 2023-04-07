@@ -347,12 +347,12 @@ void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, ch
   }
 }
 
-void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, double d)
+void writeDouble(WRITE_CONTEXT *context, char *filename, double d)
 {
   // Write to local buffer
   char str[100]; // should be able to fit any double
   sprintf(str, NUMBER_FORMAT, d);
-  writeString(context, filename, extension, str);
+  writeString(context, filename, CSV_EXTENSION, str);
 }
 
 void freeWriteContext(WRITE_CONTEXT *context)

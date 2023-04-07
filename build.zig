@@ -90,6 +90,7 @@ const libSources = [_][]const u8{
     "src/csv.c",
     "src/writer.c",
     "src/fec.c",
+    "src/string_utils.c",
 };
 const pcreSources = [_][]const u8{
     "src/pcre/pcre_chartables.c",
@@ -128,7 +129,8 @@ const testIncludes = [_][]const u8{
     "src/csv.c",
     "src/writer.c",
     "src/cli.c",
-    "src/fec.c"
+    "src/fec.c",
+    "src/string_utils.c",
 };
 const buildOptions = [_][]const u8{
     "-std=c11",
