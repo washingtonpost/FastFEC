@@ -4,10 +4,11 @@
 #include "writer.h"
 #include "string_utils.h"
 
-void initParseContext(PARSE_CONTEXT *parseContext, STRING *line, FIELD_INFO *fieldInfo)
+void initParseContext(PARSE_CONTEXT *parseContext, STRING *line)
 {
   parseContext->line = line;
-  parseContext->fieldInfo = fieldInfo;
+  parseContext->fieldInfo.num_commas = 0;
+  parseContext->fieldInfo.num_quotes = 0;
   parseContext->position = 0;
   parseContext->start = 0;
   parseContext->end = 0;
@@ -57,10 +58,7 @@ void stripQuotes(PARSE_CONTEXT *parseContext)
     // Bump the field positions to avoid the quotes
     (parseContext->start)++;
     (parseContext->end)--;
-    if (parseContext->fieldInfo)
-    {
-      (parseContext->fieldInfo->num_quotes) -= 2;
-    }
+    (parseContext->fieldInfo.num_quotes) -= 2;
   }
 }
 
@@ -68,12 +66,12 @@ void readAscii28Field(PARSE_CONTEXT *parseContext)
 {
   parseContext->start = parseContext->position;
   char c = parseContext->line->str[parseContext->position];
-  processFieldChar(c, parseContext->fieldInfo);
+  processFieldChar(c, &(parseContext->fieldInfo));
   while (c != 0 && c != 28 && c != '\n')
   {
     parseContext->position += 1;
     c = parseContext->line->str[parseContext->position];
-    processFieldChar(c, parseContext->fieldInfo);
+    processFieldChar(c, &(parseContext->fieldInfo));
   }
   parseContext->end = parseContext->position;
   stripQuotes(parseContext);
@@ -120,7 +118,7 @@ void readCsvSubfield(PARSE_CONTEXT *parseContext)
       parseContext->end = parseContext->position - offset;
       return;
     }
-    processFieldChar(c, parseContext->fieldInfo);
+    processFieldChar(c, &(parseContext->fieldInfo));
     if (escaped && c == '"')
     {
       // If in escaped mode and a quote is encountered, then we need
@@ -137,7 +135,7 @@ void readCsvSubfield(PARSE_CONTEXT *parseContext)
         parseContext->end = parseContext->position - offset;
         (parseContext->position)++;
         // Don't count trailing quote
-        parseContext->fieldInfo->num_quotes--;
+        parseContext->fieldInfo.num_quotes--;
         return;
       }
     }
@@ -154,8 +152,8 @@ void readCsvField(PARSE_CONTEXT *parseContext)
 void readField(PARSE_CONTEXT *parseContext, int useAscii28)
 {
   // Reset field info
-  parseContext->fieldInfo->num_quotes = 0;
-  parseContext->fieldInfo->num_commas = 0;
+  parseContext->fieldInfo.num_quotes = 0;
+  parseContext->fieldInfo.num_commas = 0;
 
   if (useAscii28)
   {

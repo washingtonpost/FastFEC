@@ -13,7 +13,7 @@ typedef struct field_info FIELD_INFO;
 struct parse_context
 {
   STRING *line;
-  FIELD_INFO *fieldInfo;
+  FIELD_INFO fieldInfo;
   int position;
   int start;
   int end;
@@ -21,7 +21,7 @@ struct parse_context
 };
 typedef struct parse_context PARSE_CONTEXT;
 
-void initParseContext(PARSE_CONTEXT *parseContext, STRING *line, FIELD_INFO *fieldInfo);
+void initParseContext(PARSE_CONTEXT *parseContext, STRING *line);
 
 void processFieldChar(char c, FIELD_INFO *info);
 

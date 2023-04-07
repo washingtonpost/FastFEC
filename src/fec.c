@@ -142,7 +142,7 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
 
         // Initialize a parse context for reading each header field
         PARSE_CONTEXT headerFields;
-        initParseContext(&headerFields, headersCsv, NULL);
+        initParseContext(&headerFields, headersCsv);
 
         // Iterate each field and build up the type info
         while (!isParseDone(&headerFields))
@@ -448,8 +448,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
 {
   // Parse fields
   PARSE_CONTEXT parseContext;
-  FIELD_INFO fieldInfo;
-  initParseContext(&parseContext, ctx->persistentMemory->line, &fieldInfo);
+  initParseContext(&parseContext, ctx->persistentMemory->line);
 
   // Log the indices on the line where the form version is specified
   int formStart;
@@ -525,17 +524,17 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       if (type == 's')
       {
         // String
-        ctxWriteSubstr(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        ctxWriteSubstr(ctx, filename, parseContext.start, parseContext.end, &(parseContext.fieldInfo));
       }
       else if (type == 'd')
       {
         // Date
-        writeDateField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        writeDateField(ctx, filename, parseContext.start, parseContext.end, &(parseContext.fieldInfo));
       }
       else if (type == 'f')
       {
         // Float
-        writeFloatField(ctx, filename, parseContext.start, parseContext.end, parseContext.fieldInfo);
+        writeFloatField(ctx, filename, parseContext.start, parseContext.end, &(parseContext.fieldInfo));
       }
       else
       {
@@ -684,8 +683,7 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 {
   // Parse fields
   PARSE_CONTEXT parseContext;
-  FIELD_INFO fieldInfo;
-  initParseContext(&parseContext, ctx->persistentMemory->line, &fieldInfo);
+  initParseContext(&parseContext, ctx->persistentMemory->line);
 
   int isFecSecondColumn = 0;
 
