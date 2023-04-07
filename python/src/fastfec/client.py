@@ -1,5 +1,4 @@
-"""
-A Python library to interface with FastFEC.
+"""A Python library to interface with FastFEC.
 
 This library provides methods to
   * parse a .fec file line by line, yieling a parsed result
@@ -27,21 +26,19 @@ from .utils import (
 
 
 class LibFastFEC:
-    """
-    Python wrapper for the fastfec library
-    """
+    """Python wrapper for the fastfec library."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__init_lib()
 
         # Initialize
         self.persistent_memory_context = self.libfastfec.newPersistentMemoryContext()
 
     def parse(self, file_handle, include_filing_id=None, should_parse_date=True):
-        """
-        Parses the input file line-by-line
+        """Parses the input file line-by-line.
 
         Arguments:
+        ---------
             file_handle -- An input stream for reading a .fec file
             include_filing_id -- If set, prepend a column into each outputted csv for filing_id
                                  with the specified filing id (defaults to None)
@@ -50,6 +47,7 @@ class LibFastFEC:
                                  false for performance reasons (defaults to true)
 
         Returns:
+        -------
             A generator that receives the form name and a dictionary
             object describing each line in the file
         """
@@ -63,7 +61,9 @@ class LibFastFEC:
 
         # Provide a custom line callback
         buffer_read_fn = provide_read_callback(file_handle)
-        line_callback_fn = CUSTOM_LINE(provide_line_callback(queue, filing_id_included, should_parse_date))
+        line_callback_fn = CUSTOM_LINE(
+            provide_line_callback(queue, filing_id_included, should_parse_date),
+        )
         fec_context = self.libfastfec.newFecContext(
             self.persistent_memory_context,
             buffer_read_fn,
@@ -102,18 +102,19 @@ class LibFastFEC:
         self.libfastfec.freeFecContext(fec_context)
 
     def parse_as_files(self, file_handle, output_directory, include_filing_id=None):
-        """
-        Parses the input file into output files in the output directory
+        """Parses the input file into output files in the output directory.
 
         Parent directories will be automatically created as needed.
 
         Arguments:
+        ---------
             file_handle -- An input stream for reading a .fec file
             output_directory -- A directory in which to place output parsed .csv files
             include_filing_id -- If set, prepend a column into each outputted csv for filing_id
                                  with the specified filing id (defaults to None)
 
         Returns:
+        -------
             A status code. 1 indicates a successful parse, 0 an unsuccessful one.
         """
 
@@ -125,13 +126,17 @@ class LibFastFEC:
             # pylint: disable=consider-using-with,unspecified-encoding,bad-option-value
             return open(filename, *args, **kwargs)
 
-        return self.parse_as_files_custom(file_handle, open_output_file, include_filing_id=include_filing_id)
+        return self.parse_as_files_custom(
+            file_handle,
+            open_output_file,
+            include_filing_id=include_filing_id,
+        )
 
     def parse_as_files_custom(self, file_handle, open_function, include_filing_id=None):
-        """
-        Parses the input file into output files
+        """Parses the input file into output files.
 
         Arguments:
+        ---------
             file_handle -- An input stream for reading a .fec file
             open_function -- A function to open an output file for writing. This can be set to
                              customize the output stream for each parsed .csv file
@@ -139,6 +144,7 @@ class LibFastFEC:
                                  with the specified filing id (defaults to None)
 
         Returns:
+        -------
             A status code. 1 indicates a successful parse, 0 an unsuccessful one.
         """
         # Set callbacks
@@ -176,9 +182,7 @@ class LibFastFEC:
         return result
 
     def free(self):
-        """
-        Frees all the allocated memory from the fastfec library
-        """
+        """Frees all the allocated memory from the fastfec library."""
         self.libfastfec.freePersistentMemoryContext(self.persistent_memory_context)
 
     def __init_lib(self):
@@ -213,8 +217,7 @@ class LibFastFEC:
 
 @contextlib.contextmanager
 def FastFEC():  # pylint: disable=invalid-name
-    """
-    A convenience method to run fastfec and free memory afterwards
+    """A convenience method to run fastfec and free memory afterwards.
 
     Usage:
 
