@@ -87,7 +87,7 @@ class LibFastFEC:
             self.libfastfec.parseFec(fec_context)
             queue.put(done_processing)  # Signal processing is over
 
-        Thread(target=task, args=()).start()
+        Thread(target=task, args=(), daemon=True).start()
 
         # Yield processed lines
         while True:
