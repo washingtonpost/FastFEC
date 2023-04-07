@@ -85,11 +85,13 @@ pub fn build(b: *std.build.Builder) !void {
 
 const libSources = [_][]const u8{
     "src/buffer.c",
+    "src/mappings.c",
     "src/memory.c",
     "src/encoding.c",
     "src/csv.c",
     "src/writer.c",
     "src/fec.c",
+    "src/regex.c",
     "src/string_utils.c",
 };
 const pcreSources = [_][]const u8{
@@ -124,12 +126,14 @@ const tests = [_][]const u8{
 };
 const testIncludes = [_][]const u8{
     "src/buffer.c",
+    "src/mappings.c",
     "src/memory.c",
     "src/encoding.c",
     "src/csv.c",
     "src/writer.c",
     "src/cli.c",
     "src/fec.c",
+    "src/regex.c",
     "src/string_utils.c",
 };
 const buildOptions = [_][]const u8{

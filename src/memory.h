@@ -36,15 +36,9 @@ struct persistent_memory_context
   STRING *rawLine;
   STRING *line;
   STRING *bufferLine;
-
-  pcre **headerVersions;
-  pcre **headerFormTypes;
-  pcre **typeVersions;
-  pcre **typeFormTypes;
-  pcre **typeHeaders;
 };
 typedef struct persistent_memory_context PERSISTENT_MEMORY_CONTEXT;
 
-EXPORT PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext();
+EXPORT PERSISTENT_MEMORY_CONTEXT *newPersistentMemoryContext(void);
 
 EXPORT void freePersistentMemoryContext(PERSISTENT_MEMORY_CONTEXT *context);

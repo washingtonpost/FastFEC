@@ -5,6 +5,7 @@
 #include "mappings.h"
 #include "buffer.h"
 #include "string_utils.h"
+#include "regex.h"
 #include <string.h>
 #include <stdarg.h>
 
@@ -34,17 +35,11 @@ void freeSafe(void *ptr)
   }
 }
 
-pcre *_compileRegex(const char *pattern)
+int _lineReMatch(FEC_CONTEXT *ctx, pcre *regex)
 {
-  const char *error;
-  int errorOffset;
-  pcre *regex = pcre_compile(pattern, PCRE_CASELESS, &error, &errorOffset, NULL);
-  if (regex == NULL)
-  {
-    fprintf(stderr, "Regex '%s' compilation failed at offset %d: %s\n", pattern, errorOffset, error);
-    exit(1);
-  }
-  return regex;
+  char *str = ctx->persistentMemory->line->str;
+  int len = ctx->currentLineLength;
+  return pcre_exec(regex, NULL, str, len, 0, 0, NULL, 0) >= 0;
 }
 
 int lineContainsF99Start(FEC_CONTEXT *ctx)
@@ -52,7 +47,7 @@ int lineContainsF99Start(FEC_CONTEXT *ctx)
   static pcre *regex = NULL;
   if (regex == NULL)
   {
-    regex = _compileRegex("^\\s*\\[BEGIN ?TEXT\\]\\s*$");
+    regex = newRegex("^\\s*\\[BEGIN ?TEXT\\]\\s*$");
   }
   return _lineReMatch(ctx, regex);
 }
@@ -62,16 +57,9 @@ int lineContainsF99End(FEC_CONTEXT *ctx)
   static pcre *regex = NULL;
   if (regex == NULL)
   {
-    regex = _compileRegex("^\\s*\\[END ?TEXT\\]\\s*$");
+    regex = newRegex("^\\s*\\[END ?TEXT\\]\\s*$");
   }
   return _lineReMatch(ctx, regex);
-}
-
-int _lineReMatch(FEC_CONTEXT *ctx, pcre *regex)
-{
-  char *str = ctx->persistentMemory->line->str;
-  int len = ctx->currentLineLength;
-  return pcre_exec(regex, NULL, str, len, 0, 0, NULL, 0) >= 0;
 }
 
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
@@ -124,14 +112,16 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
   strncpy(ctx->formType, parseContext->line->str + formStart, formEnd - formStart);
   ctx->formType[formEnd - formStart] = 0;
 
+  LOOKUP_REGEXES *lookup = getLookupRegexes();
+
   // Grab the field mapping given the form version
   for (int i = 0; i < numHeaders; i++)
   {
     // Try to match the regex to version
-    if (pcre_exec(ctx->persistentMemory->headerVersions[i], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
+    if (pcre_exec(lookup->headerVersions[i], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
     {
       // Match! Test regex against form type
-      if (pcre_exec(ctx->persistentMemory->headerFormTypes[i], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
+      if (pcre_exec(lookup->headerFormTypes[i], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
       {
         // Matched form type
         ctx->headers = (char *)(headers[i][2]);
@@ -147,20 +137,20 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
         // Iterate each field and build up the type info
         while (!isParseDone(&headerFields))
         {
-          readCsvField(&headerFields);
+          readField(&headerFields, 0);
 
           // Match type info
           int matched = 0;
           for (int j = 0; j < numTypes; j++)
           {
             // Try to match the type regex to version
-            if (pcre_exec(ctx->persistentMemory->typeVersions[j], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
+            if (pcre_exec(lookup->typeVersions[j], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
             {
               // Try to match type regex to form type
-              if (pcre_exec(ctx->persistentMemory->typeFormTypes[j], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
+              if (pcre_exec(lookup->typeFormTypes[j], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
               {
                 // Try to match type regex to header
-                if (pcre_exec(ctx->persistentMemory->typeHeaders[j], NULL, headerFields.line->str + headerFields.start, headerFields.end - headerFields.start, 0, 0, NULL, 0) >= 0)
+                if (pcre_exec(lookup->typeHeaders[j], NULL, headerFields.line->str + headerFields.start, headerFields.end - headerFields.start, 0, 0, NULL, 0) >= 0)
                 {
                   // Match! Print out type information
                   ctx->types[headerFields.columnIndex] = types[j][3][0];
@@ -201,6 +191,7 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
   fprintf(stderr, "Error: Unmatched for version %s and form type %s\n", ctx->version, ctx->formType);
   return 0;
 }
+
 void ctxWriteSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
 {
   writeField(ctx->writeContext, filename, CSV_EXTENSION, ctx->persistentMemory->line, start, end, field);
