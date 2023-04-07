@@ -84,7 +84,6 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->filingId = filingId;
   ctx->version = 0;
   ctx->versionLength = 0;
-  ctx->useAscii28 = 0; // default to using comma parsing unless a version is set
   ctx->summary = 0;
   ctx->f99Text = 0;
   ctx->currentLineHasAscii28 = 0;
@@ -625,30 +624,6 @@ void setVersion(FEC_CONTEXT *ctx, int start, int end)
   // Add null terminator
   ctx->version[end - start] = 0;
   ctx->versionLength = end - start;
-  ctx->useAscii28 = versionUsesAscii28(ctx->version);
-}
-
-// Calculate whether the version uses ASCII 28 or comma as a delimeter
-int versionUsesAscii28(char *version)
-{
-  const static char *COMMA_FEC_VERSIONS[] = {"1", "2", "3", "5"};
-  const static int NUM_COMMA_FEC_VERSIONS = sizeof(COMMA_FEC_VERSIONS) / sizeof(char *);
-  char *dot = strchr(version, '.');
-  if (dot == NULL)
-  {
-    return 1;
-  }
-  // Check text of left of the dot to get major version
-  int dotIndex = (int)(dot - version);
-  for (int i = 0; i < NUM_COMMA_FEC_VERSIONS; i++)
-  {
-    int isMatch = strncmp(version, COMMA_FEC_VERSIONS[i], dotIndex) == 0;
-    if (isMatch)
-    {
-      return 0;
-    }
-  }
-  return 1;
 }
 
 // Returns 0 on failure, 1 on success

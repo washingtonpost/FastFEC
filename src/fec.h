@@ -18,7 +18,6 @@ struct fec_context
   char *filingId;
   char *version; // default null
   int versionLength;
-  int useAscii28;
   int summary; // default false
   char *f99Text;
 
