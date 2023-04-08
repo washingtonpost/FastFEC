@@ -142,20 +142,20 @@ void ctxWriteSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_
   writeField(ctx->writeContext, filename, CSV_EXTENSION, ctx->persistentMemory->line, start, end, field);
 }
 
-void writeQuotedCsvField(FEC_CONTEXT *ctx, char *filename, char *line, int length)
+void writeQuotedString(WRITE_CONTEXT *ctx, char *filename, char *str, int length)
 {
   for (int i = 0; i < length; i++)
   {
-    char c = line[i];
+    char c = str[i];
     if (c == '"')
     {
       // Write two quotes since the field is quoted
-      writeChar(ctx->writeContext, filename, CSV_EXTENSION, '"');
-      writeChar(ctx->writeContext, filename, CSV_EXTENSION, '"');
+      writeChar(ctx, filename, CSV_EXTENSION, '"');
+      writeChar(ctx, filename, CSV_EXTENSION, '"');
     }
     else
     {
-      writeChar(ctx->writeContext, filename, CSV_EXTENSION, c);
+      writeChar(ctx, filename, CSV_EXTENSION, c);
     }
   }
 }
@@ -343,7 +343,7 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
         first = 0;
       }
 
-      writeQuotedCsvField(ctx, filename, ctx->persistentMemory->line->str, ctx->currentLineLength);
+      writeQuotedString(ctx->writeContext, filename, ctx->persistentMemory->line->str, ctx->currentLineLength);
       continue;
     }
 
