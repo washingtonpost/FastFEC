@@ -4,6 +4,7 @@ import configparser
 import csv
 import datetime
 import shutil
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -66,10 +67,16 @@ class Case:
 
 
 def case_to_param(case: Case):
-    marks = [
-        pytest.mark.skipif(case.skip, reason=case.skip_reason),
-        pytest.mark.xfail(case.x_fail, reason=case.x_fail_reason),
-    ]
+    # Add a pytest marker with the name of the case.
+    # So to run the "trailing_commas" test, you can do:
+    #   pytest -m trailing_commas
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=pytest.PytestUnknownMarkWarning)
+        marks = [
+            pytest.mark.skipif(case.skip, reason=case.skip_reason),
+            pytest.mark.xfail(case.x_fail, reason=case.x_fail_reason),
+            getattr(pytest.mark, case.name),
+        ]
     return pytest.param(case, id=case.name, marks=marks)
 
 
