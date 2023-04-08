@@ -98,7 +98,7 @@ void freeFecContext(FEC_CONTEXT *ctx)
 }
 
 // Return 1 on success, 0 on failure
-int lookupMappings(FEC_CONTEXT *ctx, const char *form, int formLength)
+static int updateCurrentFormSchema(FEC_CONTEXT *ctx, const char *form, int formLength)
 {
   // If type mappings are unchanged from before we can return early
   if ((ctx->formType != NULL) && (strncmp(ctx->formType, form, formLength) == 0))
@@ -397,7 +397,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       stripWhitespace(&parseContext);
       char *form = parseContext.line->str + parseContext.start;
       int formLength = parseContext.end - parseContext.start;
-      if (!lookupMappings(ctx, form, formLength))
+      if (!updateCurrentFormSchema(ctx, form, formLength))
       {
         // Mappings error
         return 3;
