@@ -11,7 +11,8 @@ struct form_schema
 };
 typedef struct form_schema FORM_SCHEMA;
 
-// Lookup the schema for a given version and form type.
-// You must call freeSchema() on the result when you're done with it.
-FORM_SCHEMA *lookupSchema(const char *version, int versionLength, const char *form, int formLength);
-void freeSchema(FORM_SCHEMA *schema);
+// Lookup the FORM_SCHEMA for a given version and form type.
+// You must call formSchemaFree() on the result when you're done with it.
+FORM_SCHEMA *formSchemaLookup(const char *version, int versionLength, const char *form, int formLength);
+// Safe to pass in NULL
+void formSchemaFree(FORM_SCHEMA *schema);

@@ -102,7 +102,7 @@ static int lookupTypes(char *types, const char *version, int versionLength, cons
     return headerParser.columnIndex + 1;
 }
 
-FORM_SCHEMA *lookupSchema(const char *version, int versionLength, const char *form, int formLength)
+FORM_SCHEMA *formSchemaLookup(const char *version, int versionLength, const char *form, int formLength)
 {
     // Find the headerString given the version and form type
     LOOKUP_REGEXES *lookup = getLookupRegexes();
@@ -135,7 +135,7 @@ FORM_SCHEMA *lookupSchema(const char *version, int versionLength, const char *fo
     return NULL;
 }
 
-void freeSchema(FORM_SCHEMA *schema)
+void formSchemaFree(FORM_SCHEMA *schema)
 {
     free(schema->fieldTypes);
     free(schema);

@@ -106,7 +106,7 @@ int lookupMappings(FEC_CONTEXT *ctx, const char *form, int formLength)
     return 1;
   }
 
-  FORM_SCHEMA *schema = lookupSchema(ctx->version, ctx->versionLength, form, formLength);
+  FORM_SCHEMA *schema = formSchemaLookup(ctx->version, ctx->versionLength, form, formLength);
   if (schema == NULL)
   {
     ctxWarn(ctx, "No mappings found for version %s and form ", ctx->version, form);
@@ -132,7 +132,7 @@ int lookupMappings(FEC_CONTEXT *ctx, const char *form, int formLength)
   ctx->types = malloc(strlen(schema->fieldTypes) + 1);
   strcpy(ctx->types, schema->fieldTypes);
 
-  freeSchema(schema);
+  formSchemaFree(schema);
 
   return 1;
 }
