@@ -115,7 +115,7 @@ int lookupMappings(FEC_CONTEXT *ctx, char *form, int formLength)
   LOOKUP_REGEXES *lookup = getLookupRegexes();
 
   // Grab the field mapping given the form version
-  for (int i = 0; i < numHeaders; i++)
+  for (int i = 0; i < NUM_HEADERS; i++)
   {
     // Try to match the regex to version
     if (pcre_exec(lookup->headerVersions[i], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
@@ -138,35 +138,9 @@ int lookupMappings(FEC_CONTEXT *ctx, char *form, int formLength)
         while (!isParseDone(&headerFields))
         {
           readField(&headerFields, 0);
-
-          // Match type info
-          int matched = 0;
-          for (int j = 0; j < numTypes; j++)
-          {
-            // Try to match the type regex to version
-            if (pcre_exec(lookup->typeVersions[j], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
-            {
-              // Try to match type regex to form type
-              if (pcre_exec(lookup->typeFormTypes[j], NULL, form, formLength, 0, 0, NULL, 0) >= 0)
-              {
-                // Try to match type regex to header
-                if (pcre_exec(lookup->typeHeaders[j], NULL, headerFields.line->str + headerFields.start, headerFields.end - headerFields.start, 0, 0, NULL, 0) >= 0)
-                {
-                  // Match! Print out type information
-                  ctx->types[headerFields.columnIndex] = types[j][3][0];
-                  matched = 1;
-                  break;
-                }
-              }
-            }
-          }
-
-          if (!matched)
-          {
-            // Unmatched type — default to 's' for string type
-            ctx->types[headerFields.columnIndex] = 's';
-          }
-
+          char *fieldName = headerFields.line->str + headerFields.start;
+          int fieldNameLength = headerFields.end - headerFields.start;
+          ctx->types[headerFields.columnIndex] = lookupType(ctx->version, ctx->versionLength, ctx->formType, formLength, fieldName, fieldNameLength);
           if (isParseDone(&headerFields))
           {
             break;
