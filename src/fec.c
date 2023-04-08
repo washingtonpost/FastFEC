@@ -97,9 +97,9 @@ void freeFecContext(FEC_CONTEXT *ctx)
   free(ctx);
 }
 
-int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart, int formEnd)
+int lookupMappings(FEC_CONTEXT *ctx, char *form, int formLength)
 {
-  if ((ctx->formType != NULL) && (strncmp(ctx->formType, parseContext->line->str + formStart, formEnd - formStart) == 0))
+  if ((ctx->formType != NULL) && (strncmp(ctx->formType, form, formLength) == 0))
   {
     // Type mappings are unchanged from before; can return early
     return 1;
@@ -108,9 +108,9 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
   // Clear last form type information if present
   freeSafe(ctx->formType);
   // Set last form type to store it for later
-  ctx->formType = malloc(formEnd - formStart + 1);
-  strncpy(ctx->formType, parseContext->line->str + formStart, formEnd - formStart);
-  ctx->formType[formEnd - formStart] = 0;
+  ctx->formType = malloc(formLength + 1);
+  strncpy(ctx->formType, form, formLength);
+  ctx->formType[formLength] = 0;
 
   LOOKUP_REGEXES *lookup = getLookupRegexes();
 
@@ -121,7 +121,7 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
     if (pcre_exec(lookup->headerVersions[i], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
     {
       // Match! Test regex against form type
-      if (pcre_exec(lookup->headerFormTypes[i], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
+      if (pcre_exec(lookup->headerFormTypes[i], NULL, form, formLength, 0, 0, NULL, 0) >= 0)
       {
         // Matched form type
         ctx->headers = (char *)(headers[i][2]);
@@ -147,7 +147,7 @@ int lookupMappings(FEC_CONTEXT *ctx, PARSE_CONTEXT *parseContext, int formStart,
             if (pcre_exec(lookup->typeVersions[j], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
             {
               // Try to match type regex to form type
-              if (pcre_exec(lookup->typeFormTypes[j], NULL, parseContext->line->str + formStart, formEnd - formStart, 0, 0, NULL, 0) >= 0)
+              if (pcre_exec(lookup->typeFormTypes[j], NULL, form, formLength, 0, 0, NULL, 0) >= 0)
               {
                 // Try to match type regex to header
                 if (pcre_exec(lookup->typeHeaders[j], NULL, headerFields.line->str + headerFields.start, headerFields.end - headerFields.start, 0, 0, NULL, 0) >= 0)
@@ -456,8 +456,11 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       stripWhitespace(&parseContext);
       formStart = parseContext.start;
       formEnd = parseContext.end;
-      if (!lookupMappings(ctx, &parseContext, formStart, formEnd))
+      char *form = parseContext.line->str + formStart;
+      int formLength = formEnd - formStart;
+      if (!lookupMappings(ctx, form, formLength))
       {
+        // Mappings error
         return 3;
       }
 
