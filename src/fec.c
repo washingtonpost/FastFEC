@@ -97,73 +97,44 @@ void freeFecContext(FEC_CONTEXT *ctx)
   free(ctx);
 }
 
-int lookupMappings(FEC_CONTEXT *ctx, char *form, int formLength)
+// Return 1 on success, 0 on failure
+int lookupMappings(FEC_CONTEXT *ctx, const char *form, int formLength)
 {
+  // If type mappings are unchanged from before we can return early
   if ((ctx->formType != NULL) && (strncmp(ctx->formType, form, formLength) == 0))
   {
-    // Type mappings are unchanged from before; can return early
     return 1;
   }
 
-  // Clear last form type information if present
+  FORM_SCHEMA *schema = lookupSchema(ctx->version, ctx->versionLength, form, formLength);
+  if (schema == NULL)
+  {
+    ctxWarn(ctx, "No mappings found for version %s and form ", ctx->version, form);
+    return 0;
+  }
+
+  // Copy form type
   freeSafe(ctx->formType);
-  // Set last form type to store it for later
   ctx->formType = malloc(formLength + 1);
   strncpy(ctx->formType, form, formLength);
   ctx->formType[formLength] = 0;
 
-  LOOKUP_REGEXES *lookup = getLookupRegexes();
+  // Copy header string
+  freeSafe(ctx->headers);
+  ctx->headers = malloc(strlen(schema->headerString) + 1);
+  strcpy(ctx->headers, schema->headerString);
 
-  // Grab the field mapping given the form version
-  for (int i = 0; i < NUM_HEADERS; i++)
-  {
-    // Try to match the regex to version
-    if (pcre_exec(lookup->headerVersions[i], NULL, ctx->version, ctx->versionLength, 0, 0, NULL, 0) >= 0)
-    {
-      // Match! Test regex against form type
-      if (pcre_exec(lookup->headerFormTypes[i], NULL, form, formLength, 0, 0, NULL, 0) >= 0)
-      {
-        // Matched form type
-        ctx->headers = (char *)(headers[i][2]);
-        STRING *headersCsv = fromString(ctx->headers);
-        freeSafe(ctx->types);
-        ctx->numFields = 0;
-        ctx->types = malloc(strlen(ctx->headers) + 1); // at least as big as it needs to be
+  // Copy number of fields
+  ctx->numFields = schema->numFields;
 
-        // Initialize a parse context for reading each header field
-        PARSE_CONTEXT headerFields;
-        initParseContext(&headerFields, headersCsv);
+  // Copy field types
+  freeSafe(ctx->types);
+  ctx->types = malloc(strlen(schema->fieldTypes) + 1);
+  strcpy(ctx->types, schema->fieldTypes);
 
-        // Iterate each field and build up the type info
-        while (!isParseDone(&headerFields))
-        {
-          readField(&headerFields, 0);
-          char *fieldName = headerFields.line->str + headerFields.start;
-          int fieldNameLength = headerFields.end - headerFields.start;
-          ctx->types[headerFields.columnIndex] = lookupType(ctx->version, ctx->versionLength, ctx->formType, formLength, fieldName, fieldNameLength);
-          if (isParseDone(&headerFields))
-          {
-            break;
-          }
-          advanceField(&headerFields);
-        }
+  freeSchema(schema);
 
-        // Add null terminator
-        ctx->types[headerFields.columnIndex + 1] = 0;
-        ctx->numFields = headerFields.columnIndex + 1;
-
-        // Free up unnecessary line memory
-        freeString(headersCsv);
-
-        // Done; return
-        return 1;
-      }
-    }
-  }
-
-  // Unmatched — error
-  fprintf(stderr, "Error: Unmatched for version %s and form type %s\n", ctx->version, ctx->formType);
-  return 0;
+  return 1;
 }
 
 void ctxWriteSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
@@ -415,10 +386,6 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
   PARSE_CONTEXT parseContext;
   initParseContext(&parseContext, ctx->persistentMemory->line);
 
-  // Log the indices on the line where the form version is specified
-  int formStart;
-  int formEnd;
-
   // Iterate through fields
   while (!isParseDone(&parseContext))
   {
@@ -428,10 +395,8 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       // Set the form version to the first column
       // (with whitespace removed)
       stripWhitespace(&parseContext);
-      formStart = parseContext.start;
-      formEnd = parseContext.end;
-      char *form = parseContext.line->str + formStart;
-      int formLength = formEnd - formStart;
+      char *form = parseContext.line->str + parseContext.start;
+      int formLength = parseContext.end - parseContext.start;
       if (!lookupMappings(ctx, form, formLength))
       {
         // Mappings error

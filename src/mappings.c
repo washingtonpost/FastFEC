@@ -1,9 +1,22 @@
+#include "csv.h"
 #include "memory.h"
 #include "regex.h"
+#include "mappings_generated.h"
 
+static int NUM_HEADERS = sizeof(headers) / sizeof(headers[0]);
 static const int NUM_TYPES = sizeof(types) / sizeof(types[0]);
 
-LOOKUP_REGEXES *getLookupRegexes(void)
+struct lookup_regexes
+{
+    pcre **headerVersions;
+    pcre **headerFormTypes;
+    pcre **typeVersions;
+    pcre **typeFormTypes;
+    pcre **typeFieldNames;
+};
+typedef struct lookup_regexes LOOKUP_REGEXES;
+
+static LOOKUP_REGEXES *getLookupRegexes(void)
 {
     static LOOKUP_REGEXES *lookup = NULL;
     if (lookup != NULL)
@@ -34,7 +47,7 @@ LOOKUP_REGEXES *getLookupRegexes(void)
     return lookup;
 }
 
-char lookupType(char *version, int versionLength, char *form, int formLength, char *fieldName, int fieldNameLength)
+static char lookupType(char *version, int versionLength, char *form, int formLength, char *fieldName, int fieldNameLength)
 {
     LOOKUP_REGEXES *lookup = getLookupRegexes();
     for (int i = 0; i < NUM_TYPES; i++)
@@ -58,4 +71,72 @@ char lookupType(char *version, int versionLength, char *form, int formLength, ch
     }
     // Default to string
     return 's';
+}
+
+// Lookup the types for a given version, form type, and header string.
+// The types are placed into the types array. This assumes that the types array
+// is large enough to hold all the types, plus a null terminator.
+// Returns the number of types/fields found.
+static int lookupTypes(char *types, const char *version, int versionLength, const char *form, int formLength, const char *headerString)
+{
+    STRING *s = fromString(headerString);
+    PARSE_CONTEXT headerParser;
+    initParseContext(&headerParser, s);
+
+    // Iterate each field in the header and build up the type info
+    while (!isParseDone(&headerParser))
+    {
+        readField(&headerParser, 0);
+        char *fieldName = headerParser.line->str + headerParser.start;
+        int fieldNameLength = headerParser.end - headerParser.start;
+        types[headerParser.columnIndex] = lookupType(version, versionLength, form, formLength, fieldName, fieldNameLength);
+        if (isParseDone(&headerParser))
+        {
+            break;
+        }
+        advanceField(&headerParser);
+    }
+    freeString(s);
+    // Add null terminator
+    types[headerParser.columnIndex + 1] = 0;
+    return headerParser.columnIndex + 1;
+}
+
+FORM_SCHEMA *lookupSchema(const char *version, int versionLength, const char *form, int formLength)
+{
+    // Find the headerString given the version and form type
+    LOOKUP_REGEXES *lookup = getLookupRegexes();
+    for (int i = 0; i < NUM_HEADERS; i++)
+    {
+        int versionMatch = pcre_exec(lookup->headerVersions[i], NULL, version, versionLength, 0, 0, NULL, 0) >= 0;
+        if (!versionMatch)
+        {
+            continue;
+        }
+        int formMatch = pcre_exec(lookup->headerFormTypes[i], NULL, form, formLength, 0, 0, NULL, 0) >= 0;
+        if (!formMatch)
+        {
+            continue;
+        }
+
+        // Now find the types given the version, form type, and header string
+        // We aren't allocating any new memory here for the headerString,
+        // only referencing the static data in the headers array. Don't free it later.
+        const char *headerString = headers[i][2];
+        char *types = malloc(strlen(headerString) + 1); // at least as big as it needs to be
+        int numFields = lookupTypes(types, version, versionLength, form, formLength, headerString);
+
+        FORM_SCHEMA *result = malloc(sizeof(*result));
+        result->headerString = headerString;
+        result->numFields = numFields;
+        result->fieldTypes = types;
+        return result;
+    }
+    return NULL;
+}
+
+void freeSchema(FORM_SCHEMA *schema)
+{
+    free(schema->fieldTypes);
+    free(schema);
 }

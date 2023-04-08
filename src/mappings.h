@@ -1,20 +1,17 @@
 #pragma once
 
-#include "mappings_generated.h"
-
-struct lookup_regexes
+struct form_schema
 {
-    pcre **headerVersions;
-    pcre **headerFormTypes;
-    pcre **typeVersions;
-    pcre **typeFormTypes;
-    pcre **typeFieldNames;
+    // Comma-delimited list of fields
+    // eg "rec_type,form_type,back_reference_tran_id_number,text"
+    char *headerString;
+    int numFields;
+    // Type codes. One char for each field in headerString, then null-terminated.
+    char *fieldTypes;
 };
-typedef struct lookup_regexes LOOKUP_REGEXES;
+typedef struct form_schema FORM_SCHEMA;
 
-static int NUM_HEADERS = sizeof(headers) / sizeof(headers[0]);
-
-LOOKUP_REGEXES *getLookupRegexes(void);
-
-// Lookup the type of a field, for a given version and form type.
-char lookupType(char *version, int versionLength, char *form, int formLength, char *fieldName, int fieldNameLength);
+// Lookup the schema for a given version and form type.
+// You must call freeSchema() on the result when you're done with it.
+FORM_SCHEMA *lookupSchema(const char *version, int versionLength, const char *form, int formLength);
+void freeSchema(FORM_SCHEMA *schema);
