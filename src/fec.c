@@ -374,6 +374,27 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
   return 1;
 }
 
+void ctxWriteField(FEC_CONTEXT *ctx, char *filename, PARSE_CONTEXT *parseContext, char type)
+{
+  if (type == 's')
+  {
+    ctxWriteSubstr(ctx, filename, parseContext->start, parseContext->end, &(parseContext->fieldInfo));
+  }
+  else if (type == 'd')
+  {
+    writeDateField(ctx, filename, parseContext->start, parseContext->end, &(parseContext->fieldInfo));
+  }
+  else if (type == 'f')
+  {
+    writeFloatField(ctx, filename, parseContext->start, parseContext->end, &(parseContext->fieldInfo));
+  }
+  else
+  {
+    fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->formType);
+    exit(1);
+  }
+}
+
 // Parse a line from a filing, using FEC and form version
 // information to map fields to headers and types.
 // Return 1 if successful, or 0 if the line is not fully
@@ -434,7 +455,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
 
       // Get the type of the current field and write accordingly
-      char type;
+      char type = 's'; // Default to string type
       if (parseContext.columnIndex < ctx->numFields)
       {
         // Ensure the column index is in bounds
@@ -449,32 +470,8 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
           ctxWarn(ctx, "%c", parseContext.line->str[i]);
         }
         ctxWarn(ctx, "\n");
-        // Default to string type
-        type = 's';
       }
-
-      // Iterate possible types
-      if (type == 's')
-      {
-        // String
-        ctxWriteSubstr(ctx, filename, parseContext.start, parseContext.end, &(parseContext.fieldInfo));
-      }
-      else if (type == 'd')
-      {
-        // Date
-        writeDateField(ctx, filename, parseContext.start, parseContext.end, &(parseContext.fieldInfo));
-      }
-      else if (type == 'f')
-      {
-        // Float
-        writeFloatField(ctx, filename, parseContext.start, parseContext.end, &(parseContext.fieldInfo));
-      }
-      else
-      {
-        // Unknown type
-        fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->formType);
-        exit(1);
-      }
+      ctxWriteField(ctx, filename, &parseContext, type);
     }
 
     if (isParseDone(&parseContext))
