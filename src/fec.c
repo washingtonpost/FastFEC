@@ -446,7 +446,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
         ctxWarn(ctx, "Unexpected column in %s (%d): ", ctx->formType, parseContext.columnIndex);
         for (int i = parseContext.start; i < parseContext.end; i++)
         {
-          ctxWarn(ctx, "%c", ctx->persistentMemory->line->str[i]);
+          ctxWarn(ctx, "%c", parseContext.line->str[i]);
         }
         ctxWarn(ctx, "\n");
         // Default to string type
