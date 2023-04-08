@@ -80,8 +80,8 @@ static char lookupType(char *version, int versionLength, char *form, int formLen
 static int lookupTypes(char *types, const char *version, int versionLength, const char *form, int formLength, const char *headerString)
 {
     STRING *s = fromString(headerString);
-    PARSE_CONTEXT headerParser;
-    initParseContext(&headerParser, s);
+    CSV_LINE_PARSER headerParser;
+    csvParserInit(&headerParser, s);
 
     // Iterate each field in the header and build up the type info
     while (!isParseDone(&headerParser))

@@ -374,19 +374,19 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
   return 1;
 }
 
-void ctxWriteField(FEC_CONTEXT *ctx, char *filename, PARSE_CONTEXT *parseContext, char type)
+void ctxWriteField(FEC_CONTEXT *ctx, char *filename, CSV_LINE_PARSER *parser, char type)
 {
   if (type == 's')
   {
-    ctxWriteSubstr(ctx, filename, parseContext->start, parseContext->end, &(parseContext->fieldInfo));
+    ctxWriteSubstr(ctx, filename, parser->start, parser->end, &(parser->fieldInfo));
   }
   else if (type == 'd')
   {
-    writeDateField(ctx, filename, parseContext->start, parseContext->end, &(parseContext->fieldInfo));
+    writeDateField(ctx, filename, parser->start, parser->end, &(parser->fieldInfo));
   }
   else if (type == 'f')
   {
-    writeFloatField(ctx, filename, parseContext->start, parseContext->end, &(parseContext->fieldInfo));
+    writeFloatField(ctx, filename, parser->start, parser->end, &(parser->fieldInfo));
   }
   else
   {
@@ -403,21 +403,20 @@ void ctxWriteField(FEC_CONTEXT *ctx, char *filename, PARSE_CONTEXT *parseContext
 // Return 3 if we encountered a mappings error.
 int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
 {
-  // Parse fields
-  PARSE_CONTEXT parseContext;
-  initParseContext(&parseContext, ctx->persistentMemory->line);
+  CSV_LINE_PARSER parser;
+  csvParserInit(&parser, ctx->persistentMemory->line);
 
   // Iterate through fields
-  while (!isParseDone(&parseContext))
+  while (!isParseDone(&parser))
   {
-    readField(&parseContext, ctx->currentLineHasAscii28);
-    if (parseContext.columnIndex == 0)
+    readField(&parser, ctx->currentLineHasAscii28);
+    if (parser.columnIndex == 0)
     {
       // Set the form version to the first column
       // (with whitespace removed)
-      stripWhitespace(&parseContext);
-      char *form = parseContext.line->str + parseContext.start;
-      int formLength = parseContext.end - parseContext.start;
+      stripWhitespace(&parser);
+      char *form = parser.line->str + parser.start;
+      int formLength = parser.end - parser.start;
       if (!updateCurrentFormSchema(ctx, form, formLength))
       {
         // Mappings error
@@ -434,7 +433,7 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
     {
       // If column index is 1, then there are at least two columns
       // and the line is fully specified, so write header/line info
-      if (parseContext.columnIndex == 1)
+      if (parser.columnIndex == 1)
       {
         // Write header if necessary
         if (getFile(ctx->writeContext, filename, CSV_EXTENSION) == 1)
@@ -456,44 +455,44 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
 
       // Get the type of the current field and write accordingly
       char type = 's'; // Default to string type
-      if (parseContext.columnIndex < ctx->numFields)
+      if (parser.columnIndex < ctx->numFields)
       {
         // Ensure the column index is in bounds
-        type = ctx->types[parseContext.columnIndex];
+        type = ctx->types[parser.columnIndex];
       }
       else
       {
         // Warning: column exceeding row length
-        ctxWarn(ctx, "Unexpected column in %s (%d): ", ctx->formType, parseContext.columnIndex);
-        for (int i = parseContext.start; i < parseContext.end; i++)
+        ctxWarn(ctx, "Unexpected column in %s (%d): ", ctx->formType, parser.columnIndex);
+        for (int i = parser.start; i < parser.end; i++)
         {
-          ctxWarn(ctx, "%c", parseContext.line->str[i]);
+          ctxWarn(ctx, "%c", parser.line->str[i]);
         }
         ctxWarn(ctx, "\n");
       }
-      ctxWriteField(ctx, filename, &parseContext, type);
+      ctxWriteField(ctx, filename, &parser, type);
     }
 
-    if (isParseDone(&parseContext))
+    if (isParseDone(&parser))
     {
       break;
     }
-    advanceField(&parseContext);
+    advanceField(&parser);
   }
 
-  if (parseContext.columnIndex < 2)
+  if (parser.columnIndex < 2)
   {
     // Fewer than two fields? The line isn't fully specified
     return 0;
   }
 
-  if (parseContext.columnIndex + 1 != ctx->numFields && !headerRow)
+  if (parser.columnIndex + 1 != ctx->numFields && !headerRow)
   {
     // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parseContext.columnIndex + 1, ctx->numFields, ctx->formType);
-      ctxWarn(ctx, "'%s'\n", parseContext.line->str);
+      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parser.columnIndex + 1, ctx->numFields, ctx->formType);
+      ctxWarn(ctx, "'%s'\n", parser.line->str);
       // 2 indicates we won't grab the line again
       writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
       endLine(ctx->writeContext, ctx->types);
@@ -612,26 +611,26 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
 int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 {
   // Parse fields
-  PARSE_CONTEXT parseContext;
-  initParseContext(&parseContext, ctx->persistentMemory->line);
+  CSV_LINE_PARSER parser;
+  csvParserInit(&parser, ctx->persistentMemory->line);
 
   int isFecSecondColumn = 0;
 
   // Iterate through fields
-  while (!isParseDone(&parseContext))
+  while (!isParseDone(&parser))
   {
-    readField(&parseContext, ctx->currentLineHasAscii28);
-    if (parseContext.columnIndex == 1)
+    readField(&parser, ctx->currentLineHasAscii28);
+    if (parser.columnIndex == 1)
     {
       // Check if the second column is "FEC"
-      if (strncmp(ctx->persistentMemory->line->str + parseContext.start, FEC, strlen(FEC)) == 0)
+      if (strncmp(ctx->persistentMemory->line->str + parser.start, FEC, strlen(FEC)) == 0)
       {
         isFecSecondColumn = 1;
       }
       else
       {
         // If not, the second column is the version
-        setVersion(ctx, parseContext.start, parseContext.end);
+        setVersion(ctx, parser.start, parser.end);
 
         // Parse the header now that version is known
         if (parseLine(ctx, HEADER, 1) == 3)
@@ -640,20 +639,20 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
         }
       }
     }
-    if (parseContext.columnIndex == 2 && isFecSecondColumn)
+    if (parser.columnIndex == 2 && isFecSecondColumn)
     {
       // Set the version
-      setVersion(ctx, parseContext.start, parseContext.end);
+      setVersion(ctx, parser.start, parser.end);
 
       // Parse the header now that version is known
       return parseLine(ctx, HEADER, 1) != 3;
     }
 
-    if (isParseDone(&parseContext))
+    if (isParseDone(&parser))
     {
       break;
     }
-    advanceField(&parseContext);
+    advanceField(&parser);
   }
   return 1;
 }

@@ -4,20 +4,20 @@
 #include "writer.h"
 #include "string_utils.h"
 
-void initParseContext(PARSE_CONTEXT *parseContext, STRING *line)
+void csvParserInit(CSV_LINE_PARSER *parser, STRING *line)
 {
-  parseContext->line = line;
-  parseContext->fieldInfo.num_commas = 0;
-  parseContext->fieldInfo.num_quotes = 0;
-  parseContext->position = 0;
-  parseContext->start = 0;
-  parseContext->end = 0;
-  parseContext->columnIndex = 0;
+  parser->line = line;
+  parser->fieldInfo.num_commas = 0;
+  parser->fieldInfo.num_quotes = 0;
+  parser->position = 0;
+  parser->start = 0;
+  parser->end = 0;
+  parser->columnIndex = 0;
 }
 
-int isParseDone(PARSE_CONTEXT *parseContext)
+int isParseDone(CSV_LINE_PARSER *parser)
 {
-  char c = parseContext->line->str[parseContext->position];
+  char c = parser->line->str[parser->position];
   return (c == 0) || (c == '\n');
 }
 
@@ -51,40 +51,40 @@ static inline int endOfField(char c)
   return (c == ',') || (c == '\n') || (c == 0);
 }
 
-void stripQuotes(PARSE_CONTEXT *parseContext)
+void stripQuotes(CSV_LINE_PARSER *parser)
 {
-  if ((parseContext->start != parseContext->end) && (parseContext->line->str[parseContext->start] == '"') && (parseContext->line->str[parseContext->end - 1] == '"'))
+  if ((parser->start != parser->end) && (parser->line->str[parser->start] == '"') && (parser->line->str[parser->end - 1] == '"'))
   {
     // Bump the field positions to avoid the quotes
-    (parseContext->start)++;
-    (parseContext->end)--;
-    (parseContext->fieldInfo.num_quotes) -= 2;
+    (parser->start)++;
+    (parser->end)--;
+    (parser->fieldInfo.num_quotes) -= 2;
   }
 }
 
-void readAscii28Field(PARSE_CONTEXT *parseContext)
+void readAscii28Field(CSV_LINE_PARSER *parser)
 {
-  parseContext->start = parseContext->position;
-  char c = parseContext->line->str[parseContext->position];
-  processFieldChar(c, &(parseContext->fieldInfo));
+  parser->start = parser->position;
+  char c = parser->line->str[parser->position];
+  processFieldChar(c, &(parser->fieldInfo));
   while (c != 0 && c != 28 && c != '\n')
   {
-    parseContext->position += 1;
-    c = parseContext->line->str[parseContext->position];
-    processFieldChar(c, &(parseContext->fieldInfo));
+    parser->position += 1;
+    c = parser->line->str[parser->position];
+    processFieldChar(c, &(parser->fieldInfo));
   }
-  parseContext->end = parseContext->position;
-  stripQuotes(parseContext);
+  parser->end = parser->position;
+  stripQuotes(parser);
 }
 
-void readCsvSubfield(PARSE_CONTEXT *parseContext)
+void readCsvSubfield(CSV_LINE_PARSER *parser)
 {
-  char c = parseContext->line->str[parseContext->position];
+  char c = parser->line->str[parser->position];
   if (endOfField(c))
   {
     // Empty field
-    parseContext->start = parseContext->position;
-    parseContext->end = parseContext->position;
+    parser->start = parser->position;
+    parser->end = parser->position;
     return;
   }
 
@@ -93,82 +93,82 @@ void readCsvSubfield(PARSE_CONTEXT *parseContext)
   int offset = 0;
   if (escaped)
   {
-    (parseContext->position)++;
+    (parser->position)++;
   }
-  parseContext->start = parseContext->position;
+  parser->start = parser->position;
   while (1)
   {
     if (offset != 0)
     {
       // If the offset is non-zero, we need to shift characters
-      parseContext->line->str[(parseContext->position) - offset] = parseContext->line->str[parseContext->position];
+      parser->line->str[(parser->position) - offset] = parser->line->str[parser->position];
     }
 
-    c = parseContext->line->str[parseContext->position];
+    c = parser->line->str[parser->position];
     if (c == 0)
     {
       // End of line
-      parseContext->end = parseContext->position - offset;
+      parser->end = parser->position - offset;
       return;
     }
     if (!escaped && ((c == ',') || (c == '\n')))
     {
       // If not in escaped mode and the end of field is encountered
       // then we're done.
-      parseContext->end = parseContext->position - offset;
+      parser->end = parser->position - offset;
       return;
     }
-    processFieldChar(c, &(parseContext->fieldInfo));
+    processFieldChar(c, &(parser->fieldInfo));
     if (escaped && c == '"')
     {
       // If in escaped mode and a quote is encountered, then we need
       // to check if the quote is escaped.
-      if (parseContext->line->str[parseContext->position + 1] == '"')
+      if (parser->line->str[parser->position + 1] == '"')
       {
         // If the quote is escaped, then we need to skip it.
-        (parseContext->position)++;
+        (parser->position)++;
         offset++;
       }
       else
       {
         // If the quote is not escaped, then we're done.
-        parseContext->end = parseContext->position - offset;
-        (parseContext->position)++;
+        parser->end = parser->position - offset;
+        (parser->position)++;
         // Don't count trailing quote
-        parseContext->fieldInfo.num_quotes--;
+        parser->fieldInfo.num_quotes--;
         return;
       }
     }
-    (parseContext->position)++;
+    (parser->position)++;
   }
 }
 
-void readCsvField(PARSE_CONTEXT *parseContext)
+void readCsvField(CSV_LINE_PARSER *parser)
 {
-  readCsvSubfield(parseContext);
-  stripQuotes(parseContext);
+  readCsvSubfield(parser);
+  stripQuotes(parser);
 }
 
-void readField(PARSE_CONTEXT *parseContext, int useAscii28)
+void readField(CSV_LINE_PARSER *parser, int useAscii28)
 {
   // Reset field info
-  parseContext->fieldInfo.num_quotes = 0;
-  parseContext->fieldInfo.num_commas = 0;
+  parser->fieldInfo.num_quotes = 0;
+  parser->fieldInfo.num_commas = 0;
 
   if (useAscii28)
   {
-    readAscii28Field(parseContext);
+    readAscii28Field(parser);
   }
   else
   {
-    readCsvField(parseContext);
+    readCsvField(parser);
   }
 }
 
-void advanceField(PARSE_CONTEXT *context)
+void advanceField(CSV_LINE_PARSER *parser)
 {
-  context->columnIndex++;
-  context->position++;
+  parser->columnIndex++;
+  parser->position++;
 }
 
 void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info)
@@ -211,22 +211,22 @@ void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, S
   }
 }
 
-int isWhitespace(PARSE_CONTEXT *context, int position)
+int isWhitespace(CSV_LINE_PARSER *parser, int position)
 {
-  return strIsWhitespace(context->line->str[position]);
+  return strIsWhitespace(parser->line->str[position]);
 }
 
-void stripWhitespace(PARSE_CONTEXT *context)
+void stripWhitespace(CSV_LINE_PARSER *parser)
 {
   // Strip leading whitespace
-  while (isWhitespace(context, context->start) && (context->start < context->end))
+  while (isWhitespace(parser, parser->start) && (parser->start < parser->end))
   {
-    (context->start)++;
+    (parser->start)++;
   }
 
   // Strip trailing whitespace
-  while (isWhitespace(context, context->end - 1) && (context->end > context->start))
+  while (isWhitespace(parser, parser->end - 1) && (parser->end > parser->start))
   {
-    (context->end)--;
+    (parser->end)--;
   }
 }

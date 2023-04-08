@@ -10,7 +10,7 @@ struct field_info
 };
 typedef struct field_info FIELD_INFO;
 
-struct parse_context
+struct csv_line_parser
 {
   STRING *line;
   FIELD_INFO fieldInfo;
@@ -19,9 +19,10 @@ struct parse_context
   int end;
   int columnIndex;
 };
-typedef struct parse_context PARSE_CONTEXT;
+// Parses a single line of comma (or ascii28) separated data
+typedef struct csv_line_parser CSV_LINE_PARSER;
 
-void initParseContext(PARSE_CONTEXT *parseContext, STRING *line);
+void csvParserInit(CSV_LINE_PARSER *parser, STRING *line);
 
 void processFieldChar(char c, FIELD_INFO *info);
 
@@ -41,16 +42,16 @@ static inline int endOfField(char c);
 // Read a CSV field in-place, modifying line and returning start and
 // end positions of the unescaped field. Since CSV fields are always
 // longer escaped than not, this will always work in-place.
-void readField(PARSE_CONTEXT *parseContext, int useAscii28);
+void readField(CSV_LINE_PARSER *parser, int useAscii28);
 
 // Advance past the delimeter and increase the column index
-void advanceField(PARSE_CONTEXT *parseContext);
+void advanceField(CSV_LINE_PARSER *parser);
 
 void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info);
 
 // Trim whitespace by adjusting start and end pointers in
 // write context
-void stripWhitespace(PARSE_CONTEXT *context);
+void stripWhitespace(CSV_LINE_PARSER *parser);
 
 // The parse is done if a newline or NULL is encountered
-int isParseDone(PARSE_CONTEXT *parseContext);
+int isParseDone(CSV_LINE_PARSER *parser);
