@@ -171,7 +171,7 @@ void advanceField(CSV_LINE_PARSER *parser)
   parser->position++;
 }
 
-void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info)
+void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, const char *str, int length, FIELD_INFO *info)
 {
   int escaped = (info->num_commas > 0) || (info->num_quotes > 0);
   int copyDirectly = !(info->num_quotes > 0);
@@ -184,14 +184,14 @@ void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, S
   if (copyDirectly)
   {
     // No need for char-by-char writing
-    writeN(context, filename, extension, line->str + start, end - start);
+    writeN(context, filename, extension, str, length);
   }
   else
   {
     // Copy string in char-by-char
-    for (int i = start; i < end; i++)
+    for (int i = 0; i < length; i++)
     {
-      char c = line->str[i];
+      char c = str[i];
       if (c == '"')
       {
         // Double quotes

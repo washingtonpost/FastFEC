@@ -47,7 +47,7 @@ void readField(CSV_LINE_PARSER *parser, int useAscii28);
 // Advance past the delimeter and increase the column index
 void advanceField(CSV_LINE_PARSER *parser);
 
-void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info);
+void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, const char *str, int length, FIELD_INFO *info);
 
 // Trim whitespace by adjusting start and end pointers in
 // write context

@@ -139,7 +139,9 @@ static int updateCurrentFormSchema(FEC_CONTEXT *ctx, const char *form, int formL
 
 void ctxWriteSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
 {
-  writeField(ctx->writeContext, filename, CSV_EXTENSION, ctx->persistentMemory->line, start, end, field);
+  const char *str = ctx->persistentMemory->line->str + start;
+  int len = end - start;
+  writeField(ctx->writeContext, filename, CSV_EXTENSION, str, len, field);
 }
 
 void writeQuotedString(WRITE_CONTEXT *ctx, char *filename, char *str, int length)
@@ -595,7 +597,9 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
       // Write the key/value pair
       ctxWriteSubstr(ctx, HEADER, keyStart, keyEnd, &headerField);
       // Write the value to a buffer to be written later
-      writeField(&bufferWriteContext, NULL, NULL, ctx->persistentMemory->line, valueStart, valueEnd, &valueField);
+      const char *value = ctx->persistentMemory->line + valueStart;
+      const int valueLength = valueEnd - valueStart;
+      writeField(&bufferWriteContext, NULL, NULL, value, valueLength, &valueField);
     }
   }
   writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION);
