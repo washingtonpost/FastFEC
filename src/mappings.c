@@ -90,10 +90,6 @@ static int lookupTypes(char *types, const char *version, int versionLength, cons
         char *fieldName = headerParser.line->str + headerParser.start;
         int fieldNameLength = headerParser.end - headerParser.start;
         types[headerParser.columnIndex] = lookupType(version, versionLength, form, formLength, fieldName, fieldNameLength);
-        if (isParseDone(&headerParser))
-        {
-            break;
-        }
         advanceField(&headerParser);
     }
     freeString(s);

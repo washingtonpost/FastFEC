@@ -474,11 +474,6 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
       }
       ctxWriteField(ctx, filename, &parser, type);
     }
-
-    if (isParseDone(&parser))
-    {
-      break;
-    }
     advanceField(&parser);
   }
 
@@ -650,11 +645,6 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 
       // Parse the header now that version is known
       return parseLine(ctx, HEADER, 1) != 3;
-    }
-
-    if (isParseDone(&parser))
-    {
-      break;
     }
     advanceField(&parser);
   }

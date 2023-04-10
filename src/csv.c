@@ -144,6 +144,10 @@ void readField(CSV_LINE_PARSER *parser, int useAscii28)
 
 void advanceField(CSV_LINE_PARSER *parser)
 {
+  if (isParseDone(parser))
+  {
+    return;
+  }
   parser->columnIndex++;
   parser->position++;
 }

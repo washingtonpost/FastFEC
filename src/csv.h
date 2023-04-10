@@ -42,7 +42,7 @@ void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, c
 // longer escaped than not, this will always work in-place.
 void readField(CSV_LINE_PARSER *parser, int useAscii28);
 
-// Advance past the delimeter and increase the column index
+// Advance the parser to the next field. No-op if isParseDone().
 void advanceField(CSV_LINE_PARSER *parser);
 
 // Trim whitespace by adjusting start and end pointers in
