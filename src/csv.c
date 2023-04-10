@@ -46,11 +46,6 @@ void writeNewline(WRITE_CONTEXT *context, char *filename, const char *extension)
   writeChar(context, filename, extension, '\n');
 }
 
-static inline int endOfField(char c)
-{
-  return (c == ',') || (c == '\n') || (c == 0);
-}
-
 void stripQuotes(CSV_LINE_PARSER *parser)
 {
   if ((parser->start != parser->end) && (parser->line->str[parser->start] == '"') && (parser->line->str[parser->end - 1] == '"'))
@@ -77,18 +72,10 @@ void readAscii28Field(CSV_LINE_PARSER *parser)
   stripQuotes(parser);
 }
 
-void readCsvSubfield(CSV_LINE_PARSER *parser)
+static void readCsvSubfield(CSV_LINE_PARSER *parser)
 {
   char c = parser->line->str[parser->position];
-  if (endOfField(c))
-  {
-    // Empty field
-    parser->start = parser->position;
-    parser->end = parser->position;
-    return;
-  }
-
-  // If quoted, field is escaped
+  // If first char is a quote, field is escaped
   int escaped = c == '"';
   int offset = 0;
   if (escaped)
@@ -105,31 +92,18 @@ void readCsvSubfield(CSV_LINE_PARSER *parser)
     }
 
     c = parser->line->str[parser->position];
-    if (c == 0)
+    int is_EOF = (c == 0);
+    int is_EOL = !escaped && ((c == ',') || (c == '\n'));
+    if (is_EOF || is_EOL)
     {
-      // End of line
-      parser->end = parser->position - offset;
-      return;
-    }
-    if (!escaped && ((c == ',') || (c == '\n')))
-    {
-      // If not in escaped mode and the end of field is encountered
-      // then we're done.
       parser->end = parser->position - offset;
       return;
     }
     processFieldChar(c, &(parser->fieldInfo));
     if (escaped && c == '"')
     {
-      // If in escaped mode and a quote is encountered, then we need
-      // to check if the quote is escaped.
-      if (parser->line->str[parser->position + 1] == '"')
-      {
-        // If the quote is escaped, then we need to skip it.
-        (parser->position)++;
-        offset++;
-      }
-      else
+      // check if the quote is escaped.
+      if (parser->line->str[parser->position + 1] != '"')
       {
         // If the quote is not escaped, then we're done.
         parser->end = parser->position - offset;
@@ -138,6 +112,9 @@ void readCsvSubfield(CSV_LINE_PARSER *parser)
         parser->fieldInfo.num_quotes--;
         return;
       }
+      // If the quote is escaped, then we need to skip it.
+      (parser->position)++;
+      offset++;
     }
     (parser->position)++;
   }
