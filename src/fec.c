@@ -611,11 +611,11 @@ static int parseHeaderLegacy(FEC_CONTEXT *ctx)
     }
   }
   writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION);
-  endLine(ctx->writeContext, ctx->types);
+  endLine(ctx->writeContext, NULL);
   startDataRow(ctx, HEADER); // output the filing id if we have it
   writeString(ctx->writeContext, HEADER, CSV_EXTENSION, bufferWriteContext.localBuffer->str);
   writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION); // end with newline
-  endLine(ctx->writeContext, ctx->types);
+  endLine(ctx->writeContext, NULL);
   return 1;
 }
 
