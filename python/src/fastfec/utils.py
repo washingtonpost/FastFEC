@@ -9,16 +9,24 @@ This library provides methods to
 import csv
 import datetime
 import logging
-import os
-import pathlib
-from ctypes import CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_size_t, c_void_p, memmove
-from glob import glob
+from ctypes import (
+    CFUNCTYPE,
+    POINTER,
+    c_char,
+    c_char_p,
+    c_int,
+    c_size_t,
+    c_void_p,
+    memmove,
+)
+from pathlib import Path
 
 logger = logging.getLogger("fastfec")
 
 # Directories used for locating the shared library
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-PARENT_DIR = pathlib.Path(SCRIPT_DIR).parent.absolute()
+SCRIPT_DIR = Path(__file__).parent.absolute()
+REPO_DIR = SCRIPT_DIR.parent.parent.parent  # REPO_DIR/python/src/fastfec/utils.py
+assert REPO_DIR.name == "FastFEC"
 
 # Buffer constants
 BUFFER_SIZE = 1024 * 1024
@@ -54,27 +62,26 @@ def find_fastfec_lib():
     """
     Scans for the fastfec shared library and returns the path of the found library
 
-    This method tries searching in package directories, with a fallback to the local
+    This method tries searching in package directories, with a priority to the local
     zig build directory for development work.
     """
     prefixes = ["fastfec", "libfastfec"]
-
     suffixes = ["so", "dylib", "dll"]
+    patterns = [f"{prefix}*.{suffix}" for prefix in prefixes for suffix in suffixes]
     directories = [
+        REPO_DIR / "zig-out/lib",  # prioritize local dev
         SCRIPT_DIR,
-        PARENT_DIR,
-        os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
+        SCRIPT_DIR.parent,
     ]
 
-    # Search in parent directory
     for root_dir in directories:
-        for prefix in prefixes:
-            for suffix in suffixes:
-                files = glob(os.path.join(root_dir, f"{prefix}*.{suffix}"))
-                if files:
-                    if len(files) > 1:
-                        logger.warning("Expected just one library file")
-                    return os.path.join(PARENT_DIR, files[0])
+        files = []
+        for pattern in patterns:
+            files.extend(root_dir.glob(pattern))
+        if files:
+            if len(files) > 1:
+                logger.warning("Expected just one library file")
+            return files[0]
 
     raise LookupError("Unable to find libfastfec")
 
@@ -216,7 +223,9 @@ def provide_write_callback(open_function):
             file_descriptor = write_cache.file_descriptors.get(path)
             if not file_descriptor:
                 # Open the file
-                write_cache.file_descriptors[path] = open_function(path.decode("utf8"), mode="wb")
+                write_cache.file_descriptors[path] = open_function(
+                    path.decode("utf8"), mode="wb"
+                )
                 file_descriptor = write_cache.file_descriptors[path]
             write_cache.last_filename = filename
             write_cache.last_fd = file_descriptor
