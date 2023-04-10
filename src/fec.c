@@ -9,10 +9,9 @@
 #include <string.h>
 #include <stdarg.h>
 
-char *HEADER = "header";
-char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
-char *FEC_VERSION_NUMBER = "fec_ver_#";
-char *FEC = "FEC";
+static const char *HEADER = "header";
+static const char *SCHEDULE_COUNTS = "SCHEDULE_COUNTS_";
+static const char *FEC_VERSION_NUMBER = "fec_ver_#";
 
 void ctxWarn(FEC_CONTEXT *ctx, const char *message, ...)
 {
@@ -639,7 +638,7 @@ static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
     if (parser.columnIndex == 1)
     {
       // Check if the second column is "FEC"
-      if (strncmp(fieldValue, FEC, strlen(FEC)) == 0)
+      if (strncmp(fieldValue, "FEC", strlen("FEC")) == 0)
       {
         isFecSecondColumn = 1;
       }
