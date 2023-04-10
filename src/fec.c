@@ -249,12 +249,12 @@ int lineMightStartWithF99(STRING *line)
 }
 
 // Consume whitespace, advancing a position index at the same time
-void consumeWhitespace(STRING *line, int *i)
+static void consumeWhitespace(STRING *line, int *i)
 {
   while (*i < line->n)
   {
     char c = line->str[*i];
-    int isWhitespace = (c != ' ') && (c != '\t');
+    int isWhitespace = (c == ' ') || (c == '\t');
     if (!isWhitespace)
     {
       break;
@@ -514,6 +514,25 @@ static void setVersion(FEC_CONTEXT *ctx, const char *chars, int length)
 }
 
 // Returns 0 on failure, 1 on success
+//
+// Example header:
+// /* Header
+// FEC_Ver_# = 2.02
+// Soft_Name = FECfile
+// Soft_Ver# = 3
+// Dec/NoDec = DEC
+// Date_Fmat = CCYYMMDD
+// NameDelim = ^
+// Form_Name = F3XA
+// FEC_IDnum = C00101766
+// Committee = CONTINENTAL AIRLINES INC EMPLOYEE FUND FOR A BETTER AMERICA (FKA CONTINENTAL HOLDINGS PAC)
+// Control_# = K245592Q
+// Schedule_Counts:
+// SA11A1    = 00139
+// SA17      = 00001
+// SB23      = 00008
+// SB29      = 00003
+// /* End Header
 int parseHeaderLegacy(FEC_CONTEXT *ctx)
 {
   startHeaderRow(ctx, HEADER);
