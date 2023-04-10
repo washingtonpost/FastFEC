@@ -1,3 +1,4 @@
+#include <string.h>
 #include "csv.h"
 #include "memory.h"
 #include "regex.h"
@@ -47,7 +48,7 @@ static LOOKUP_REGEXES *getLookupRegexes(void)
     return lookup;
 }
 
-static char lookupType(char *version, int versionLength, char *form, int formLength, char *fieldName, int fieldNameLength)
+static char lookupType(const char *version, int versionLength, const char *form, int formLength, const char *fieldName, int fieldNameLength)
 {
     LOOKUP_REGEXES *lookup = getLookupRegexes();
     for (int i = 0; i < NUM_TYPES; i++)
@@ -118,7 +119,7 @@ FORM_SCHEMA *formSchemaLookup(const char *version, int versionLength, const char
         // Now find the types given the version, form type, and header string
         // We aren't allocating any new memory here for the headerString,
         // only referencing the static data in the headers array. Don't free it later.
-        const char *headerString = headers[i][2];
+        char *headerString = headers[i][2];
         char *types = malloc(strlen(headerString) + 1); // at least as big as it needs to be
         int numFields = lookupTypes(types, version, versionLength, form, formLength, headerString);
 
