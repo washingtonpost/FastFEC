@@ -452,27 +452,20 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
         writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->formType);
       }
 
-      // Write delimeter
-      writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
-
-      // Get the type of the current field and write accordingly
-      char type = 's'; // Default to string type
+      char fieldType = 's'; // Default to string type
       if (parser.columnIndex < ctx->numFields)
       {
         // Ensure the column index is in bounds
-        type = ctx->types[parser.columnIndex];
+        fieldType = ctx->types[parser.columnIndex];
       }
       else
       {
-        // Warning: column exceeding row length
-        ctxWarn(ctx, "Unexpected column in %s (%d): ", ctx->formType, parser.columnIndex);
-        for (int i = parser.start; i < parser.end; i++)
-        {
-          ctxWarn(ctx, "%c", parser.line->str[i]);
-        }
-        ctxWarn(ctx, "\n");
+        char *fieldValue = parser.line->str + parser.start;
+        int fieldValueLength = parser.end - parser.start;
+        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", ctx->formType, parser.columnIndex, fieldValueLength, fieldValue);
       }
-      ctxWriteField(ctx, filename, &parser, type);
+      writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
+      ctxWriteField(ctx, filename, &parser, fieldType);
     }
     advanceField(&parser);
   }
