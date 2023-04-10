@@ -609,7 +609,7 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
       // If we match the FEC version column, set the version
       if (strncmp(key, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
       {
-        setVersion(ctx, key, keyLength);
+        setVersion(ctx, value, valueLength);
       }
 
       // Write the key/value pair
