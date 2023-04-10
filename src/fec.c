@@ -533,7 +533,7 @@ static void setVersion(FEC_CONTEXT *ctx, const char *chars, int length)
 // SB23      = 00008
 // SB29      = 00003
 // /* End Header
-int parseHeaderLegacy(FEC_CONTEXT *ctx)
+static int parseHeaderLegacy(FEC_CONTEXT *ctx)
 {
   startHeaderRow(ctx, HEADER);
   int scheduleCounts = 0; // init scheduleCounts to be false
@@ -628,7 +628,7 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
 }
 
 // Returns 0 on failure, 1 on success
-int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
+static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 {
   // Parse fields
   CSV_LINE_PARSER parser;
@@ -674,7 +674,7 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 }
 
 // Returns 0 on failure, 1 on success
-int parseHeader(FEC_CONTEXT *ctx)
+static inline int parseHeader(FEC_CONTEXT *ctx)
 {
   if (lineStartsWithLegacyHeader(ctx->persistentMemory->line))
   {
