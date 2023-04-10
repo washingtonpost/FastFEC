@@ -80,7 +80,8 @@ def case_to_param(case: Case):
     return pytest.param(case, id=case.name, marks=marks)
 
 
-ALL_TEST_CASES = [Case(path) for path in CASES_DIR.iterdir()]
+# Filter by is_dir() so we don't pick up on .DS_Store files.
+ALL_TEST_CASES = [Case(path) for path in CASES_DIR.iterdir() if path.is_dir()]
 ALL_TEST_CASE_PARAMS = [case_to_param(case) for case in ALL_TEST_CASES]
 
 
