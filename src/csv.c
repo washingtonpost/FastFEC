@@ -36,12 +36,12 @@ void processFieldChar(char c, FIELD_INFO *info)
   }
 }
 
-void writeDelimeter(WRITE_CONTEXT *context, char *filename, const char *extension)
+void writeDelimeter(WRITE_CONTEXT *context, const char *filename, const char *extension)
 {
   writeChar(context, filename, extension, ',');
 }
 
-void writeNewline(WRITE_CONTEXT *context, char *filename, const char *extension)
+void writeNewline(WRITE_CONTEXT *context, const char *filename, const char *extension)
 {
   writeChar(context, filename, extension, '\n');
 }
@@ -152,7 +152,7 @@ void advanceField(CSV_LINE_PARSER *parser)
   parser->position++;
 }
 
-void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, const char *str, int length, FIELD_INFO *info)
+void writeField(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *str, int length, FIELD_INFO *info)
 {
   int escaped = (info->num_commas > 0) || (info->num_quotes > 0);
   int copyDirectly = !(info->num_quotes > 0);

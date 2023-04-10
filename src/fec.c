@@ -136,14 +136,14 @@ static int updateCurrentFormSchema(FEC_CONTEXT *ctx, const char *form, int formL
   return 1;
 }
 
-void ctxWriteSubstr(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+void ctxWriteSubstr(FEC_CONTEXT *ctx, const char *filename, int start, int end, FIELD_INFO *field)
 {
   const char *str = ctx->persistentMemory->line->str + start;
   int len = end - start;
   writeField(ctx->writeContext, filename, CSV_EXTENSION, str, len, field);
 }
 
-void writeQuotedString(WRITE_CONTEXT *ctx, char *filename, char *str, int length)
+void writeQuotedString(WRITE_CONTEXT *ctx, const char *filename, const char *str, int length)
 {
   for (int i = 0; i < length; i++)
   {
@@ -162,7 +162,7 @@ void writeQuotedString(WRITE_CONTEXT *ctx, char *filename, char *str, int length
 }
 
 // Write a date field by separating the output with dashes
-void writeDateField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+void writeDateField(FEC_CONTEXT *ctx, const char *filename, int start, int end, FIELD_INFO *field)
 {
   if (start == end)
   {
@@ -184,7 +184,7 @@ void writeDateField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_
   ctxWriteSubstr(ctx, filename, start + 6, start + 8, field);
 }
 
-void writeFloatField(FEC_CONTEXT *ctx, char *filename, int start, int end, FIELD_INFO *field)
+void writeFloatField(FEC_CONTEXT *ctx, const char *filename, int start, int end, FIELD_INFO *field)
 {
   char *doubleStr;
   char *conversionFloat = ctx->persistentMemory->line->str + start;
@@ -287,7 +287,7 @@ int consumeUntil(STRING *line, int *i, char c)
   return finalNonwhitespace;
 }
 
-void startHeaderRow(FEC_CONTEXT *ctx, char *filename)
+void startHeaderRow(FEC_CONTEXT *ctx, const char *filename)
 {
   // Write the filing ID header, if includeFilingId is specified
   if (ctx->includeFilingId)
@@ -297,7 +297,7 @@ void startHeaderRow(FEC_CONTEXT *ctx, char *filename)
   }
 }
 
-void startDataRow(FEC_CONTEXT *ctx, char *filename)
+void startDataRow(FEC_CONTEXT *ctx, const char *filename)
 {
   // Write the filing ID value, if includeFilingId is specified
   if (ctx->includeFilingId)
@@ -310,7 +310,7 @@ void startDataRow(FEC_CONTEXT *ctx, char *filename)
 // Parse F99 text from a filing, writing the text to the specified
 // file in escaped CSV form if successful. Returns 1 if successful,
 // 0 otherwise.
-int parseF99Text(FEC_CONTEXT *ctx, char *filename)
+int parseF99Text(FEC_CONTEXT *ctx, const char *filename)
 {
   int f99Mode = 0;
   int first = 1;
@@ -375,7 +375,7 @@ int parseF99Text(FEC_CONTEXT *ctx, char *filename)
   return 1;
 }
 
-void ctxWriteField(FEC_CONTEXT *ctx, char *filename, CSV_LINE_PARSER *parser, char type)
+void ctxWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_LINE_PARSER *parser, char type)
 {
   if (type == 's')
   {
@@ -402,7 +402,7 @@ void ctxWriteField(FEC_CONTEXT *ctx, char *filename, CSV_LINE_PARSER *parser, ch
 // specified. Return 2 if there was a warning but it was
 // still successful and the next line has already been grabbed.
 // Return 3 if we encountered a mappings error.
-int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
+int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
 {
   CSV_LINE_PARSER parser;
   csvParserInit(&parser, ctx->persistentMemory->line);

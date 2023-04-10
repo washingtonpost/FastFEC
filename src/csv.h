@@ -26,9 +26,9 @@ void csvParserInit(CSV_LINE_PARSER *parser, STRING *line);
 
 void processFieldChar(char c, FIELD_INFO *info);
 
-void writeDelimeter(WRITE_CONTEXT *context, char *filename, const char *extension);
-void writeNewline(WRITE_CONTEXT *context, char *filename, const char *extension);
-void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, const char *str, int length, FIELD_INFO *info);
+void writeDelimeter(WRITE_CONTEXT *context, const char *filename, const char *extension);
+void writeNewline(WRITE_CONTEXT *context, const char *filename, const char *extension);
+void writeField(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *str, int length, FIELD_INFO *info);
 
 // Read a field, either delimted by ascii28 or comma.
 //

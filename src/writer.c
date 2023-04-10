@@ -146,7 +146,7 @@ void initializeCustomWriteContext(WRITE_CONTEXT *writeContext)
   writeContext->customLineBuffer->str[0] = 0;
 }
 
-void endLine(WRITE_CONTEXT *writeContext, char *types)
+void endLine(WRITE_CONTEXT *writeContext, const char *types)
 {
   if (!writeContext->useCustomLine)
   {
@@ -159,7 +159,7 @@ void endLine(WRITE_CONTEXT *writeContext, char *types)
   writeContext->customLineBuffer->str[0] = 0;
 }
 
-int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
+int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
 {
   if ((context->lastname != NULL) && (strcmp(context->lastname, filename) == 0))
   {
@@ -245,7 +245,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   return 1;
 }
 
-void bufferFlush(WRITE_CONTEXT *context, char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile)
+void bufferFlush(WRITE_CONTEXT *context, const char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile)
 {
   if (bufferFile->bufferPos == 0)
   {
@@ -263,7 +263,7 @@ void bufferFlush(WRITE_CONTEXT *context, char *filename, const char *extension, 
   bufferFile->bufferPos = 0;
 }
 
-void bufferWrite(WRITE_CONTEXT *context, char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile, char *string, int nchars)
+void bufferWrite(WRITE_CONTEXT *context, const char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile, const char *string, int nchars)
 {
   int offset = 0;
   while (nchars > 0)
@@ -289,7 +289,7 @@ void bufferWrite(WRITE_CONTEXT *context, char *filename, const char *extension, 
   }
 }
 
-void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char *string, int nchars)
+void writeN(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *string, int nchars)
 {
   if (context->local == 0)
   {
@@ -326,12 +326,12 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
   }
 }
 
-void writeString(WRITE_CONTEXT *context, char *filename, const char *extension, char *string)
+void writeString(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *string)
 {
   writeN(context, filename, extension, string, strlen(string));
 }
 
-void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, char c)
+void writeChar(WRITE_CONTEXT *context, const char *filename, const char *extension, char c)
 {
   if (context->local == 0 && (!context->useCustomLine))
   {
@@ -347,7 +347,7 @@ void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, ch
   }
 }
 
-void writeDouble(WRITE_CONTEXT *context, char *filename, double d)
+void writeDouble(WRITE_CONTEXT *context, const char *filename, double d)
 {
   // Write to local buffer
   char str[100]; // should be able to fit any double
