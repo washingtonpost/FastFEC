@@ -690,33 +690,22 @@ int parseHeader(FEC_CONTEXT *ctx)
 int parseFec(FEC_CONTEXT *ctx)
 {
   int skipGrabLine = 0;
-
   if (grabLine(ctx) == 0)
   {
-    return 0;
+    return 0; // file is empty
   }
-
-  // Parse the header
   if (!parseHeader(ctx))
   {
-    return 0;
+    return 0; // couldn't parse header
   }
 
-  // Loop through parsing the entire file, line by
-  // line.
+  // Loop through the file line by line
   while (1)
   {
-    // Load the current line
     if (!skipGrabLine && grabLine(ctx) == 0)
     {
-      // End of file
-      break;
+      return 1; // End of file
     }
-
-    // Parse the line and write its parsed output
-    // to CSV files depending on version/form type
     skipGrabLine = parseLine(ctx, NULL, 0) == 2;
   }
-
-  return 1;
 }
