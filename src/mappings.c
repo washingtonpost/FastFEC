@@ -134,6 +134,10 @@ FORM_SCHEMA *formSchemaLookup(const char *version, int versionLength, const char
 
 void formSchemaFree(FORM_SCHEMA *schema)
 {
+    if (schema == NULL)
+    {
+        return;
+    }
     free(schema->fieldTypes);
     free(schema);
 }
