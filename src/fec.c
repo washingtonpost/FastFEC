@@ -503,14 +503,14 @@ int parseLine(FEC_CONTEXT *ctx, char *filename, int headerRow)
   return 1;
 }
 
-// Set the FEC context version based on a substring of the current line
-void setVersion(FEC_CONTEXT *ctx, int start, int end)
+// Set the FEC file version string
+static void setVersion(FEC_CONTEXT *ctx, const char *chars, int length)
 {
-  ctx->version = malloc(end - start + 1);
-  strncpy(ctx->version, ctx->persistentMemory->line->str + start, end - start);
+  ctx->version = malloc(length + 1);
+  strncpy(ctx->version, chars, length);
   // Add null terminator
-  ctx->version[end - start] = 0;
-  ctx->versionLength = end - start;
+  ctx->version[length] = 0;
+  ctx->versionLength = length;
 }
 
 // Returns 0 on failure, 1 on success
@@ -549,24 +549,28 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
       // Grab key value from "key=value" (strip whitespace)
       int i = 0;
       consumeWhitespace(line, &i);
-      int keyStart = i;
-      int keyEnd = consumeUntil(line, &i, '=');
+      const int keyStart = i;
+      const int keyEnd = consumeUntil(line, &i, '=');
+      const char *key = line->str + keyStart;
+      const int keyLength = keyEnd - keyStart;
       // Jump over '='
       i++;
       consumeWhitespace(line, &i);
-      int valueStart = i;
-      int valueEnd = consumeUntil(line, &i, 0);
+      const int valueStart = i;
+      const int valueEnd = consumeUntil(line, &i, 0);
+      const char *value = line->str + valueStart;
+      const int valueLength = valueEnd - valueStart;
 
       // Gather field metrics for CSV writing
       FIELD_INFO headerField = {.num_quotes = 0, .num_commas = 0};
-      for (int i = keyStart; i < keyEnd; i++)
+      for (int i = 0; i < keyLength; i++)
       {
-        processFieldChar(line->str[i], &headerField);
+        processFieldChar(key[i], &headerField);
       }
       FIELD_INFO valueField = {.num_quotes = 0, .num_commas = 0};
-      for (int i = valueStart; i < valueEnd; i++)
+      for (int i = 0; i < valueLength; i++)
       {
-        processFieldChar(line->str[i], &valueField);
+        processFieldChar(value[i], &valueField);
       }
 
       // Write commas as needed (only before fields that aren't first)
@@ -584,16 +588,14 @@ int parseHeaderLegacy(FEC_CONTEXT *ctx)
       }
 
       // If we match the FEC version column, set the version
-      if (strncmp(line->str + keyStart, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
+      if (strncmp(key, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
       {
-        setVersion(ctx, valueStart, valueEnd);
+        setVersion(ctx, key, keyLength);
       }
 
       // Write the key/value pair
       ctxWriteSubstr(ctx, HEADER, keyStart, keyEnd, &headerField);
       // Write the value to a buffer to be written later
-      const char *value = ctx->persistentMemory->line + valueStart;
-      const int valueLength = valueEnd - valueStart;
       writeField(&bufferWriteContext, NULL, NULL, value, valueLength, &valueField);
     }
   }
@@ -611,7 +613,8 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 {
   // Parse fields
   CSV_LINE_PARSER parser;
-  csvParserInit(&parser, ctx->persistentMemory->line);
+  STRING *line = ctx->persistentMemory->line;
+  csvParserInit(&parser, line);
 
   int isFecSecondColumn = 0;
 
@@ -619,17 +622,19 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
   while (!isParseDone(&parser))
   {
     readField(&parser, ctx->currentLineHasAscii28);
+    const char *fieldValue = parser.line->str + parser.start;
+    const int fieldLength = parser.end - parser.start;
     if (parser.columnIndex == 1)
     {
       // Check if the second column is "FEC"
-      if (strncmp(ctx->persistentMemory->line->str + parser.start, FEC, strlen(FEC)) == 0)
+      if (strncmp(fieldValue, FEC, strlen(FEC)) == 0)
       {
         isFecSecondColumn = 1;
       }
       else
       {
         // If not, the second column is the version
-        setVersion(ctx, parser.start, parser.end);
+        setVersion(ctx, fieldValue, fieldLength);
 
         // Parse the header now that version is known
         if (parseLine(ctx, HEADER, 1) == 3)
@@ -640,9 +645,7 @@ int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
     }
     if (parser.columnIndex == 2 && isFecSecondColumn)
     {
-      // Set the version
-      setVersion(ctx, parser.start, parser.end);
-
+      setVersion(ctx, fieldValue, fieldLength);
       // Parse the header now that version is known
       return parseLine(ctx, HEADER, 1) != 3;
     }
