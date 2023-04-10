@@ -250,7 +250,7 @@ int lineMightStartWithF99(STRING *line)
 // Consume whitespace, advancing a position index at the same time
 static void consumeWhitespace(STRING *line, int *i)
 {
-  while (*i < line->n)
+  while ((size_t)*i < line->n)
   {
     char c = line->str[*i];
     int isWhitespace = (c == ' ') || (c == '\t');
@@ -269,7 +269,7 @@ int consumeUntil(STRING *line, int *i, char c)
 {
   // Store the last non-whitespace character
   int finalNonwhitespace = *i;
-  while (*i < line->n)
+  while ((size_t)*i < line->n)
   {
     // Grab the current character
     char current = line->str[*i];
