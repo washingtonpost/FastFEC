@@ -6,7 +6,15 @@ extern void wasmBufferWrite(char *filename, char *extension, char *contents, int
 void wasmFec(int bufferSize)
 {
   PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&wasmBufferRead)), bufferSize, ((CustomWriteFunction)(&wasmBufferWrite)), bufferSize, NULL, 0, NULL, NULL, NULL, 0, 1, 0);
+  CustomLineFunction customLineFunction = NULL;
+  int writeToFile = 0;
+  FILE *file = NULL;
+  char *filingId = NULL;
+  char *outputDirectory = NULL;
+  int includeFilingId = 0;
+  int silent = 1;
+  int warn = 0;
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&wasmBufferRead)), bufferSize, ((CustomWriteFunction)(&wasmBufferWrite)), bufferSize, customLineFunction, writeToFile, file, filingId, outputDirectory, includeFilingId, silent, warn);
   int fecParseResult = parseFec(fec);
   freeFecContext(fec);
   freePersistentMemoryContext(persistentMemory);

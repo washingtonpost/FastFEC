@@ -91,7 +91,12 @@ int main(int argc, char *argv[])
 
   const char *outputDir = pathJoin(cli->outputDirectory, cli->fecId);
   PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, NULL, 1, handle, cli->fecId, outputDir, cli->includeFilingId, cli->silent, cli->warn);
+  int inBufferSize = BUFFERSIZE;
+  int outBufferSize = BUFFERSIZE;
+  CustomWriteFunction customWriteFunction = NULL;
+  CustomLineFunction customLineFunction = NULL;
+  int writeToFile = 1;
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&readBuffer)), inBufferSize, customWriteFunction, outBufferSize, customLineFunction, writeToFile, handle, cli->fecId, outputDir, cli->includeFilingId, cli->silent, cli->warn);
 
   // Parse the fec file
   int fecParseResult = parseFec(fec);
