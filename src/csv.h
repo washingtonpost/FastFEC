@@ -12,8 +12,8 @@ typedef struct field_info FIELD_INFO;
 
 struct csv_field
 {
-  char *chars;
-  size_t length;
+  char *chars;   // Not necessarily null-terminated. Pointer into the owning CSV_LINE_PARSER.line
+  size_t length; // number of chars
   FIELD_INFO info;
 };
 typedef struct csv_field CSV_FIELD;
@@ -25,11 +25,11 @@ struct csv_line_parser
   int columnIndex;
   CSV_FIELD currentField;
 };
+typedef struct csv_line_parser CSV_LINE_PARSER;
 
 // ========== Parser API ============
 
 // Parses a single line of comma (or ascii28) separated data
-typedef struct csv_line_parser CSV_LINE_PARSER;
 void csvParserInit(CSV_LINE_PARSER *parser, STRING *line);
 // Read a field, either delimted by ascii28 or comma.
 //
