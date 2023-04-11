@@ -1,77 +1,10 @@
-#include "memory.h"
-#include "writer.h"
 #include <string.h>
-#include <limits.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include "compat.h"
-
-#ifndef PATH_MAX_LENGTH
-#define PATH_MAX_LENGTH 4096 /* # chars in a path name including nul */
-#endif
-#ifndef EEXIST
-#define EEXIST 17
-#endif
-#ifndef ENAMETOOLONG
-#define ENAMETOOLONG 63
-#endif
+#include "memory.h"
+#include "path.h"
+#include "writer.h"
 
 const char *NUMBER_FORMAT = "%.2f";
-
-// From https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950
-int mkdir_p(const char *path)
-{
-  /* Adapted from http://stackoverflow.com/a/2336245/119527 */
-  const size_t len = strlen(path);
-  char _path[PATH_MAX_LENGTH];
-  char *p;
-
-  errno = 0;
-
-  /* Copy string so its mutable */
-  if (len > sizeof(_path) - 1)
-  {
-    errno = ENAMETOOLONG;
-    return -1;
-  }
-  strcpy(_path, path);
-
-  /* Iterate the string */
-  for (p = _path + 1; *p; p++)
-  {
-    if (*p == DIR_SEPARATOR_CHAR)
-    {
-      /* Temporarily truncate */
-      *p = '\0';
-
-#if defined(_WIN32)
-      int mkdirResult = mkdir(_path);
-#else
-      int mkdirResult = mkdir(_path, S_IRWXU);
-#endif
-      if (mkdirResult != 0)
-      {
-        if (errno != EEXIST)
-          return -1;
-      }
-
-      *p = DIR_SEPARATOR_CHAR;
-    }
-  }
-
-#if defined(_WIN32)
-  int mkdirResult = mkdir(_path);
-#else
-  int mkdirResult = mkdir(_path, S_IRWXU);
-#endif
-  if (mkdirResult != 0)
-  {
-    if (errno != EEXIST)
-      return -1;
-  }
-
-  return 0;
-}
 
 // Normalize a file name by converting slashes to dashes
 // Adapted from https://stackoverflow.com/a/32496721
@@ -216,12 +149,11 @@ int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
 
   if (context->writeToFile)
   {
-    // Ensure the directory exists (will silently fail if it does)
     const int nchars = strlen(context->outputDirectory) + strlen(context->filingId) + 1 + strlen(filename) + 1 + strlen(extension);
     char *fullpath = malloc(sizeof(char) * nchars);
     strcpy(fullpath, context->outputDirectory);
     strcat(fullpath, context->filingId);
-    mkdir_p(fullpath);
+    mkdir_safe(fullpath);
 
     // Add the normalized filename to path
     strcat(fullpath, DIR_SEPARATOR);

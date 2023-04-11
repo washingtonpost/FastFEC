@@ -87,6 +87,7 @@ const libSources = [_][]const u8{
     "src/buffer.c",
     "src/mappings.c",
     "src/memory.c",
+    "src/path.c",
     "src/encoding.c",
     "src/csv.c",
     "src/writer.c",
