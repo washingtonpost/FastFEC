@@ -19,7 +19,6 @@ struct fec_context
   char *filingId;
   char *version; // default null
   int versionLength;
-  int summary; // default false
   char *f99Text;
 
   // Supporting line information

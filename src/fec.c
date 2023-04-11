@@ -69,7 +69,6 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->filingId = filingId;
   ctx->version = 0;
   ctx->versionLength = 0;
-  ctx->summary = 0;
   ctx->f99Text = 0;
   ctx->currentLineHasAscii28 = 0;
 
