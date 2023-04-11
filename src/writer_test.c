@@ -42,7 +42,7 @@ static char *testWriter()
 {
   resetOutput();
 
-  WRITE_CONTEXT *ctx = newWriteContext(NULL, NULL, 0, 3, writeToFile, writeToLine);
+  WRITE_CONTEXT *ctx = newWriteContext(NULL, 0, 3, writeToFile, writeToLine);
 
   // Write a small string that won't flush the buffer
   writeString(ctx, testFile, testExt, "hi");
@@ -70,7 +70,7 @@ static char *testWriterEndOnBufferSize()
 {
   resetOutput();
 
-  WRITE_CONTEXT *ctx = newWriteContext(NULL, NULL, 0, 3, writeToFile, writeToLine);
+  WRITE_CONTEXT *ctx = newWriteContext(NULL, 0, 3, writeToFile, writeToLine);
 
   // Write a small string that won't flush the buffer
   writeString(ctx, testFile, testExt, "hi");
@@ -98,7 +98,7 @@ static char *testWriterMassiveBuffer()
 {
   resetOutput();
 
-  WRITE_CONTEXT *ctx = newWriteContext(NULL, NULL, 0, 300, writeToFile, writeToLine);
+  WRITE_CONTEXT *ctx = newWriteContext(NULL, 0, 300, writeToFile, writeToLine);
 
   // Write a small string that won't flush the buffer
   writeString(ctx, testFile, testExt, "hi");
@@ -126,7 +126,7 @@ static char *testLineBuffer()
 {
   resetOutput();
 
-  WRITE_CONTEXT *ctx = newWriteContext(NULL, NULL, 0, 300, writeToFile, writeToLine);
+  WRITE_CONTEXT *ctx = newWriteContext(NULL, 0, 300, writeToFile, writeToLine);
 
   // Write a small string that won't flush the buffer
   writeString(ctx, testFile, testExt, "hi there\n");

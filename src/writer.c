@@ -33,11 +33,10 @@ void freeBufferFile(BUFFER_FILE *bufferFile)
   free(bufferFile);
 }
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction)
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction)
 {
   WRITE_CONTEXT *context = malloc(sizeof(WRITE_CONTEXT));
   context->outputDirectory = outputDirectory;
-  context->filingId = filingId;
   context->writeToFile = writeToFile;
   context->bufferSize = bufferSize;
   context->filenames = NULL;
@@ -148,8 +147,7 @@ int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
 
   if (context->writeToFile)
   {
-    const char *filingDir = pathJoin(context->outputDirectory, context->filingId);
-    mkdir_safe(filingDir);
+    mkdir_safe(context->outputDirectory);
 
     // Add the normalized filename to path
     int nchars = strlen(filename) + strlen(extension); // "F3", ".csv"
@@ -157,13 +155,12 @@ int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
     strcpy(normalizedFilename, filename);
     normalize_filename(normalizedFilename);
     strcat(normalizedFilename, extension);
-    const char *fullpath = pathJoin(filingDir, normalizedFilename);
+    const char *fullpath = pathJoin(context->outputDirectory, normalizedFilename);
 
     context->files[context->nfiles] = fopen(fullpath, "w");
     // Free the derived file paths
     free(fullpath);
     free(normalizedFilename);
-    free(filingDir);
   }
   context->lastname = context->filenames[context->nfiles];
   context->lastBufferFile = context->bufferFiles[context->nfiles];

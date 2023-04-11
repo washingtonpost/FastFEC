@@ -45,7 +45,7 @@ BUFFER_FILE *newBufferFile(int bufferSize);
 
 void freeBufferFile(BUFFER_FILE *bufferFile);
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction);
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction);
 
 void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line);
 

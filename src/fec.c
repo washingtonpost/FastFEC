@@ -64,7 +64,7 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   FEC_CONTEXT *ctx = malloc(sizeof(FEC_CONTEXT));
   ctx->buffer = newBuffer(inputBufferSize, bufferRead);
   ctx->file = file;
-  ctx->writeContext = newWriteContext(outputDirectory, filingId, writeToFile, outputBufferSize, customWriteFunction, customLineFunction);
+  ctx->writeContext = newWriteContext(outputDirectory, writeToFile, outputBufferSize, customWriteFunction, customLineFunction);
   ctx->version = NULL;
 
   ctx->persistentMemory = persistentMemory;
