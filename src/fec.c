@@ -142,13 +142,9 @@ int grabLine(FEC_CONTEXT *ctx)
   {
     return 0;
   }
-
-  // Decode the line
-  LINE_INFO info;
-  decodeLine(&info, ctx->persistentMemory->rawLine, ctx->persistentMemory->line);
   // Store whether the current line has ascii separators
   // (determines whether we use CSV or ascii28 split line parsing)
-  ctx->currentLineHasAscii28 = info.ascii28;
+  ctx->currentLineHasAscii28 = decodeLine(ctx->persistentMemory->rawLine, ctx->persistentMemory->line);
   return 1;
 }
 

@@ -26,6 +26,13 @@ static const uint8_t utf8d[] = {
     1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // s7..s8
 };
 
+static struct lineInfo
+{
+  int ascii28;
+  int validUtf8;
+};
+typedef struct lineInfo LINE_INFO;
+
 static void collectLineInfo(char *chars, LINE_INFO *info)
 {
   // Initialize info
@@ -85,10 +92,11 @@ static void iso_8859_1_to_utf_8(STRING *in, STRING *output)
   output->n = length;
 }
 
-void decodeLine(LINE_INFO *info, STRING *in, STRING *output)
+int decodeLine(STRING *in, STRING *output)
 {
-  collectLineInfo(in->str, info);
-  if (!info->validUtf8)
+  LINE_INFO info;
+  collectLineInfo(in->str, &info);
+  if (!info.validUtf8)
   {
     iso_8859_1_to_utf_8(in, output);
   }
@@ -97,4 +105,5 @@ void decodeLine(LINE_INFO *info, STRING *in, STRING *output)
     // Copy memory buffer over
     copyString(in, output);
   }
+  return info.ascii28;
 }
