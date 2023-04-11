@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include "pcre/pcre.h"
 #include "export.h"
-#include "mappings.h"
 
 extern const size_t DEFAULT_STRING_SIZE;
 struct string_type

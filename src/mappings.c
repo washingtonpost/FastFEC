@@ -2,6 +2,7 @@
 #include "csv.h"
 #include "memory.h"
 #include "regex.h"
+#include "mappings.h"
 #include "mappings_generated.h"
 
 static int NUM_HEADERS = sizeof(headers) / sizeof(headers[0]);
