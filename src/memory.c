@@ -32,20 +32,13 @@ void freeString(STRING *s)
 
 int growStringTo(STRING *str, size_t newSize)
 {
-  // Grow the size
-  if (newSize > str->n)
+  if (str->n >= newSize)
   {
-    str->n = newSize;
-  }
-  else
-  {
-    // No need to reallocate
+    // No need to do anything
     return 1;
   }
-
-  // Reallocate the space
-  str->str = realloc(str->str, str->n);
-
+  str->n = newSize;
+  str->str = realloc(str->str, newSize);
   // Check if the reallocation failed
   if (str->str == 0)
   {
