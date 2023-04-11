@@ -34,31 +34,29 @@ void freeSafe(void *ptr)
   }
 }
 
-int _lineReMatch(FEC_CONTEXT *ctx, pcre *regex)
+static int _lineReMatch(STRING *line, pcre *regex)
 {
-  char *str = ctx->persistentMemory->line->str;
-  int len = ctx->currentLineLength;
-  return pcre_exec(regex, NULL, str, len, 0, 0, NULL, 0) >= 0;
+  return pcre_exec(regex, NULL, line->str, line->n, 0, 0, NULL, 0) >= 0;
 }
 
-int lineContainsF99Start(FEC_CONTEXT *ctx)
+static int _lineContainsF99Start(STRING *line)
 {
   static pcre *regex = NULL;
   if (regex == NULL)
   {
     regex = newRegex("^\\s*\\[BEGIN ?TEXT\\]\\s*$");
   }
-  return _lineReMatch(ctx, regex);
+  return _lineReMatch(line, regex);
 }
 
-int lineContainsF99End(FEC_CONTEXT *ctx)
+static int _lineContainsF99End(STRING *line)
 {
   static pcre *regex = NULL;
   if (regex == NULL)
   {
     regex = newRegex("^\\s*\\[END ?TEXT\\]\\s*$");
   }
-  return _lineReMatch(ctx, regex);
+  return _lineReMatch(line, regex);
 }
 
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
@@ -306,11 +304,12 @@ int parseF99Text(FEC_CONTEXT *ctx, const char *filename)
       // End of file
       return 1;
     }
+    STRING *line = ctx->persistentMemory->line;
 
     if (f99Mode)
     {
       // See if we have reached the end boundary
-      if (lineContainsF99End(ctx))
+      if (_lineContainsF99End(line))
       {
         f99Mode = 0;
         break;
@@ -327,15 +326,15 @@ int parseF99Text(FEC_CONTEXT *ctx, const char *filename)
         first = 0;
       }
 
-      writeQuotedString(ctx->writeContext, filename, ctx->persistentMemory->line->str, ctx->currentLineLength);
+      writeQuotedString(ctx->writeContext, filename, line->str, line->n);
       continue;
     }
 
     // See if line begins with f99 text boundary by first seeing if it starts with "["
-    if (lineMightStartWithF99(ctx->persistentMemory->line))
+    if (lineMightStartWithF99(line))
     {
       // Now, execute the proper regex (we don't want to do this for every line, as it's slow)
-      if (lineContainsF99Start(ctx))
+      if (_lineContainsF99Start(line))
       {
         f99Mode = 1;
         continue;
@@ -346,7 +345,7 @@ int parseF99Text(FEC_CONTEXT *ctx, const char *filename)
         return 0;
       }
     }
-    else if (strContainsNonWhitespace(ctx->persistentMemory->line->str, ctx->persistentMemory->line->n))
+    else if (strContainsNonWhitespace(line->str, line->n))
     {
       // The line should only contain non-whitespace that starts
       // f99 text
