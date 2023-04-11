@@ -22,7 +22,7 @@ struct csv_line_parser
 {
   STRING *line;
   int position;
-  int columnIndex;
+  int numFieldsRead;
   CSV_FIELD currentField;
 };
 typedef struct csv_line_parser CSV_LINE_PARSER;
@@ -31,7 +31,9 @@ typedef struct csv_line_parser CSV_LINE_PARSER;
 
 // Parses a single line of comma (or ascii28) separated data
 void csvParserInit(CSV_LINE_PARSER *parser, STRING *line);
-// Read a field, either delimted by ascii28 or comma.
+// Read the next field, either delimited by ascii28 or comma.
+//
+// You should only use this when isParseDone() is false. Otherwise behavior is undefined.
 //
 // For ascii28:
 // If both the start and end of the field are `"`
@@ -41,9 +43,7 @@ void csvParserInit(CSV_LINE_PARSER *parser, STRING *line);
 // Read a CSV field in-place, modifying line and returning start and
 // end positions of the unescaped field. Since CSV fields are always
 // longer escaped than not, this will always work in-place.
-CSV_FIELD *readField(CSV_LINE_PARSER *parser, int useAscii28);
-// Advance the parser to the next field. No-op if isParseDone().
-void advanceField(CSV_LINE_PARSER *parser);
+CSV_FIELD *nextField(CSV_LINE_PARSER *parser, int useAscii28);
 // The parse is done if a newline or NULL is encountered
 int isParseDone(CSV_LINE_PARSER *parser);
 

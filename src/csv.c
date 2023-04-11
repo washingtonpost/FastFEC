@@ -8,7 +8,7 @@ void csvParserInit(CSV_LINE_PARSER *parser, STRING *line)
 {
   parser->line = line;
   parser->position = 0;
-  parser->columnIndex = 0;
+  parser->numFieldsRead = 0;
   parser->currentField.chars = NULL;
   parser->currentField.length = 0;
   parser->currentField.info.num_commas = 0;
@@ -121,7 +121,7 @@ static void readCsvField(CSV_LINE_PARSER *parser)
   stripQuotes(&(parser->currentField));
 }
 
-CSV_FIELD *readField(CSV_LINE_PARSER *parser, int useAscii28)
+CSV_FIELD *nextField(CSV_LINE_PARSER *parser, int useAscii28)
 {
   // Reset field info
   parser->currentField.info.num_quotes = 0;
@@ -135,17 +135,12 @@ CSV_FIELD *readField(CSV_LINE_PARSER *parser, int useAscii28)
   {
     readCsvField(parser);
   }
-  return &(parser->currentField);
-}
-
-void advanceField(CSV_LINE_PARSER *parser)
-{
-  if (isParseDone(parser))
+  parser->numFieldsRead++;
+  if (!isParseDone(parser))
   {
-    return;
+    parser->position++;
   }
-  parser->columnIndex++;
-  parser->position++;
+  return &(parser->currentField);
 }
 
 void writeDelimeter(WRITE_CONTEXT *context, const char *filename)

@@ -87,14 +87,13 @@ static int lookupTypes(char *types, const char *version, int versionLength, cons
     // Iterate each field in the header and build up the type info
     while (!isParseDone(&headerParser))
     {
-        const CSV_FIELD *field = readField(&headerParser, 0);
-        types[headerParser.columnIndex] = lookupType(version, versionLength, form, formLength, field->chars, field->length);
-        advanceField(&headerParser);
+        const CSV_FIELD *field = nextField(&headerParser, 0);
+        types[headerParser.numFieldsRead - 1] = lookupType(version, versionLength, form, formLength, field->chars, field->length);
     }
     freeString(s);
     // Add null terminator
-    types[headerParser.columnIndex + 1] = 0;
-    return headerParser.columnIndex + 1;
+    types[headerParser.numFieldsRead] = 0;
+    return headerParser.numFieldsRead;
 }
 
 FORM_SCHEMA *formSchemaLookup(const char *version, int versionLength, const char *form, int formLength)

@@ -353,8 +353,8 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
   // Iterate through fields
   while (!isParseDone(&parser))
   {
-    const CSV_FIELD *field = readField(&parser, ctx->currentLineHasAscii28);
-    if (parser.columnIndex == 0)
+    const CSV_FIELD *field = nextField(&parser, ctx->currentLineHasAscii28);
+    if (parser.numFieldsRead == 1)
     {
       // Set the form version to the first column (with whitespace removed)
       stripWhitespace(field);
@@ -372,9 +372,8 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
     }
     else
     {
-      // If column index is 1, then there are at least two columns
-      // and the line is fully specified, so write header/line info
-      if (parser.columnIndex == 1)
+      // If we have two columns the line is fully specified, so write header/line info
+      if (parser.numFieldsRead == 2)
       {
         // Write header if necessary
         if (getFile(ctx->writeContext, filename, CSV_EXTENSION) == 1)
@@ -392,33 +391,32 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
       }
 
       char fieldType = 's'; // Default to string type
-      if (parser.columnIndex < formSchema->numFields)
+      if (parser.numFieldsRead - 1 < formSchema->numFields)
       {
         // Ensure the column index is in bounds
-        fieldType = formSchema->fieldTypes[parser.columnIndex];
+        fieldType = formSchema->fieldTypes[parser.numFieldsRead - 1];
       }
       else
       {
-        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.columnIndex, field->length, field->chars);
+        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.numFieldsRead, field->length, field->chars);
       }
       writeDelimeter(ctx->writeContext, filename);
       ctxWriteField(ctx, filename, field, fieldType);
     }
-    advanceField(&parser);
   }
 
-  if (parser.columnIndex < 2)
+  if (parser.numFieldsRead <= 2)
   {
-    // Fewer than two fields? The line isn't fully specified
+    // Two or fewer fields? The line isn't fully specified
     return 0;
   }
 
-  if (parser.columnIndex + 1 != formSchema->numFields && !headerRow)
+  if (parser.numFieldsRead != formSchema->numFields && !headerRow)
   {
     // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parser.columnIndex + 1, formSchema->numFields, formSchema->type);
+      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parser.numFieldsRead, formSchema->numFields, formSchema->type);
       ctxWarn(ctx, "'%s'\n", parser.line->str);
       // 2 indicates we won't grab the line again
       writeNewline(ctx->writeContext, filename);
@@ -578,8 +576,8 @@ static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
   // Iterate through fields
   while (!isParseDone(&parser))
   {
-    const CSV_FIELD *field = readField(&parser, ctx->currentLineHasAscii28);
-    if (parser.columnIndex == 1)
+    const CSV_FIELD *field = nextField(&parser, ctx->currentLineHasAscii28);
+    if (parser.numFieldsRead == 2)
     {
       // Check if the second column is "FEC"
       if (strncmp(field->chars, "FEC", strlen("FEC")) == 0)
@@ -598,13 +596,12 @@ static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
         }
       }
     }
-    if (parser.columnIndex == 2 && isFecSecondColumn)
+    if (parser.numFieldsRead == 3 && isFecSecondColumn)
     {
       setVersion(ctx, field->chars, field->length);
       // Parse the header now that version is known
       return parseLine(ctx, HEADER, 1) != 3;
     }
-    advanceField(&parser);
   }
   return 1;
 }
