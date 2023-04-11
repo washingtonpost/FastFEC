@@ -62,14 +62,16 @@ static int _lineContainsF99End(STRING *line)
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
   FEC_CONTEXT *ctx = malloc(sizeof(FEC_CONTEXT));
-  ctx->persistentMemory = persistentMemory;
   ctx->buffer = newBuffer(inputBufferSize, bufferRead);
   ctx->file = file;
   ctx->writeContext = newWriteContext(outputDirectory, filingId, writeToFile, outputBufferSize, customWriteFunction, customLineFunction);
-  ctx->filingId = filingId;
   ctx->version = NULL;
+
+  ctx->persistentMemory = persistentMemory;
   ctx->currentLineHasAscii28 = 0;
 
+  // Options
+  ctx->filingId = filingId;
   ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
   ctx->warn = warn;
@@ -81,8 +83,8 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
 void freeFecContext(FEC_CONTEXT *ctx)
 {
   freeBuffer(ctx->buffer);
-  freeString(ctx->version);
   freeWriteContext(ctx->writeContext);
+  freeString(ctx->version);
   formSchemaFree(ctx->currentForm);
   free(ctx);
 }

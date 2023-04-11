@@ -16,14 +16,14 @@ struct fec_context
   // A way to write lines
   WRITE_CONTEXT *writeContext;
 
-  char *filingId;
   STRING *version; // The version of the filing, eg "8.3". Default NULL
 
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;
   int currentLineHasAscii28;
 
-  // Flags
+  // Options
+  char *filingId;
   int includeFilingId;
   int silent;
   int warn;
