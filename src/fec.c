@@ -59,7 +59,20 @@ static int _lineContainsF99End(STRING *line)
   return _lineReMatch(line, regex);
 }
 
-FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
+FEC_CONTEXT *newFecContext(
+    PERSISTENT_MEMORY_CONTEXT *persistentMemory,
+    BufferRead bufferRead,
+    int inputBufferSize,
+    CustomWriteFunction customWriteFunction,
+    int outputBufferSize,
+    CustomLineFunction customLineFunction,
+    int writeToFile,
+    void *file,
+    char *filingId,
+    char *outputDirectory,
+    int includeFilingId,
+    int silent,
+    int warn)
 {
   FEC_CONTEXT *ctx = malloc(sizeof(FEC_CONTEXT));
   ctx->buffer = newBuffer(inputBufferSize, bufferRead);

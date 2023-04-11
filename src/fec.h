@@ -33,6 +33,19 @@ struct fec_context
 };
 typedef struct fec_context FEC_CONTEXT;
 
-EXPORT FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn);
+EXPORT FEC_CONTEXT *newFecContext(
+    PERSISTENT_MEMORY_CONTEXT *persistentMemory,
+    BufferRead bufferRead,
+    int inputBufferSize,
+    CustomWriteFunction customWriteFunction,
+    int outputBufferSize,
+    CustomLineFunction customLineFunction,
+    int writeToFile,
+    void *file,
+    char *filingId,
+    char *outputDirectory,
+    int includeFilingId,
+    int silent,
+    int warn);
 EXPORT void freeFecContext(FEC_CONTEXT *context);
 EXPORT int parseFec(FEC_CONTEXT *ctx);
