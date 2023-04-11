@@ -219,7 +219,7 @@ int lineStartsWithLegacyHeader(STRING *line)
 // Return whether the line starts with the '[' character (ignoring whitespace)
 int lineMightStartWithF99(STRING *line)
 {
-  int i = 0;
+  size_t i = 0;
   while (i < line->n && strIsWhitespace(line->str[i]))
   {
     i++;
