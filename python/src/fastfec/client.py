@@ -65,19 +65,19 @@ class LibFastFEC:
             provide_line_callback(queue, filing_id_included, should_parse_date),
         )
         fec_context = self.libfastfec.newFecContext(
-            self.persistent_memory_context,
-            buffer_read_fn,
-            BUFFER_SIZE,
-            CUSTOM_WRITE(0),
-            BUFFER_SIZE,
-            line_callback_fn,
-            0,
-            None,
-            include_filing_id,
-            None,
-            filing_id_included,
-            1,
-            0,
+            self.persistent_memory_context,  # persistentMemory
+            buffer_read_fn,  # bufferRead
+            BUFFER_SIZE,  # inputBufferSize
+            CUSTOM_WRITE(0),  # customWriteFunction
+            BUFFER_SIZE,  # outputBufferSize
+            line_callback_fn,  # customLineFunction
+            0,  # writeToFile
+            None,  # file
+            include_filing_id,  # filingId
+            None,  # outputDirectory
+            filing_id_included,  # includeFilingId
+            1,  # silent
+            0,  # warn
         )
 
         # Run the parsing in a separate thread. It's essentially still single-threaded
@@ -158,19 +158,19 @@ class LibFastFEC:
 
         # Initialize fastfec context
         fec_context = self.libfastfec.newFecContext(
-            self.persistent_memory_context,
-            buffer_read_fn,
-            BUFFER_SIZE,
-            write_callback_fn,
-            BUFFER_SIZE,
-            CUSTOM_LINE(0),
-            0,
-            None,
-            include_filing_id,
-            None,
-            filing_id_included,
-            1,
-            0,
+            self.persistent_memory_context,  # persistentMemory
+            buffer_read_fn,  # bufferRead
+            BUFFER_SIZE,  # inputBufferSize
+            write_callback_fn,  # customWriteFunction
+            BUFFER_SIZE,  # outputBufferSize
+            CUSTOM_LINE(0),  # customLineFunction
+            0,  # writeToFile
+            None,  # file
+            include_filing_id,  # filingId
+            None,  # outputDirectory
+            filing_id_included,  # includeFilingId
+            1,  # silent
+            0,  # warn
         )
 
         # Parse
@@ -195,19 +195,19 @@ class LibFastFEC:
         self.libfastfec.newPersistentMemoryContext.restype = c_void_p
 
         self.libfastfec.newFecContext.argtypes = [
-            c_void_p,
-            BUFFER_READ,
-            c_int,
-            CUSTOM_WRITE,
-            c_int,
-            CUSTOM_LINE,
-            c_int,
-            c_void_p,
-            c_char_p,
-            c_char_p,
-            c_int,
-            c_int,
-            c_int,
+            c_void_p,  # persistentMemory
+            BUFFER_READ,  # bufferRead
+            c_int,  # inputBufferSize
+            CUSTOM_WRITE,  # customWriteFunction
+            c_int,  # outputBufferSize
+            CUSTOM_LINE,  # customLineFunction
+            c_int,  # writeToFile
+            c_void_p,  # file
+            c_char_p,  # filingId
+            c_char_p,  # outputDirectory
+            c_int,  # includeFilingId
+            c_int,  # silent
+            c_int,  # warn
         ]
         self.libfastfec.newFecContext.restype = c_void_p
         self.libfastfec.parseFec.argtypes = [c_void_p]
