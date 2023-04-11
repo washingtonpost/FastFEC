@@ -26,6 +26,10 @@ void setString(STRING *s, const char *str)
 
 void freeString(STRING *s)
 {
+  if (s == NULL)
+  {
+    return;
+  }
   free(s->str);
   free(s);
 }

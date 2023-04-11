@@ -21,6 +21,7 @@ STRING *fromString(const char *);
 
 void setString(STRING *s, const char *str);
 
+// OK to pass NULL
 void freeString(STRING *s);
 
 // Double the size of the string

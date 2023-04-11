@@ -387,9 +387,6 @@ void freeWriteContext(WRITE_CONTEXT *context)
   {
     free(context->extensions);
   }
-  if (context->customLineBuffer != NULL)
-  {
-    freeString(context->customLineBuffer);
-  }
+  freeString(context->customLineBuffer);
   free(context);
 }
