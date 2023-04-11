@@ -87,10 +87,8 @@ static int lookupTypes(char *types, const char *version, int versionLength, cons
     // Iterate each field in the header and build up the type info
     while (!isParseDone(&headerParser))
     {
-        readField(&headerParser, 0);
-        char *fieldName = headerParser.line->str + headerParser.start;
-        int fieldNameLength = headerParser.end - headerParser.start;
-        types[headerParser.columnIndex] = lookupType(version, versionLength, form, formLength, fieldName, fieldNameLength);
+        const CSV_FIELD *field = readField(&headerParser, 0);
+        types[headerParser.columnIndex] = lookupType(version, versionLength, form, formLength, field->chars, field->length);
         advanceField(&headerParser);
     }
     freeString(s);

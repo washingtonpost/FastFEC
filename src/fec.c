@@ -225,7 +225,7 @@ void startHeaderRow(FEC_CONTEXT *ctx, const char *filename)
   if (ctx->includeFilingId)
   {
     writeString(ctx->writeContext, filename, CSV_EXTENSION, "filing_id");
-    writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
+    writeDelimeter(ctx->writeContext, filename);
   }
 }
 
@@ -235,7 +235,7 @@ void startDataRow(FEC_CONTEXT *ctx, const char *filename)
   if (ctx->includeFilingId)
   {
     writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->filingId);
-    writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
+    writeDelimeter(ctx->writeContext, filename);
   }
 }
 
@@ -272,7 +272,7 @@ int parseF99Text(FEC_CONTEXT *ctx, const char *filename)
         // Write the delimeter at the beginning and a quote character
         // (the csv field will always be escaped so we can stream write
         // without having to calculate whether it's escaped later).
-        writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
+        writeDelimeter(ctx->writeContext, filename);
         writeChar(ctx->writeContext, filename, CSV_EXTENSION, '"');
         first = 0;
       }
@@ -308,31 +308,27 @@ int parseF99Text(FEC_CONTEXT *ctx, const char *filename)
   return 1;
 }
 
-static void ctxCsvWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_LINE_PARSER *parser, char type)
+static void ctxWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_FIELD *field, char type)
 {
   WRITE_CONTEXT *wctx = ctx->writeContext;
-  const char *str = parser->line->str + parser->start;
-  size_t len = parser->end - parser->start;
-  FIELD_INFO *fieldInfo = &(parser->fieldInfo);
-
   if (type == 's')
   {
-    csvWriteField(wctx, filename, CSV_EXTENSION, str, len, fieldInfo);
+    writeField(wctx, filename, field);
   }
   else if (type == 'd')
   {
-    int convertFailed = (csvWriteFieldDate(wctx, filename, str, len, fieldInfo) == 0);
+    int convertFailed = (writeFieldDate(wctx, filename, field) == 0);
     if (convertFailed)
     {
-      ctxWarn(ctx, "Date fields must be exactly 8 chars long, saw: %.s", len, str);
+      ctxWarn(ctx, "Date fields must be exactly 8 chars long, saw: %.s", field->length, field->chars);
     }
   }
   else if (type == 'f')
   {
-    int convertFailed = (csvWriteFieldFloat(wctx, filename, str, len, fieldInfo) == 0);
+    int convertFailed = (writeFieldFloat(wctx, filename, field) == 0);
     if (convertFailed)
     {
-      ctxWarn(ctx, "Failed to convert field to float: %.s", len, str);
+      ctxWarn(ctx, "Failed to convert field to float: %.s", field->length, field->chars);
     }
   }
   else
@@ -357,15 +353,12 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
   // Iterate through fields
   while (!isParseDone(&parser))
   {
-    readField(&parser, ctx->currentLineHasAscii28);
+    const CSV_FIELD *field = readField(&parser, ctx->currentLineHasAscii28);
     if (parser.columnIndex == 0)
     {
-      // Set the form version to the first column
-      // (with whitespace removed)
-      stripWhitespace(&parser);
-      char *form = parser.line->str + parser.start;
-      int formLength = parser.end - parser.start;
-      formSchema = ctxFormSchemaLookup(ctx, form, formLength);
+      // Set the form version to the first column (with whitespace removed)
+      stripWhitespace(field);
+      formSchema = ctxFormSchemaLookup(ctx, field->chars, field->length);
       if (formSchema == NULL)
       {
         return 3;
@@ -389,7 +382,7 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
           // File is newly opened, write headers
           startHeaderRow(ctx, filename);
           writeString(ctx->writeContext, filename, CSV_EXTENSION, formSchema->headerString);
-          writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
+          writeNewline(ctx->writeContext, filename);
           endLine(ctx->writeContext, formSchema->fieldTypes);
         }
 
@@ -406,12 +399,10 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
       }
       else
       {
-        char *fieldValue = parser.line->str + parser.start;
-        int fieldValueLength = parser.end - parser.start;
-        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.columnIndex, fieldValueLength, fieldValue);
+        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.columnIndex, field->length, field->chars);
       }
-      writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
-      ctxCsvWriteField(ctx, filename, &parser, fieldType);
+      writeDelimeter(ctx->writeContext, filename);
+      ctxWriteField(ctx, filename, field, fieldType);
     }
     advanceField(&parser);
   }
@@ -430,14 +421,14 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
       ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parser.columnIndex + 1, formSchema->numFields, formSchema->type);
       ctxWarn(ctx, "'%s'\n", parser.line->str);
       // 2 indicates we won't grab the line again
-      writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
+      writeNewline(ctx->writeContext, filename);
       endLine(ctx->writeContext, formSchema->fieldTypes);
       return 2;
     }
   }
 
   // Parsing successful
-  writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
+  writeNewline(ctx->writeContext, filename);
   endLine(ctx->writeContext, formSchema->fieldTypes);
   return 1;
 }
@@ -520,22 +511,30 @@ static int parseHeaderLegacy(FEC_CONTEXT *ctx)
       const int valueLength = valueEnd - valueStart;
 
       // Gather field metrics for CSV writing
-      FIELD_INFO headerField = {.num_quotes = 0, .num_commas = 0};
+      CSV_FIELD keyField = {
+          .chars = key,
+          .length = keyLength,
+          .info = {.num_quotes = 0, .num_commas = 0},
+      };
       for (int i = 0; i < keyLength; i++)
       {
-        processFieldChar(key[i], &headerField);
+        processFieldChar(key[i], &(keyField.info));
       }
-      FIELD_INFO valueField = {.num_quotes = 0, .num_commas = 0};
+      CSV_FIELD valueField = {
+          .chars = value,
+          .length = valueLength,
+          .info = {.num_quotes = 0, .num_commas = 0},
+      };
       for (int i = 0; i < valueLength; i++)
       {
-        processFieldChar(value[i], &valueField);
+        processFieldChar(value[i], &(valueField.info));
       }
 
       // Write commas as needed (only before fields that aren't first)
       if (!firstField)
       {
-        writeDelimeter(ctx->writeContext, HEADER, CSV_EXTENSION);
-        writeDelimeter(&bufferWriteContext, NULL, NULL);
+        writeDelimeter(ctx->writeContext, HEADER);
+        writeDelimeter(&bufferWriteContext, NULL);
       }
       firstField = 0;
 
@@ -552,16 +551,16 @@ static int parseHeaderLegacy(FEC_CONTEXT *ctx)
       }
 
       // Write the key/value pair
-      csvWriteField(ctx->writeContext, HEADER, CSV_EXTENSION, key, keyLength, &headerField);
+      writeField(ctx->writeContext, HEADER, &keyField);
       // Write the value to a buffer to be written later
-      csvWriteField(&bufferWriteContext, NULL, NULL, value, valueLength, &valueField);
+      writeField(&bufferWriteContext, NULL, &valueField);
     }
   }
-  writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION);
+  writeNewline(ctx->writeContext, HEADER);
   endLine(ctx->writeContext, NULL);
   startDataRow(ctx, HEADER); // output the filing id if we have it
   writeString(ctx->writeContext, HEADER, CSV_EXTENSION, bufferWriteContext.localBuffer->str);
-  writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION); // end with newline
+  writeNewline(ctx->writeContext, HEADER); // end with newline
   endLine(ctx->writeContext, NULL);
   return 1;
 }
@@ -579,20 +578,18 @@ static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
   // Iterate through fields
   while (!isParseDone(&parser))
   {
-    readField(&parser, ctx->currentLineHasAscii28);
-    const char *fieldValue = parser.line->str + parser.start;
-    const int fieldLength = parser.end - parser.start;
+    const CSV_FIELD *field = readField(&parser, ctx->currentLineHasAscii28);
     if (parser.columnIndex == 1)
     {
       // Check if the second column is "FEC"
-      if (strncmp(fieldValue, "FEC", strlen("FEC")) == 0)
+      if (strncmp(field->chars, "FEC", strlen("FEC")) == 0)
       {
         isFecSecondColumn = 1;
       }
       else
       {
         // If not, the second column is the version
-        setVersion(ctx, fieldValue, fieldLength);
+        setVersion(ctx, field->chars, field->length);
 
         // Parse the header now that version is known
         if (parseLine(ctx, HEADER, 1) == 3)
@@ -603,7 +600,7 @@ static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
     }
     if (parser.columnIndex == 2 && isFecSecondColumn)
     {
-      setVersion(ctx, fieldValue, fieldLength);
+      setVersion(ctx, field->chars, field->length);
       // Parse the header now that version is known
       return parseLine(ctx, HEADER, 1) != 3;
     }

@@ -6,29 +6,31 @@
 
 int tests_run = 0;
 
-static char *testCsvReading()
+static char *testCsvReading(void)
 {
   CSV_LINE_PARSER parser;
-  FIELD_INFO *fieldInfo = &(parser.fieldInfo);
+  CSV_FIELD *field = &(parser.currentField);
+  FIELD_INFO *fieldInfo = &(field->info);
   STRING *csv = fromString("");
 
   setString(csv, "");
   csvParserInit(&parser, csv);
   readField(&parser, 0);
-  mu_assert("expect start 0= 0", parser.start == 0);
-  mu_assert("expect end == 0", parser.end == 0);
   mu_assert("expect position == 3", parser.position == 0);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect end == 0", field->length == 0);
+  mu_assert("expect field.chars == NULL", strncmp(field->chars, "", 0) == 0);
   mu_assert("expect num quotes == 0", fieldInfo->num_quotes == 0);
   mu_assert("expect num commas == 0", fieldInfo->num_commas == 0);
-  mu_assert("expect columnIndex= 0", parser.columnIndex == 0);
 
   // Basic test
   setString(csv, "abc");
   csvParserInit(&parser, csv);
   readField(&parser, 0);
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 3", parser.end == 3);
   mu_assert("error, position != 3", parser.position == 3);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 3", field->length == 3);
+  mu_assert("expect field.chars == abc", strncmp(field->chars, "abc", 3) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -36,9 +38,10 @@ static char *testCsvReading()
   setString(csv, "\"abc\"");
   csvParserInit(&parser, csv);
   readField(&parser, 0);
-  mu_assert("error, start != 1", parser.start == 1);
-  mu_assert("error, end != 4", parser.end == 4);
   mu_assert("error, position != 5", parser.position == 5);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 3", field->length == 3);
+  mu_assert("expect field.chars == abc", strncmp(field->chars, "abc", 3) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -47,9 +50,10 @@ static char *testCsvReading()
   csvParserInit(&parser, csv);
   parser.position = 3;
   readField(&parser, 0);
-  mu_assert("error, start != 4", parser.start == 4);
-  mu_assert("error, end != 14", parser.end == 14);
   mu_assert("error, position != 19", parser.position == 19);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 11", field->length == 10);
+  // mu_assert("expect field.chars == a\",a\"b,\"c,\"\"", strncmp(field->chars, "\",a\"b,\"c,\"\"", 10) == 0);
   mu_assert("num quotes != 4", fieldInfo->num_quotes == 4);
   mu_assert("num commas != 3", fieldInfo->num_commas == 3);
 
@@ -57,9 +61,10 @@ static char *testCsvReading()
   setString(csv, "\"\"");
   csvParserInit(&parser, csv);
   readField(&parser, 0);
-  mu_assert("error, start != 1", parser.start == 1);
-  mu_assert("error, end != 1", parser.end == 1);
   mu_assert("error, position != 2", parser.position == 2);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 0", field->length == 0);
+  mu_assert("expect field.chars == \"\"", strncmp(field->chars, "", 0) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -67,9 +72,10 @@ static char *testCsvReading()
   setString(csv, ",,");
   csvParserInit(&parser, csv);
   readField(&parser, 0);
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 0", parser.end == 0);
   mu_assert("error, position != 0", parser.position == 0);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 0", field->length == 0);
+  mu_assert("expect field.chars == \"\"", strncmp(field->chars, "", 0) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -77,11 +83,10 @@ static char *testCsvReading()
   setString(csv, "\"\"\"FEC\"\"\"");
   csvParserInit(&parser, csv);
   readField(&parser, 0);
-  char *resultString = malloc(parser.end - parser.start + 1);
-  strncpy(resultString, parser.line->str + parser.start, parser.end - parser.start);
-  resultString[parser.end - parser.start] = 0;
-  mu_assert("field should be \"FEC\" without quotes", strcmp(resultString, "FEC") == 0);
   mu_assert("error, position != 9", parser.position == 9);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 3", field->length == 3);
+  mu_assert("field should be \"FEC\" without quotes", strncmp(field->chars, "FEC", 3) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -93,31 +98,31 @@ static char *testCsvReading()
   readField(&parser, 0);
   advanceField(&parser);
   readField(&parser, 0);
-  resultString = realloc(resultString, parser.end - parser.start + 1);
-  strncpy(resultString, parser.line->str + parser.start, parser.end - parser.start);
-  resultString[parser.end - parser.start] = 0;
-  mu_assert("field should be \"c\" without quotes", strcmp(resultString, "c") == 0);
   mu_assert("error, position != 5", parser.position == 5);
+  mu_assert("expect columnIndex == 2", parser.columnIndex == 2);
+  mu_assert("expect field.length == 1", field->length == 1);
+  mu_assert("field should be \"c\" without quotes", strncmp(field->chars, "c", 1) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
   freeString(csv);
-  free(resultString);
   return 0;
 }
 
-static char *testAscii28Reading()
+static char *testAscii28Reading(void)
 {
   CSV_LINE_PARSER parser;
-  FIELD_INFO *fieldInfo = &(parser.fieldInfo);
+  CSV_FIELD *field = &(parser.currentField);
+  FIELD_INFO *fieldInfo = &(field->info);
 
   // Basic test
   STRING *line = fromString("abc");
   csvParserInit(&parser, line);
   readField(&parser, 1);
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 3", parser.end == 3);
   mu_assert("error, position != 3", parser.position == 3);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 3", field->length == 3);
+  mu_assert("expect field.chars == abc", strncmp(field->chars, "abc", 3) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -125,9 +130,10 @@ static char *testAscii28Reading()
   setString(line, "\"abc\"");
   csvParserInit(&parser, line);
   readField(&parser, 1);
-  mu_assert("error, start != 1", parser.start == 1);
-  mu_assert("error, end != 4", parser.end == 4);
-  mu_assert("error, position != 5", parser.position == 5);
+  mu_assert("expect position == 5", parser.position == 5);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 3", field->length == 3);
+  mu_assert("expect field.chars == abc", strncmp(field->chars, "abc", 3) == 0);
   mu_assert("num quotes != 0", fieldInfo->num_quotes == 0);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -135,9 +141,10 @@ static char *testAscii28Reading()
   setString(line, "\"abc");
   csvParserInit(&parser, line);
   readField(&parser, 1);
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 4", parser.end == 4);
-  mu_assert("error, position != 4", parser.position == 4);
+  mu_assert("expect position == 4", parser.position == 4);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 4", field->length == 4);
+  mu_assert("expect field.chars == \"abc", strncmp(field->chars, "\"abc", 3) == 0);
   mu_assert("num quotes != 1", fieldInfo->num_quotes == 1);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -145,9 +152,10 @@ static char *testAscii28Reading()
   setString(line, "ab\"c");
   csvParserInit(&parser, line);
   readField(&parser, 1);
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 4", parser.end == 4);
   mu_assert("error, position != 4", parser.position == 4);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 4", field->length == 4);
+  mu_assert("expect field.chars == ab\"c", strncmp(field->chars, "ab\"c", 3) == 0);
   mu_assert("num quotes != 1", fieldInfo->num_quotes == 1);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -155,9 +163,10 @@ static char *testAscii28Reading()
   setString(line, "abc\"");
   csvParserInit(&parser, line);
   readField(&parser, 1);
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 4", parser.end == 4);
   mu_assert("error, position != 4", parser.position == 4);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 4", field->length == 4);
+  mu_assert("expect field.chars == abc\"", strncmp(field->chars, "abc\"", 3) == 0);
   mu_assert("num quotes != 1", fieldInfo->num_quotes == 1);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -165,9 +174,10 @@ static char *testAscii28Reading()
   setString(line, "\"ab\034c\"");
   csvParserInit(&parser, line);
   readField(&parser, 1);
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 3", parser.end == 3);
   mu_assert("error, position != 3", parser.position == 3);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 3", field->length == 3);
+  mu_assert("expect field.chars == \"ab", strncmp(field->chars, "\"ab", 3) == 0);
   mu_assert("num quotes != 1", fieldInfo->num_quotes == 1);
   mu_assert("num commas != 0", fieldInfo->num_commas == 0);
 
@@ -180,25 +190,28 @@ static char *testStripWhitespace()
   CSV_LINE_PARSER parser;
 
   // Basic test
-  STRING *line = fromString("   abc    ");
+  char *s = "   abc    ";
+  STRING *line = fromString(s);
   csvParserInit(&parser, line);
   readField(&parser, 1);
 
-  mu_assert("error, start != 0", parser.start == 0);
-  mu_assert("error, end != 10", parser.end == 10);
-  mu_assert("error, position != 10", parser.position == 10);
+  mu_assert("expect position == 10", parser.position == 10);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == strlen(s)", parser.currentField.length == strlen(s));
+  mu_assert("expect field.chars == line", strncmp(parser.currentField.chars, s, strlen(s)) == 0);
 
-  stripWhitespace(&parser);
+  stripWhitespace(&(parser.currentField));
 
-  mu_assert("error, start != 3", parser.start == 3);
-  mu_assert("error, end != 6", parser.end == 6);
-  mu_assert("error, position != 10", parser.position == 10);
+  mu_assert("expect position == 10", parser.position == 10);
+  mu_assert("expect columnIndex == 0", parser.columnIndex == 0);
+  mu_assert("expect field.length == 3", parser.currentField.length == 3);
+  mu_assert("expect field.chars == abc", strncmp(parser.currentField.chars, "abc", 3) == 0);
 
   freeString(line);
   return 0;
 }
 
-static char *all_tests()
+static char *all_tests(void)
 {
   mu_run_test(testCsvReading);
   mu_run_test(testAscii28Reading);
