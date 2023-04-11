@@ -96,15 +96,20 @@ def as_bytes(text):
     return text
 
 
-class WriteCache:  # pylint: disable=too-few-public-methods
-    """
-    Class to store cache information for the custom write function
-    """
+class WriterCache:
+    def __init__(self, open_function):
+        self._open_function = open_function
+        self._writers = {}
 
-    def __init__(self):
-        self.file_descriptors = {}  # Store all open file descriptors
-        self.last_filename = None  # The last opened filename
-        self.last_fd = None  # The last file descriptor
+    def get_writer(self, filename: bytes, extension: bytes):
+        path = filename + extension
+        if path not in self._writers:
+            self._writers[path] = self._open_function(path.decode("utf8"), mode="wb")
+        return self._writers[path]
+
+    def close(self) -> None:
+        for writers in self._writers.values():
+            writers.close()
 
 
 class LineCache:  # pylint: disable=too-few-public-methods
@@ -211,32 +216,13 @@ def provide_write_callback(open_function):
     Provides a C callback to write to file given a function to open file streams
     """
     # Initialize parsing cache
-    write_cache = WriteCache()
+    cache = WriterCache(open_function)
 
     def write_callback(filename, extension, contents, num_bytes):
-        if filename == write_cache.last_filename:
-            # Same filename as last call? Reuse file handle
-            write_cache.last_fd.write(contents[:num_bytes])
-        else:
-            path = filename + extension
-            # Grab the file descriptor from the cache if possible
-            file_descriptor = write_cache.file_descriptors.get(path)
-            if not file_descriptor:
-                # Open the file
-                write_cache.file_descriptors[path] = open_function(
-                    path.decode("utf8"), mode="wb"
-                )
-                file_descriptor = write_cache.file_descriptors[path]
-            write_cache.last_filename = filename
-            write_cache.last_fd = file_descriptor
-            # Write to the file descriptor
-            file_descriptor.write(contents[:num_bytes])
+        writer = cache.get_writer(filename, extension)
+        writer.write(contents[:num_bytes])
 
-    def free_file_descriptors():
-        for file_descriptor in write_cache.file_descriptors.values():
-            file_descriptor.close()
-
-    return [CUSTOM_WRITE(write_callback), free_file_descriptors]
+    return (CUSTOM_WRITE(write_callback), cache.close)
 
 
 def provide_line_callback(queue, filing_id_included, should_parse_date):
