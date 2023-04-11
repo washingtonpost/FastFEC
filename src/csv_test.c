@@ -10,9 +10,20 @@ static char *testCsvReading()
 {
   CSV_LINE_PARSER parser;
   FIELD_INFO *fieldInfo = &(parser.fieldInfo);
+  STRING *csv = fromString("");
+
+  setString(csv, "");
+  csvParserInit(&parser, csv);
+  readField(&parser, 0);
+  mu_assert("expect start 0= 0", parser.start == 0);
+  mu_assert("expect end == 0", parser.end == 0);
+  mu_assert("expect position == 3", parser.position == 0);
+  mu_assert("expect num quotes == 0", fieldInfo->num_quotes == 0);
+  mu_assert("expect num commas == 0", fieldInfo->num_commas == 0);
+  mu_assert("expect columnIndex= 0", parser.columnIndex == 0);
 
   // Basic test
-  STRING *csv = fromString("abc");
+  setString(csv, "abc");
   csvParserInit(&parser, csv);
   readField(&parser, 0);
   mu_assert("error, start != 0", parser.start == 0);
