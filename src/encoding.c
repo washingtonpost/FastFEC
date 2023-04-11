@@ -26,7 +26,7 @@ static const uint8_t utf8d[] = {
     1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // s7..s8
 };
 
-static void collectLineInfo(STRING *line, LINE_INFO *info)
+static void collectLineInfo(char *chars, LINE_INFO *info)
 {
   // Initialize info
   info->ascii28 = 0;
@@ -37,7 +37,7 @@ static void collectLineInfo(STRING *line, LINE_INFO *info)
   int i = 0;
   while (1)
   {
-    char c = line->str[i];
+    char c = chars[i];
     i++;
     if (c == 0)
     {
@@ -87,7 +87,7 @@ static void iso_8859_1_to_utf_8(STRING *in, STRING *output)
 
 void decodeLine(LINE_INFO *info, STRING *in, STRING *output)
 {
-  collectLineInfo(in, info);
+  collectLineInfo(in->str, info);
   if (!info->validUtf8)
   {
     iso_8859_1_to_utf_8(in, output);
