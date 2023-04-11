@@ -75,13 +75,12 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->f99Text = 0;
   ctx->currentLineHasAscii28 = 0;
   ctx->currentLineLength = 0;
-  ctx->formType = NULL;
-  ctx->numFields = 0;
-  ctx->headers = NULL;
-  ctx->types = NULL;
+
   ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
   ctx->warn = warn;
+
+  ctx->currentForm = NULL;
   return ctx;
 }
 
@@ -90,50 +89,34 @@ void freeFecContext(FEC_CONTEXT *ctx)
   freeBuffer(ctx->buffer);
   freeSafe(ctx->version);
   freeSafe(ctx->f99Text);
-  freeSafe(ctx->formType);
-  freeSafe(ctx->types);
   freeWriteContext(ctx->writeContext);
+  formSchemaFree(ctx->currentForm);
   free(ctx);
 }
 
-// Return 1 on success, 0 on failure
-static int updateCurrentFormSchema(FEC_CONTEXT *ctx, const char *form, int formLength)
+// Get the schema for a form. Basically a cached version of formSchemaLookup,
+// because ctx->version never changes within a single file.
+static FORM_SCHEMA *ctxFormSchemaLookup(FEC_CONTEXT *ctx, const char *form, int formLength)
 {
   // If type mappings are unchanged from before we can return early
-  if ((ctx->formType != NULL) && (strncmp(ctx->formType, form, formLength) == 0))
+  if (
+      (ctx->currentForm != NULL) &&
+      (ctx->currentForm->type != NULL) &&
+      (strncmp(ctx->currentForm->type, form, formLength) == 0))
   {
-    return 1;
+    return ctx->currentForm;
   }
 
   FORM_SCHEMA *schema = formSchemaLookup(ctx->version, ctx->versionLength, form, formLength);
   if (schema == NULL)
   {
-    ctxWarn(ctx, "No mappings found for version %s and form ", ctx->version, form);
-    return 0;
+    ctxWarn(ctx, "No mappings found for version %s and form %.s", ctx->version, formLength, form);
+    return NULL;
   }
 
-  // Copy form type
-  freeSafe(ctx->formType);
-  ctx->formType = malloc(formLength + 1);
-  strncpy(ctx->formType, form, formLength);
-  ctx->formType[formLength] = 0;
-
-  // Copy header string
-  freeSafe(ctx->headers);
-  ctx->headers = malloc(strlen(schema->headerString) + 1);
-  strcpy(ctx->headers, schema->headerString);
-
-  // Copy number of fields
-  ctx->numFields = schema->numFields;
-
-  // Copy field types
-  freeSafe(ctx->types);
-  ctx->types = malloc(strlen(schema->fieldTypes) + 1);
-  strcpy(ctx->types, schema->fieldTypes);
-
-  formSchemaFree(schema);
-
-  return 1;
+  formSchemaFree(ctx->currentForm);
+  ctx->currentForm = schema;
+  return ctx->currentForm;
 }
 
 void ctxWriteSubstr(FEC_CONTEXT *ctx, const char *filename, int start, int end, FIELD_INFO *field)
@@ -391,7 +374,7 @@ void ctxWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_LINE_PARSER *pars
   }
   else
   {
-    fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->formType);
+    fprintf(stderr, "Unknown type (%c) in %s\n", type, ctx->currentForm->type);
     exit(1);
   }
 }
@@ -406,6 +389,7 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
 {
   CSV_LINE_PARSER parser;
   csvParserInit(&parser, ctx->persistentMemory->line);
+  FORM_SCHEMA *formSchema = NULL;
 
   // Iterate through fields
   while (!isParseDone(&parser))
@@ -418,16 +402,16 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
       stripWhitespace(&parser);
       char *form = parser.line->str + parser.start;
       int formLength = parser.end - parser.start;
-      if (!updateCurrentFormSchema(ctx, form, formLength))
+      formSchema = ctxFormSchemaLookup(ctx, form, formLength);
+      if (formSchema == NULL)
       {
-        // Mappings error
         return 3;
       }
 
       // Set filename if null to form type
       if (filename == NULL)
       {
-        filename = ctx->formType;
+        filename = formSchema->type;
       }
     }
     else
@@ -441,27 +425,27 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
         {
           // File is newly opened, write headers
           startHeaderRow(ctx, filename);
-          writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->headers);
+          writeString(ctx->writeContext, filename, CSV_EXTENSION, formSchema->headerString);
           writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
-          endLine(ctx->writeContext, ctx->types);
+          endLine(ctx->writeContext, formSchema->fieldTypes);
         }
 
         // Write form type
         startDataRow(ctx, filename);
-        writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->formType);
+        writeString(ctx->writeContext, filename, CSV_EXTENSION, formSchema->type);
       }
 
       char fieldType = 's'; // Default to string type
-      if (parser.columnIndex < ctx->numFields)
+      if (parser.columnIndex < formSchema->numFields)
       {
         // Ensure the column index is in bounds
-        fieldType = ctx->types[parser.columnIndex];
+        fieldType = formSchema->fieldTypes[parser.columnIndex];
       }
       else
       {
         char *fieldValue = parser.line->str + parser.start;
         int fieldValueLength = parser.end - parser.start;
-        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", ctx->formType, parser.columnIndex, fieldValueLength, fieldValue);
+        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.columnIndex, fieldValueLength, fieldValue);
       }
       writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
       ctxWriteField(ctx, filename, &parser, fieldType);
@@ -475,23 +459,23 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
     return 0;
   }
 
-  if (parser.columnIndex + 1 != ctx->numFields && !headerRow)
+  if (parser.columnIndex + 1 != formSchema->numFields && !headerRow)
   {
     // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parser.columnIndex + 1, ctx->numFields, ctx->formType);
+      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parser.columnIndex + 1, formSchema->numFields, formSchema->type);
       ctxWarn(ctx, "'%s'\n", parser.line->str);
       // 2 indicates we won't grab the line again
       writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
-      endLine(ctx->writeContext, ctx->types);
+      endLine(ctx->writeContext, formSchema->fieldTypes);
       return 2;
     }
   }
 
   // Parsing successful
   writeNewline(ctx->writeContext, filename, CSV_EXTENSION);
-  endLine(ctx->writeContext, ctx->types);
+  endLine(ctx->writeContext, formSchema->fieldTypes);
   return 1;
 }
 

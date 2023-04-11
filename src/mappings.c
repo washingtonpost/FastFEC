@@ -124,6 +124,9 @@ FORM_SCHEMA *formSchemaLookup(const char *version, int versionLength, const char
         int numFields = lookupTypes(types, version, versionLength, form, formLength, headerString);
 
         FORM_SCHEMA *result = malloc(sizeof(*result));
+        result->type = malloc(formLength + 1);
+        strncpy(result->type, form, formLength);
+        result->type[formLength] = 0;
         result->headerString = headerString;
         result->numFields = numFields;
         result->fieldTypes = types;
@@ -138,6 +141,7 @@ void formSchemaFree(FORM_SCHEMA *schema)
     {
         return;
     }
+    free(schema->type);
     free(schema->fieldTypes);
     free(schema);
 }

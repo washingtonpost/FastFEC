@@ -2,6 +2,7 @@
 
 struct form_schema
 {
+    char *type; // eg "SA11AI"
     // Comma-delimited list of fields
     // eg "rec_type,form_type,back_reference_tran_id_number,text"
     char *headerString;

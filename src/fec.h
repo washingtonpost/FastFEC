@@ -2,6 +2,7 @@
 
 #include "export.h"
 #include "buffer.h"
+#include "mappings.h"
 #include "memory.h"
 #include "writer.h"
 #include "buffer.h"
@@ -32,10 +33,7 @@ struct fec_context
   int warn;
 
   // Parse cache
-  char *formType;
-  int numFields;
-  char *headers; // pointer to static CSV header row info
-  char *types;   // dynamically allocated string where each char indicates types
+  FORM_SCHEMA *currentForm;
 };
 typedef struct fec_context FEC_CONTEXT;
 
