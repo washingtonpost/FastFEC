@@ -72,7 +72,6 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->summary = 0;
   ctx->f99Text = 0;
   ctx->currentLineHasAscii28 = 0;
-  ctx->currentLineLength = 0;
 
   ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
@@ -197,7 +196,7 @@ int grabLine(FEC_CONTEXT *ctx)
 
   // Decode the line
   LINE_INFO info;
-  ctx->currentLineLength = decodeLine(&info, ctx->persistentMemory->rawLine, ctx->persistentMemory->line);
+  decodeLine(&info, ctx->persistentMemory->rawLine, ctx->persistentMemory->line);
   // Store whether the current line has ascii separators
   // (determines whether we use CSV or ascii28 split line parsing)
   ctx->currentLineHasAscii28 = info.ascii28;

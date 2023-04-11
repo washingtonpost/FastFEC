@@ -26,12 +26,11 @@ static const uint8_t utf8d[] = {
     1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // s7..s8
 };
 
-void collectLineInfo(STRING *line, LINE_INFO *info)
+static void collectLineInfo(STRING *line, LINE_INFO *info)
 {
   // Initialize info
   info->ascii28 = 0;
   info->validUtf8 = 1;
-  info->length = 0;
   uint32_t state = UTF8_ACCEPT;
   uint32_t type;
 
@@ -44,7 +43,6 @@ void collectLineInfo(STRING *line, LINE_INFO *info)
     {
       break;
     }
-    info->length++;
     if (c == 28)
     {
       // Has char 28 (separator)
@@ -62,9 +60,9 @@ void collectLineInfo(STRING *line, LINE_INFO *info)
 }
 
 // Adapted from https://stackoverflow.com/a/4059934
-// Ensure the output buffer is twice as long as the input
-int iso_8859_1_to_utf_8(STRING *in, STRING *output)
+static void iso_8859_1_to_utf_8(STRING *in, STRING *output)
 {
+  // Ensure the output buffer is twice as long as the input
   growStringTo(output, in->n * 2 + 1);
 
   uint8_t *line = (uint8_t *)in->str;
@@ -75,6 +73,7 @@ int iso_8859_1_to_utf_8(STRING *in, STRING *output)
     if (*line < 128)
     {
       *out++ = *line++;
+      length++;
     }
     else
     {
@@ -82,22 +81,20 @@ int iso_8859_1_to_utf_8(STRING *in, STRING *output)
       length += 2;
     }
   }
-  return length;
+  out[length] = 0;
+  output->n = length;
 }
 
-int decodeLine(LINE_INFO *info, STRING *in, STRING *output)
+void decodeLine(LINE_INFO *info, STRING *in, STRING *output)
 {
-  // Check line info
   collectLineInfo(in, info);
-
   if (!info->validUtf8)
   {
-    return iso_8859_1_to_utf_8(in, output);
+    iso_8859_1_to_utf_8(in, output);
   }
   else
   {
     // Copy memory buffer over
     copyString(in, output);
-    return info->length;
   }
 }

@@ -25,7 +25,6 @@ struct fec_context
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;
   int currentLineHasAscii28;
-  int currentLineLength;
 
   // Flags
   int includeFilingId;
