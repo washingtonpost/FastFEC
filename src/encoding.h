@@ -7,7 +7,6 @@
 struct lineInfo
 {
   int ascii28;   // default false
-  int asciiOnly; // default true
   int validUtf8; // default true
   int length;
 };

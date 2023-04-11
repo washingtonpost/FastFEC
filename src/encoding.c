@@ -30,7 +30,6 @@ void collectLineInfo(STRING *line, LINE_INFO *info)
 {
   // Initialize info
   info->ascii28 = 0;
-  info->asciiOnly = 1;
   info->validUtf8 = 1;
   info->length = 0;
   uint32_t state = UTF8_ACCEPT;
@@ -50,11 +49,6 @@ void collectLineInfo(STRING *line, LINE_INFO *info)
     {
       // Has char 28 (separator)
       info->ascii28 = 1;
-    }
-    if (c > 127)
-    {
-      // Not ascii only anymore
-      info->asciiOnly = 0;
     }
     // Check for valid UTF-8 using DFA
     type = utf8d[(uint8_t)c];
