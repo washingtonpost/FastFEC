@@ -116,14 +116,7 @@ static FORM_SCHEMA *ctxFormSchemaLookup(FEC_CONTEXT *ctx, const char *form, int 
   return ctx->currentForm;
 }
 
-void ctxWriteSubstr(FEC_CONTEXT *ctx, const char *filename, int start, int end, FIELD_INFO *field)
-{
-  const char *str = ctx->persistentMemory->line->str + start;
-  int len = end - start;
-  writeField(ctx->writeContext, filename, CSV_EXTENSION, str, len, field);
-}
-
-void writeQuotedString(WRITE_CONTEXT *ctx, const char *filename, const char *str, int length)
+static void writeQuotedString(WRITE_CONTEXT *ctx, const char *filename, const char *str, int length)
 {
   for (int i = 0; i < length; i++)
   {
@@ -139,47 +132,6 @@ void writeQuotedString(WRITE_CONTEXT *ctx, const char *filename, const char *str
       writeChar(ctx, filename, CSV_EXTENSION, c);
     }
   }
-}
-
-// Write a date field by separating the output with dashes
-void writeDateField(FEC_CONTEXT *ctx, const char *filename, int start, int end, FIELD_INFO *field)
-{
-  if (start == end)
-  {
-    // Empty field
-    return;
-  }
-  if (end - start != 8)
-  {
-    // Could not parse date, write string as is and log warning
-    ctxWarn(ctx, "Date fields must be exactly 8 chars long, not %d\n", end - start);
-    ctxWriteSubstr(ctx, filename, start, end, field);
-    return;
-  }
-
-  ctxWriteSubstr(ctx, filename, start, start + 4, field);
-  writeChar(ctx->writeContext, filename, CSV_EXTENSION, '-');
-  ctxWriteSubstr(ctx, filename, start + 4, start + 6, field);
-  writeChar(ctx->writeContext, filename, CSV_EXTENSION, '-');
-  ctxWriteSubstr(ctx, filename, start + 6, start + 8, field);
-}
-
-void writeFloatField(FEC_CONTEXT *ctx, const char *filename, int start, int end, FIELD_INFO *field)
-{
-  char *doubleStr;
-  char *conversionFloat = ctx->persistentMemory->line->str + start;
-  double value = strtod(conversionFloat, &doubleStr);
-
-  if (doubleStr == conversionFloat)
-  {
-    // Could not convert to a float, write string as is and log warning
-    ctxWarn(ctx, "Could not parse float field\n");
-    ctxWriteSubstr(ctx, filename, start, end, field);
-    return;
-  }
-
-  // Write the value
-  writeDouble(ctx->writeContext, filename, value);
 }
 
 // Grab a line from the input file.
@@ -356,19 +308,32 @@ int parseF99Text(FEC_CONTEXT *ctx, const char *filename)
   return 1;
 }
 
-void ctxWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_LINE_PARSER *parser, char type)
+static void ctxCsvWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_LINE_PARSER *parser, char type)
 {
+  WRITE_CONTEXT *wctx = ctx->writeContext;
+  const char *str = parser->line->str + parser->start;
+  size_t len = parser->end - parser->start;
+  FIELD_INFO *fieldInfo = &(parser->fieldInfo);
+
   if (type == 's')
   {
-    ctxWriteSubstr(ctx, filename, parser->start, parser->end, &(parser->fieldInfo));
+    csvWriteField(wctx, filename, CSV_EXTENSION, str, len, fieldInfo);
   }
   else if (type == 'd')
   {
-    writeDateField(ctx, filename, parser->start, parser->end, &(parser->fieldInfo));
+    int convertFailed = (csvWriteFieldDate(wctx, filename, str, len, fieldInfo) == 0);
+    if (convertFailed)
+    {
+      ctxWarn(ctx, "Date fields must be exactly 8 chars long, saw: %.s", len, str);
+    }
   }
   else if (type == 'f')
   {
-    writeFloatField(ctx, filename, parser->start, parser->end, &(parser->fieldInfo));
+    int convertFailed = (csvWriteFieldFloat(wctx, filename, str, len, fieldInfo) == 0);
+    if (convertFailed)
+    {
+      ctxWarn(ctx, "Failed to convert field to float: %.s", len, str);
+    }
   }
   else
   {
@@ -446,7 +411,7 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
         ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.columnIndex, fieldValueLength, fieldValue);
       }
       writeDelimeter(ctx->writeContext, filename, CSV_EXTENSION);
-      ctxWriteField(ctx, filename, &parser, fieldType);
+      ctxCsvWriteField(ctx, filename, &parser, fieldType);
     }
     advanceField(&parser);
   }
@@ -587,9 +552,9 @@ static int parseHeaderLegacy(FEC_CONTEXT *ctx)
       }
 
       // Write the key/value pair
-      ctxWriteSubstr(ctx, HEADER, keyStart, keyEnd, &headerField);
+      csvWriteField(ctx->writeContext, HEADER, CSV_EXTENSION, key, keyLength, &headerField);
       // Write the value to a buffer to be written later
-      writeField(&bufferWriteContext, NULL, NULL, value, valueLength, &valueField);
+      csvWriteField(&bufferWriteContext, NULL, NULL, value, valueLength, &valueField);
     }
   }
   writeNewline(ctx->writeContext, HEADER, CSV_EXTENSION);

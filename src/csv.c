@@ -36,16 +36,6 @@ void processFieldChar(char c, FIELD_INFO *info)
   }
 }
 
-void writeDelimeter(WRITE_CONTEXT *context, const char *filename, const char *extension)
-{
-  writeChar(context, filename, extension, ',');
-}
-
-void writeNewline(WRITE_CONTEXT *context, const char *filename, const char *extension)
-{
-  writeChar(context, filename, extension, '\n');
-}
-
 void stripQuotes(CSV_LINE_PARSER *parser)
 {
   if ((parser->start != parser->end) && (parser->line->str[parser->start] == '"') && (parser->line->str[parser->end - 1] == '"'))
@@ -152,7 +142,17 @@ void advanceField(CSV_LINE_PARSER *parser)
   parser->position++;
 }
 
-void writeField(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *str, int length, FIELD_INFO *info)
+void writeDelimeter(WRITE_CONTEXT *context, const char *filename, const char *extension)
+{
+  writeChar(context, filename, extension, ',');
+}
+
+void writeNewline(WRITE_CONTEXT *context, const char *filename, const char *extension)
+{
+  writeChar(context, filename, extension, '\n');
+}
+
+void csvWriteField(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *str, int length, FIELD_INFO *info)
 {
   int escaped = (info->num_commas > 0) || (info->num_quotes > 0);
   int copyDirectly = !(info->num_quotes > 0);
@@ -190,6 +190,44 @@ void writeField(WRITE_CONTEXT *context, const char *filename, const char *extens
     // End of escape quote
     writeChar(context, filename, extension, '"');
   }
+}
+
+// 1 for success, 0 for failure
+int csvWriteFieldDate(WRITE_CONTEXT *wctx, const char *filename, const char *str, int length, FIELD_INFO *field)
+{
+  if (length == 0)
+  {
+    // Empty field, not a problem
+    return 1;
+  }
+  if (length != 8)
+  {
+    // write string as is
+    csvWriteField(wctx, filename, CSV_EXTENSION, str, length, field);
+    return 0;
+  }
+  csvWriteField(wctx, filename, CSV_EXTENSION, str, 4, field);
+  writeChar(wctx, filename, CSV_EXTENSION, '-');
+  csvWriteField(wctx, filename, CSV_EXTENSION, str + 4, 2, field);
+  writeChar(wctx, filename, CSV_EXTENSION, '-');
+  csvWriteField(wctx, filename, CSV_EXTENSION, str + 6, 2, field);
+  return 1;
+}
+
+// 1 for success, 0 for warning
+int csvWriteFieldFloat(WRITE_CONTEXT *wctx, const char *filename, const char *str, int length, FIELD_INFO *field)
+{
+  char *parseEndLocation;
+  double value = strtod(str, &parseEndLocation);
+  int conversionFailed = parseEndLocation == str;
+  if (conversionFailed)
+  {
+    // write string as is
+    csvWriteField(wctx, filename, CSV_EXTENSION, str, length, field);
+    return 0;
+  }
+  writeDouble(wctx, filename, value);
+  return 1;
 }
 
 int isWhitespace(CSV_LINE_PARSER *parser, int position)

@@ -28,7 +28,12 @@ void processFieldChar(char c, FIELD_INFO *info);
 
 void writeDelimeter(WRITE_CONTEXT *context, const char *filename, const char *extension);
 void writeNewline(WRITE_CONTEXT *context, const char *filename, const char *extension);
-void writeField(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *str, int length, FIELD_INFO *info);
+void csvWriteField(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *str, int length, FIELD_INFO *info);
+// Prints a string in the form YYYYMMDD to the form YYYY-MM-DD
+// Returns 1 for success, 0 for failure to parse
+int csvWriteFieldDate(WRITE_CONTEXT *wctx, const char *filename, const char *str, int length, FIELD_INFO *field);
+// 1 for success, 0 for warning
+int csvWriteFieldFloat(WRITE_CONTEXT *wctx, const char *filename, const char *str, int length, FIELD_INFO *field);
 
 // Read a field, either delimted by ascii28 or comma.
 //
