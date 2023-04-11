@@ -19,7 +19,6 @@ struct fec_context
   char *filingId;
   char *version; // default null
   int versionLength;
-  char *f99Text;
 
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;

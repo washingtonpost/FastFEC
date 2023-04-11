@@ -69,7 +69,6 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->filingId = filingId;
   ctx->version = 0;
   ctx->versionLength = 0;
-  ctx->f99Text = 0;
   ctx->currentLineHasAscii28 = 0;
 
   ctx->includeFilingId = includeFilingId;
@@ -84,7 +83,6 @@ void freeFecContext(FEC_CONTEXT *ctx)
 {
   freeBuffer(ctx->buffer);
   freeSafe(ctx->version);
-  freeSafe(ctx->f99Text);
   freeWriteContext(ctx->writeContext);
   formSchemaFree(ctx->currentForm);
   free(ctx);
