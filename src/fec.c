@@ -67,8 +67,7 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
   ctx->file = file;
   ctx->writeContext = newWriteContext(outputDirectory, filingId, writeToFile, outputBufferSize, customWriteFunction, customLineFunction);
   ctx->filingId = filingId;
-  ctx->version = 0;
-  ctx->versionLength = 0;
+  ctx->version = NULL;
   ctx->currentLineHasAscii28 = 0;
 
   ctx->includeFilingId = includeFilingId;
@@ -82,7 +81,7 @@ FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRe
 void freeFecContext(FEC_CONTEXT *ctx)
 {
   freeBuffer(ctx->buffer);
-  freeSafe(ctx->version);
+  freeString(ctx->version);
   freeWriteContext(ctx->writeContext);
   formSchemaFree(ctx->currentForm);
   free(ctx);
@@ -101,7 +100,7 @@ static FORM_SCHEMA *ctxFormSchemaLookup(FEC_CONTEXT *ctx, const char *form, int 
     return ctx->currentForm;
   }
 
-  FORM_SCHEMA *schema = formSchemaLookup(ctx->version, ctx->versionLength, form, formLength);
+  FORM_SCHEMA *schema = formSchemaLookup(ctx->version, form, formLength);
   if (schema == NULL)
   {
     ctxWarn(ctx, "No mappings found for version %s and form %.s", ctx->version, formLength, form);
@@ -425,16 +424,6 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
   return 1;
 }
 
-// Set the FEC file version string
-static void setVersion(FEC_CONTEXT *ctx, const char *chars, int length)
-{
-  ctx->version = malloc(length + 1);
-  strncpy(ctx->version, chars, length);
-  // Add null terminator
-  ctx->version[length] = 0;
-  ctx->versionLength = length;
-}
-
 // Returns 0 on failure, 1 on success
 //
 // Example header:
@@ -539,7 +528,7 @@ static int parseHeaderLegacy(FEC_CONTEXT *ctx)
       // If we match the FEC version column, set the version
       if (strncmp(key, FEC_VERSION_NUMBER, strlen(FEC_VERSION_NUMBER)) == 0)
       {
-        setVersion(ctx, value, valueLength);
+        ctx->version = fromChars(value, valueLength);
       }
 
       // Write the key/value pair
@@ -580,7 +569,7 @@ static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
       else
       {
         // If not, the second column is the version
-        setVersion(ctx, field->chars, field->length);
+        ctx->version = fromChars(field->chars, field->length);
 
         // Parse the header now that version is known
         if (parseLine(ctx, HEADER, 1) == 3)
@@ -591,7 +580,7 @@ static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
     }
     if (parser.numFieldsRead == 3 && isFecSecondColumn)
     {
-      setVersion(ctx, field->chars, field->length);
+      ctx->version = fromChars(field->chars, field->length);
       // Parse the header now that version is known
       return parseLine(ctx, HEADER, 1) != 3;
     }

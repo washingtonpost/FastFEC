@@ -15,8 +15,10 @@ typedef struct string_type STRING;
 
 // size must include the null terminator, so for "abc", size is 4
 STRING *newString(size_t size);
-
-STRING *fromString(const char *);
+STRING *fromString(const char *str);
+// n is the number of characters to copy. Does not include the null terminator.
+// The resulting string will have n characters then a null terminator.
+STRING *fromChars(const char *chars, size_t n);
 
 void setString(STRING *s, const char *str);
 

@@ -11,11 +11,18 @@ STRING *newString(size_t size)
   return s;
 }
 
+STRING *fromChars(const char *chars, size_t n)
+{
+  STRING *s = newString(n + 1);
+  strncpy(s->str, chars, n);
+  s->str[n] = 0;
+  return s;
+}
+
 STRING *fromString(const char *str)
 {
-  STRING *s = newString(strlen(str) + 1);
-  strcpy(s->str, str);
-  return s;
+  size_t n = strlen(str);
+  return fromChars(str, n);
 }
 
 void setString(STRING *s, const char *str)

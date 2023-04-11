@@ -17,8 +17,7 @@ struct fec_context
   WRITE_CONTEXT *writeContext;
 
   char *filingId;
-  char *version; // default null
-  int versionLength;
+  STRING *version; // The version of the filing, eg "8.3". Default NULL
 
   // Supporting line information
   PERSISTENT_MEMORY_CONTEXT *persistentMemory;
