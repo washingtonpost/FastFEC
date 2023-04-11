@@ -217,7 +217,7 @@ int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
   if (context->writeToFile)
   {
     // Ensure the directory exists (will silently fail if it does)
-    const int nchars = strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1;
+    const int nchars = strlen(context->outputDirectory) + strlen(context->filingId) + 1 + strlen(filename) + 1 + strlen(extension);
     char *fullpath = malloc(sizeof(char) * nchars);
     strcpy(fullpath, context->outputDirectory);
     strcat(fullpath, context->filingId);
