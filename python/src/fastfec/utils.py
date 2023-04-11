@@ -235,7 +235,10 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
     # Initialize parsing cache
     line_cache = LineCache()
 
-    def line_callback(form_type, line, types):
+    def line_callback(form_type: bytes, line: bytes, types: bytes | None):
+        form_type = form_type.decode("utf8")
+        line = line.decode("utf8")
+
         def yield_result(result):
             # Yield in parent function by utilizing the passed in queue
             queue.put(result)
@@ -245,10 +248,10 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
             # Same form type as past form — return immediately
             yield_result(
                 (
-                    form_type.decode("utf8"),
+                    form_type,
                     line_result(
                         line_cache.last_headers,
-                        parse_csv_line(line.decode("utf8")),
+                        parse_csv_line(line),
                         types,
                         filing_id_included,
                         should_parse_date,
@@ -263,7 +266,7 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
                 # The headers have not yet encountered. They
                 # are always in the first line, so this line
                 # will contain them.
-                line_cache.headers[form_type] = parse_csv_line(line.decode("utf8"))
+                line_cache.headers[form_type] = parse_csv_line(line)
                 headers = line_cache.headers[form_type]
                 first_line = True
             line_cache.last_form_type = form_type
@@ -272,10 +275,10 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
                 # Format the result and return it (if not a header)
                 yield_result(
                     (
-                        form_type.decode("utf8"),
+                        form_type,
                         line_result(
                             headers,
-                            parse_csv_line(line.decode("utf8")),
+                            parse_csv_line(line),
                             types,
                             filing_id_included,
                             should_parse_date,
