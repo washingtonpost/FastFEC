@@ -67,3 +67,18 @@ int mkdir_safe(const char *path)
 
     return 0;
 }
+
+char *pathJoin(const char *path1, const char *path2)
+{
+    size_t len1 = strlen(path1);
+    size_t len2 = strlen(path2);
+    char *result = malloc(len1 + len2 + 2); // +1 for the separator, +1 for the null terminator
+    strcpy(result, path1);
+    if (result[len1 - 1] != DIR_SEPARATOR_CHAR)
+    {
+        result[len1] = DIR_SEPARATOR_CHAR;
+        len1++;
+    }
+    strcpy(result + len1, path2);
+    return result;
+}

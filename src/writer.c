@@ -145,28 +145,25 @@ int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
   context->bufferFiles[context->nfiles] = newBufferFile(context->bufferSize);
   strcpy(context->filenames[context->nfiles], filename);
   strcpy(context->extensions[context->nfiles], extension);
-  // Derive the full path to the file
 
   if (context->writeToFile)
   {
-    const int nchars = strlen(context->outputDirectory) + strlen(context->filingId) + 1 + strlen(filename) + 1 + strlen(extension);
-    char *fullpath = malloc(sizeof(char) * nchars);
-    strcpy(fullpath, context->outputDirectory);
-    strcat(fullpath, context->filingId);
-    mkdir_safe(fullpath);
+    const char *filingDir = pathJoin(context->outputDirectory, context->filingId);
+    mkdir_safe(filingDir);
 
     // Add the normalized filename to path
-    strcat(fullpath, DIR_SEPARATOR);
-    char *normalizedFilename = malloc(strlen(filename) + 1);
+    int nchars = strlen(filename) + strlen(extension); // "F3", ".csv"
+    char *normalizedFilename = malloc(nchars + 1);     // +1 for null terminator
     strcpy(normalizedFilename, filename);
     normalize_filename(normalizedFilename);
-    strcat(fullpath, normalizedFilename);
-    strcat(fullpath, extension);
+    strcat(normalizedFilename, extension);
+    const char *fullpath = pathJoin(filingDir, normalizedFilename);
 
     context->files[context->nfiles] = fopen(fullpath, "w");
     // Free the derived file paths
-    free(normalizedFilename);
     free(fullpath);
+    free(normalizedFilename);
+    free(filingDir);
   }
   context->lastname = context->filenames[context->nfiles];
   context->lastBufferFile = context->bufferFiles[context->nfiles];
