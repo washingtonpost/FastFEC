@@ -61,7 +61,7 @@ static int _lineContainsF99End(STRING *line)
 
 FEC_CONTEXT *newFecContext(PERSISTENT_MEMORY_CONTEXT *persistentMemory, BufferRead bufferRead, int inputBufferSize, CustomWriteFunction customWriteFunction, int outputBufferSize, CustomLineFunction customLineFunction, int writeToFile, void *file, char *filingId, char *outputDirectory, int includeFilingId, int silent, int warn)
 {
-  FEC_CONTEXT *ctx = (FEC_CONTEXT *)malloc(sizeof(FEC_CONTEXT));
+  FEC_CONTEXT *ctx = malloc(sizeof(FEC_CONTEXT));
   ctx->persistentMemory = persistentMemory;
   ctx->buffer = newBuffer(inputBufferSize, bufferRead);
   ctx->file = file;

@@ -87,7 +87,7 @@ void normalize_filename(char *filename)
 
 BUFFER_FILE *newBufferFile(int bufferSize)
 {
-  BUFFER_FILE *bufferFile = (BUFFER_FILE *)malloc(sizeof(BUFFER_FILE));
+  BUFFER_FILE *bufferFile = malloc(sizeof(BUFFER_FILE));
   bufferFile->buffer = malloc(bufferSize);
   bufferFile->bufferPos = 0;
   bufferFile->bufferSize = bufferSize;
@@ -102,7 +102,7 @@ void freeBufferFile(BUFFER_FILE *bufferFile)
 
 WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction)
 {
-  WRITE_CONTEXT *context = (WRITE_CONTEXT *)malloc(sizeof(WRITE_CONTEXT));
+  WRITE_CONTEXT *context = malloc(sizeof(WRITE_CONTEXT));
   context->outputDirectory = outputDirectory;
   context->filingId = filingId;
   context->writeToFile = writeToFile;
@@ -171,12 +171,12 @@ int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
   if (context->filenames == NULL)
   {
     // No files open, so open the file
-    context->filenames = (char **)malloc(sizeof(char *));
-    context->extensions = (char **)malloc(sizeof(char *));
-    context->bufferFiles = (BUFFER_FILE **)malloc(sizeof(BUFFER_FILE *));
+    context->filenames = malloc(sizeof(char *));
+    context->extensions = malloc(sizeof(char *));
+    context->bufferFiles = malloc(sizeof(BUFFER_FILE *));
     if (context->writeToFile)
     {
-      context->files = (FILE **)malloc(sizeof(FILE *));
+      context->files = malloc(sizeof(FILE *));
     }
   }
   else
@@ -217,7 +217,8 @@ int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
   if (context->writeToFile)
   {
     // Ensure the directory exists (will silently fail if it does)
-    char *fullpath = (char *)malloc(sizeof(char) * (strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1));
+    const int nchars = strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1;
+    char *fullpath = malloc(sizeof(char) * nchars);
     strcpy(fullpath, context->outputDirectory);
     strcat(fullpath, context->filingId);
     mkdir_p(fullpath);
