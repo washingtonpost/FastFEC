@@ -112,17 +112,6 @@ class WriterCache:
             writers.close()
 
 
-class LineCache:  # pylint: disable=too-few-public-methods
-    """
-    Class to store cache information for the custom line function
-    """
-
-    def __init__(self):
-        self.headers = {}  # Store all headers given form type
-        self.last_form_type = None  # The last opened form type
-        self.last_headers = None  # The last headers used
-
-
 def parse_csv_line(line):
     """
     Parses a string holding a CSV line into a Python list
@@ -232,58 +221,31 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
     The threading allows the parent caller to yield result lines as they are returned.
     See https://stackoverflow.com/a/9968886 for more context
     """
-    # Initialize parsing cache
-    line_cache = LineCache()
+    # Given a form type, this tells you the fields that are included in the CSV
+    header_cache: dict[str, list[str]] = {}
 
-    def line_callback(form_type: bytes, line: bytes, types: bytes | None):
-        form_type = form_type.decode("utf8")
-        line = line.decode("utf8")
+    def line_callback(
+        form_type_bytes: bytes, line_bytes: bytes, types_bytes: bytes | None
+    ):
+        form_type = form_type_bytes.decode("utf8")
+        line_items = parse_csv_line(line_bytes.decode("utf8"))
 
-        def yield_result(result):
-            # Yield in parent function by utilizing the passed in queue
-            queue.put(result)
-            queue.join()
+        if form_type not in header_cache:
+            # This was the first line, so it contains the headers
+            header_cache[form_type] = line_items
+            # We only return data, not the headers
+            return
 
-        if form_type == line_cache.last_form_type:
-            # Same form type as past form — return immediately
-            yield_result(
-                (
-                    form_type,
-                    line_result(
-                        line_cache.last_headers,
-                        parse_csv_line(line),
-                        types,
-                        filing_id_included,
-                        should_parse_date,
-                    ),
-                )
-            )
-        else:
-            # Grab the headers from the cache if possible
-            headers = line_cache.headers.get(form_type)
-            first_line = False
-            if not headers:
-                # The headers have not yet encountered. They
-                # are always in the first line, so this line
-                # will contain them.
-                line_cache.headers[form_type] = parse_csv_line(line)
-                headers = line_cache.headers[form_type]
-                first_line = True
-            line_cache.last_form_type = form_type
-            line_cache.last_headers = headers
-            if not first_line:
-                # Format the result and return it (if not a header)
-                yield_result(
-                    (
-                        form_type,
-                        line_result(
-                            headers,
-                            parse_csv_line(line),
-                            types,
-                            filing_id_included,
-                            should_parse_date,
-                        ),
-                    )
-                )
+        header = header_cache[form_type]
+        record_dict = line_result(
+            header,
+            line_items,
+            types_bytes,
+            filing_id_included,
+            should_parse_date,
+        )
+        result = (form_type, record_dict)
+        queue.put(result)
+        queue.join()
 
     return line_callback
