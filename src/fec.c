@@ -347,62 +347,63 @@ static void ctxWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_FIELD *fie
 int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
 {
   CSV_LINE_PARSER parser;
+  CSV_FIELD *field = NULL;
   csvParserInit(&parser, ctx->persistentMemory->line);
-  FORM_SCHEMA *formSchema = NULL;
 
-  // Iterate through fields
+  // Get the first field, which contains the form type
+  if (isParseDone(&parser))
+  {
+    // empty line, shouldn't be done yet. error.
+    return 0;
+  }
+  field = nextField(&parser, ctx->currentLineHasAscii28);
+  stripWhitespace(field);
+  FORM_SCHEMA *formSchema = ctxFormSchemaLookup(ctx, field->chars, field->length);
+  if (formSchema == NULL)
+  {
+    return 3;
+  }
+
+  // Set filename if null to form type
+  if (filename == NULL)
+  {
+    filename = formSchema->type;
+  }
+
+  // Iterate through rest of the fields
   while (!isParseDone(&parser))
   {
-    const CSV_FIELD *field = nextField(&parser, ctx->currentLineHasAscii28);
-    if (parser.numFieldsRead == 1)
+    field = nextField(&parser, ctx->currentLineHasAscii28);
+    // If we have two columns the line is fully specified, so write header/line info
+    if (parser.numFieldsRead == 2)
     {
-      // Set the form version to the first column (with whitespace removed)
-      stripWhitespace(field);
-      formSchema = ctxFormSchemaLookup(ctx, field->chars, field->length);
-      if (formSchema == NULL)
+      // Write header if necessary
+      if (getFile(ctx->writeContext, filename, CSV_EXTENSION) == 1)
       {
-        return 3;
+        // File is newly opened, write headers
+        startHeaderRow(ctx, filename);
+        writeString(ctx->writeContext, filename, CSV_EXTENSION, formSchema->headerString);
+        writeNewline(ctx->writeContext, filename);
+        endLine(ctx->writeContext, formSchema->fieldTypes);
       }
 
-      // Set filename if null to form type
-      if (filename == NULL)
-      {
-        filename = formSchema->type;
-      }
+      // Write form type
+      startDataRow(ctx, filename);
+      writeString(ctx->writeContext, filename, CSV_EXTENSION, formSchema->type);
+    }
+
+    char fieldType = 's'; // Default to string type
+    if (parser.numFieldsRead - 1 < formSchema->numFields)
+    {
+      // Ensure the column index is in bounds
+      fieldType = formSchema->fieldTypes[parser.numFieldsRead - 1];
     }
     else
     {
-      // If we have two columns the line is fully specified, so write header/line info
-      if (parser.numFieldsRead == 2)
-      {
-        // Write header if necessary
-        if (getFile(ctx->writeContext, filename, CSV_EXTENSION) == 1)
-        {
-          // File is newly opened, write headers
-          startHeaderRow(ctx, filename);
-          writeString(ctx->writeContext, filename, CSV_EXTENSION, formSchema->headerString);
-          writeNewline(ctx->writeContext, filename);
-          endLine(ctx->writeContext, formSchema->fieldTypes);
-        }
-
-        // Write form type
-        startDataRow(ctx, filename);
-        writeString(ctx->writeContext, filename, CSV_EXTENSION, formSchema->type);
-      }
-
-      char fieldType = 's'; // Default to string type
-      if (parser.numFieldsRead - 1 < formSchema->numFields)
-      {
-        // Ensure the column index is in bounds
-        fieldType = formSchema->fieldTypes[parser.numFieldsRead - 1];
-      }
-      else
-      {
-        ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.numFieldsRead, field->length, field->chars);
-      }
-      writeDelimeter(ctx->writeContext, filename);
-      ctxWriteField(ctx, filename, field, fieldType);
+      ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.numFieldsRead, field->length, field->chars);
     }
+    writeDelimeter(ctx->writeContext, filename);
+    ctxWriteField(ctx, filename, field, fieldType);
   }
 
   if (parser.numFieldsRead <= 2)
@@ -566,7 +567,6 @@ static int parseHeaderLegacy(FEC_CONTEXT *ctx)
 // Returns 0 on failure, 1 on success
 static int parseHeaderNonLegacy(FEC_CONTEXT *ctx)
 {
-  // Parse fields
   CSV_LINE_PARSER parser;
   STRING *line = ctx->persistentMemory->line;
   csvParserInit(&parser, line);
