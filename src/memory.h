@@ -9,8 +9,8 @@
 extern const size_t DEFAULT_STRING_SIZE;
 struct string_type
 {
-  char *str;
-  size_t n;
+  char *str; // Null-terminated string
+  size_t n;  // Size of the string, including the null terminator
 };
 typedef struct string_type STRING;
 

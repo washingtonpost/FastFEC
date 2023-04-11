@@ -49,15 +49,13 @@ int growStringTo(STRING *str, size_t newSize)
 
 int growString(STRING *str)
 {
-  // Double the space available
   return growStringTo(str, str->n * 2);
 }
 
 void copyString(STRING *src, STRING *dst)
 {
-  // Check if dst has enough space
-  growStringTo(dst, src->n + 1);
-  // Copy the strings
+  // Ensure dst has enough space, then copy
+  growStringTo(dst, src->n);
   strcpy(dst->str, src->str);
 }
 
