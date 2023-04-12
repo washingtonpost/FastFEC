@@ -73,8 +73,8 @@ class LibFastFEC:
             line_callback_fn,  # customLineFunction
             0,  # writeToFile
             None,  # file
-            filing_id,  # filingId
             None,  # outputDirectory
+            filing_id,  # filingId
             1,  # silent
             0,  # warn
         )
@@ -164,8 +164,8 @@ class LibFastFEC:
             CUSTOM_LINE(0),  # customLineFunction
             0,  # writeToFile
             None,  # file
-            filing_id,  # filingId
             None,  # outputDirectory
+            filing_id,  # filingId
             1,  # silent
             0,  # warn
         )
@@ -200,8 +200,8 @@ class LibFastFEC:
             CUSTOM_LINE,  # customLineFunction
             c_int,  # writeToFile
             c_void_p,  # file
-            c_char_p,  # filingId
             c_char_p,  # outputDirectory
+            c_char_p,  # filingId
             c_int,  # silent
             c_int,  # warn
         ]

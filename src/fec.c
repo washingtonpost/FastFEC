@@ -68,8 +68,8 @@ FEC_CONTEXT *newFecContext(
     CustomLineFunction customLineFunction,
     int writeToFile,
     void *file,
-    char *filingId,
     char *outputDirectory,
+    char *filingId,
     int silent,
     int warn)
 {

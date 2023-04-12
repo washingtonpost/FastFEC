@@ -13,7 +13,8 @@ void wasmFec(int bufferSize)
   char *outputDirectory = NULL;
   int silent = 1;
   int warn = 0;
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&wasmBufferRead)), bufferSize, ((CustomWriteFunction)(&wasmBufferWrite)), bufferSize, customLineFunction, writeToFile, file, filingId, outputDirectory, silent, warn);
+  int raw = 0;
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&wasmBufferRead)), bufferSize, ((CustomWriteFunction)(&wasmBufferWrite)), bufferSize, customLineFunction, writeToFile, file, outputDirectory, filingId, silent, warn);
   int fecParseResult = parseFec(fec);
   freeFecContext(fec);
   freePersistentMemoryContext(persistentMemory);
