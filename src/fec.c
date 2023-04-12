@@ -70,7 +70,6 @@ FEC_CONTEXT *newFecContext(
     void *file,
     char *filingId,
     char *outputDirectory,
-    int includeFilingId,
     int silent,
     int warn)
 {
@@ -85,7 +84,6 @@ FEC_CONTEXT *newFecContext(
 
   // Options
   ctx->filingId = filingId;
-  ctx->includeFilingId = includeFilingId;
   ctx->silent = silent;
   ctx->warn = warn;
 
@@ -228,8 +226,8 @@ int consumeUntil(STRING *line, int *i, char c)
 
 void startHeaderRow(FEC_CONTEXT *ctx, const char *filename)
 {
-  // Write the filing ID header, if includeFilingId is specified
-  if (ctx->includeFilingId)
+  // Write the filing ID header, if filingId is specified
+  if (ctx->filingId)
   {
     writeString(ctx->writeContext, filename, CSV_EXTENSION, "filing_id");
     writeDelimeter(ctx->writeContext, filename);
@@ -238,8 +236,8 @@ void startHeaderRow(FEC_CONTEXT *ctx, const char *filename)
 
 void startDataRow(FEC_CONTEXT *ctx, const char *filename)
 {
-  // Write the filing ID value, if includeFilingId is specified
-  if (ctx->includeFilingId)
+  // Write the filing ID value, if filingId is specified
+  if (ctx->filingId)
   {
     writeString(ctx->writeContext, filename, CSV_EXTENSION, ctx->filingId);
     writeDelimeter(ctx->writeContext, filename);

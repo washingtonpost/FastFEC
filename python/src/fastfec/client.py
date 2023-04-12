@@ -56,8 +56,8 @@ class LibFastFEC:
         done_processing = object()  # A custom object to signal the end of processing
 
         # Prepare the filing id to include, if specified
-        include_filing_id = as_bytes(include_filing_id)
-        filing_id_included = include_filing_id is not None
+        filing_id = as_bytes(include_filing_id)
+        filing_id_included = filing_id is not None
 
         # Provide a custom line callback
         buffer_read_fn = provide_read_callback(file_handle)
@@ -73,9 +73,8 @@ class LibFastFEC:
             line_callback_fn,  # customLineFunction
             0,  # writeToFile
             None,  # file
-            include_filing_id,  # filingId
+            filing_id,  # filingId
             None,  # outputDirectory
-            filing_id_included,  # includeFilingId
             1,  # silent
             0,  # warn
         )
@@ -153,8 +152,7 @@ class LibFastFEC:
         write_callback_fn, free_file_descriptors = provide_write_callback(open_function)
 
         # Prepare the filing id to include, if specified
-        include_filing_id = as_bytes(include_filing_id)
-        filing_id_included = include_filing_id is not None
+        filing_id = as_bytes(include_filing_id)
 
         # Initialize fastfec context
         fec_context = self.libfastfec.newFecContext(
@@ -166,9 +164,8 @@ class LibFastFEC:
             CUSTOM_LINE(0),  # customLineFunction
             0,  # writeToFile
             None,  # file
-            include_filing_id,  # filingId
+            filing_id,  # filingId
             None,  # outputDirectory
-            filing_id_included,  # includeFilingId
             1,  # silent
             0,  # warn
         )
@@ -205,7 +202,6 @@ class LibFastFEC:
             c_void_p,  # file
             c_char_p,  # filingId
             c_char_p,  # outputDirectory
-            c_int,  # includeFilingId
             c_int,  # silent
             c_int,  # warn
         ]

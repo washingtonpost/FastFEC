@@ -23,10 +23,12 @@ struct fec_context
   int currentLineHasAscii28;
 
   // Options
+  // If non-null, then the generated output will include a column
+  // at the beginning of every generated file called `filing_id`
+  // that is filled with this value.
   char *filingId;
-  int includeFilingId;
-  int silent;
-  int warn;
+  int silent; // bool
+  int warn;   // bool
 
   // Parse cache
   FORM_SCHEMA *currentForm;
@@ -44,7 +46,6 @@ EXPORT FEC_CONTEXT *newFecContext(
     void *file,
     char *filingId,
     char *outputDirectory,
-    int includeFilingId,
     int silent,
     int warn);
 EXPORT void freeFecContext(FEC_CONTEXT *context);
