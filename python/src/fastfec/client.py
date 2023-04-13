@@ -47,11 +47,12 @@ class LibFastFEC:
         Arguments:
         ---------
             file_handle -- An input stream for reading a .fec file
-            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
-                                 with the specified filing id (defaults to None)
-            should_parse_date -- If true, yields parsed datetime.date objects for date fields; if
-                                 false, yields strings for date fields. This would mainly be set to
-                                 false for performance reasons (defaults to true)
+            include_filing_id -- If set, prepend a column into each outputted csv
+                                 for filing_id with the specified filing id.
+            should_parse_date -- If True, date fields are parsed to datetime.date.
+                                 If False, date fields are returned as raw YYYY-MM-DD
+                                 strings. This would mainly be set to false for
+                                 performance reasons.
 
         Returns:
         -------
@@ -121,8 +122,8 @@ class LibFastFEC:
         ---------
             file_handle -- An input stream for reading a .fec file
             output_directory -- A directory in which to place output parsed .csv files
-            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
-                                 with the specified filing id (defaults to None)
+            include_filing_id -- If set, prepend a column `filing_id` into each
+                                 outputted csv filled with the specified value.
 
         Returns:
         -------
@@ -155,10 +156,11 @@ class LibFastFEC:
         Arguments:
         ---------
             file_handle -- An input stream for reading a .fec file
-            open_function -- A function to open an output file for writing. This can be set to
-                             customize the output stream for each parsed .csv file
-            include_filing_id -- If set, prepend a column into each outputted csv for filing_id
-                                 with the specified filing id (defaults to None)
+            open_function -- A function to open an output file for writing, given
+                             a form type. This can be set to customize the output
+                             stream for each parsed .csv file
+            include_filing_id -- If set, prepend a column `filing_id` into each
+                                 outputted csv filled with the specified value.
 
         Returns:
         -------
