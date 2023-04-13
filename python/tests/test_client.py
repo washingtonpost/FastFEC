@@ -172,4 +172,11 @@ def assert_dir_contents_equal(dir1: Path, dir2: Path):
     dir2_filenames = {p.name for p in dir2.iterdir()}
     assert dir1_filenames == dir2_filenames
     for filename in dir1_filenames:
-        assert (dir1 / filename).read_text() == (dir2 / filename).read_text()
+        assert_file_contents_equal(dir1 / filename, dir2 / filename)
+
+
+def assert_file_contents_equal(file1: Path, file2: Path):
+    # By putting this in its own function, if we hit the assert,
+    # then pytest will show the values of file1 and file2,
+    # so we can see which files we're actually comparing.
+    assert file1.read_text() == file2.read_text()
