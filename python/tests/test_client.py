@@ -118,10 +118,10 @@ def test_parse(case: Case, fastfec):
             assert list(lines) == []
             return
         with CsvReaders.from_dir(case.expected_dir) as readers:
-            for form, data in lines:
+            for i, (form, data) in enumerate(lines):
                 data = {k: coerce_to_string(v) for k, v in data.items()}
                 expected = readers[form].next_record()
-                assert data == expected
+                assert data == expected, f"Line {i}, form {form} did not match"
             for reader in readers.values():
                 assert reader.is_empty()
 
