@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import contextlib
 import io
-import os
 import pathlib
 from ctypes import CDLL, c_char_p, c_int, c_void_p
 from queue import Queue
@@ -129,15 +128,15 @@ class LibFastFEC:
         -------
             A status code. 1 indicates a successful parse, 0 an unsuccessful one.
         """
+        out_path = pathlib.Path(output_directory)
 
         # Custom open method
-        def open_output_file(filename, *args, **kwargs):
-            filename = filename.replace("/", "-")
-            filename = os.path.join(output_directory, filename)
-            output_file = pathlib.Path(filename)
-            output_file.parent.mkdir(exist_ok=True, parents=True)
+        def open_output_file(form_type: str, *args, **kwargs):
+            form_type = form_type.replace("/", "-")
+            path = out_path / form_type
+            path.parent.mkdir(exist_ok=True, parents=True)
             # pylint: disable=consider-using-with,unspecified-encoding,bad-option-value
-            return open(filename, *args, **kwargs)
+            return open(path, *args, **kwargs)
 
         return self.parse_as_files_custom(
             file_handle,
