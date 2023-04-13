@@ -214,6 +214,11 @@ int writeFieldDate(WRITE_CONTEXT *wctx, const char *filename, const CSV_FIELD *f
 // 1 for success, 0 for warning
 int writeFieldFloat(WRITE_CONTEXT *wctx, const char *filename, const CSV_FIELD *field)
 {
+  if (field->length == 0)
+  {
+    // Empty field, not a problem
+    return 1;
+  }
   char *parseEndLocation;
   double value = strtod(field->chars, &parseEndLocation);
   int conversionFailed = parseEndLocation == field->chars;
