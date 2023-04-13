@@ -326,7 +326,7 @@ static void ctxWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_FIELD *fie
     int convertFailed = (writeFieldDate(wctx, filename, field) == 0);
     if (convertFailed)
     {
-      ctxWarn(ctx, "Date fields must be exactly 8 chars long, saw: %.s", field->length, field->chars);
+      ctxWarn(ctx, "Date fields must be exactly 8 chars long, saw: '%.s'", field->length, field->chars);
     }
   }
   else if (type == 'f')
@@ -334,7 +334,7 @@ static void ctxWriteField(FEC_CONTEXT *ctx, const char *filename, CSV_FIELD *fie
     int convertFailed = (writeFieldFloat(wctx, filename, field) == 0);
     if (convertFailed)
     {
-      ctxWarn(ctx, "Failed to convert field to float: %.s", field->length, field->chars);
+      ctxWarn(ctx, "Failed to convert field to float: '%.s'", field->length, field->chars);
     }
   }
   else
