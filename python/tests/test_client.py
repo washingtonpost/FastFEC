@@ -151,6 +151,16 @@ class CsvReader:
         return False
 
 
+def csv_path_to_form_type(path: Path):
+    """SC-10.csv -> SC/10
+
+    In the original FEC file, the form type was "SC/10". But when we saved it as a file,
+    we had to convert to "SC-10.csv" so we didn't accidentally create a directory.
+    This function converts the filename back to the original form type.
+    """
+    return path.stem.replace("-", "/")
+
+
 class CsvReaders(dict[str, CsvReader]):
     def __enter__(self):
         return self
@@ -161,7 +171,7 @@ class CsvReaders(dict[str, CsvReader]):
 
     @classmethod
     def from_dir(cls, dir: Path):
-        d = {path.stem: CsvReader(path) for path in dir.iterdir()}
+        d = {csv_path_to_form_type(path): CsvReader(path) for path in dir.iterdir()}
         return cls(d)
 
 
