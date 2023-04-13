@@ -4,13 +4,16 @@ This library provides methods to
   * parse a .fec file line by line, yieling a parsed result
   * parse a .fec file into parsed output .csv files
 """
+from __future__ import annotations
 
 import contextlib
+import io
 import os
 import pathlib
 from ctypes import CDLL, c_char_p, c_int, c_void_p
 from queue import Queue
 from threading import Thread
+from typing import Any, Generator
 
 from .utils import (
     BUFFER_READ,
@@ -34,7 +37,12 @@ class LibFastFEC:
         # Initialize
         self.persistent_memory_context = self.libfastfec.newPersistentMemoryContext()
 
-    def parse(self, file_handle, include_filing_id=None, should_parse_date=True):
+    def parse(
+        self,
+        file_handle: io.BinaryIO,
+        include_filing_id: str | None = None,
+        should_parse_date: bool = True,
+    ) -> Generator[tuple[str, dict[str, Any]], None, None]:
         """Parses the input file line-by-line.
 
         Arguments:
@@ -100,7 +108,12 @@ class LibFastFEC:
         # Free FEC context
         self.libfastfec.freeFecContext(fec_context)
 
-    def parse_as_files(self, file_handle, output_directory, include_filing_id=None):
+    def parse_as_files(
+        self,
+        file_handle: io.BinaryIO,
+        output_directory: str | pathlib.Path,
+        include_filing_id: str | None = None,
+    ) -> int:
         """Parses the input file into output files in the output directory.
 
         Parent directories will be automatically created as needed.
@@ -132,7 +145,12 @@ class LibFastFEC:
             include_filing_id=include_filing_id,
         )
 
-    def parse_as_files_custom(self, file_handle, open_function, include_filing_id=None):
+    def parse_as_files_custom(
+        self,
+        file_handle: io.BinaryIO,
+        open_function,
+        include_filing_id: str | None = None,
+    ) -> int:
         """Parses the input file into output files.
 
         Arguments:
@@ -179,11 +197,11 @@ class LibFastFEC:
 
         return result
 
-    def free(self):
+    def free(self) -> None:
         """Frees all the allocated memory from the fastfec library."""
         self.libfastfec.freePersistentMemoryContext(self.persistent_memory_context)
 
-    def __init_lib(self):
+    def __init_lib(self) -> None:
         # Find the fastfec library
         self.libfastfec = CDLL(find_fastfec_lib())
 
@@ -213,7 +231,7 @@ class LibFastFEC:
 
 
 @contextlib.contextmanager
-def FastFEC():  # pylint: disable=invalid-name
+def FastFEC() -> Generator[LibFastFEC, None, None]:  # pylint: disable=invalid-name
     """A convenience method to run fastfec and free memory afterwards.
 
     Usage:
