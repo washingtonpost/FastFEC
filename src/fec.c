@@ -398,9 +398,8 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
     }
 
     char fieldType = 's'; // Default to string type
-    if (parser.numFieldsRead - 1 < formSchema->numFields)
+    if (parser.numFieldsRead <= formSchema->numFields)
     {
-      // Ensure the column index is in bounds
       fieldType = formSchema->fieldTypes[parser.numFieldsRead - 1];
     }
     else
