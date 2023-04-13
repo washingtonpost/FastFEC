@@ -22,6 +22,7 @@ void ctxWarn(FEC_CONTEXT *ctx, const char *message, ...)
   {
     fprintf(stderr, "Warning: ");
     vfprintf(stderr, message, args);
+    fprintf(stderr, "\n");
   }
   va_end(args);
 }
@@ -421,8 +422,8 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
     // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s): \n", parser.numFieldsRead, formSchema->numFields, formSchema->type);
-      ctxWarn(ctx, "'%s'\n", parser.line->str);
+      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s):", parser.numFieldsRead, formSchema->numFields, formSchema->type);
+      ctxWarn(ctx, "'%s'", parser.line->str);
       // 2 indicates we won't grab the line again
       writeNewline(ctx->writeContext, filename);
       endLine(ctx->writeContext, formSchema->fieldTypes);
