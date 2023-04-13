@@ -97,7 +97,8 @@ int main(int argc, char *argv[])
   CustomWriteFunction customWriteFunction = NULL;
   CustomLineFunction customLineFunction = NULL;
   int writeToFile = 1;
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&readBuffer)), inBufferSize, customWriteFunction, outBufferSize, customLineFunction, writeToFile, handle, outputDir, filingId, cli->silent, cli->warn);
+  int raw = 0;
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&readBuffer)), inBufferSize, customWriteFunction, outBufferSize, customLineFunction, writeToFile, handle, outputDir, filingId, cli->silent, cli->warn, raw);
 
   // Parse the fec file
   int fecParseResult = parseFec(fec);

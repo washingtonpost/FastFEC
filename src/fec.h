@@ -23,12 +23,19 @@ struct fec_context
   int currentLineHasAscii28;
 
   // Options
+
   // If non-null, then the generated output will include a column
   // at the beginning of every generated file called `filing_id`
   // that is filled with this value.
   char *filingId;
   int silent; // bool
   int warn;   // bool
+  // bool. If true, then each field in the input will be written as-is, even if
+  // there are fewer or more fields than we expect (based on the form type and version).
+  // If false, then we will add extra empty fields if there are too few,
+  // and we will truncate extra fields if there are too many.
+  // For more info see https://github.com/washingtonpost/FastFEC/issues/24
+  int raw;
 
   // Parse cache
   FORM_SCHEMA *currentForm;
@@ -47,6 +54,7 @@ EXPORT FEC_CONTEXT *newFecContext(
     char *outputDirectory,
     char *filingId,
     int silent,
-    int warn);
+    int warn,
+    int raw);
 EXPORT void freeFecContext(FEC_CONTEXT *context);
 EXPORT int parseFec(FEC_CONTEXT *ctx);

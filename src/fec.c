@@ -72,7 +72,8 @@ FEC_CONTEXT *newFecContext(
     char *outputDirectory,
     char *filingId,
     int silent,
-    int warn)
+    int warn,
+    int raw)
 {
   FEC_CONTEXT *ctx = malloc(sizeof(FEC_CONTEXT));
   ctx->buffer = newBuffer(inputBufferSize, bufferRead);
@@ -87,6 +88,7 @@ FEC_CONTEXT *newFecContext(
   ctx->filingId = filingId;
   ctx->silent = silent;
   ctx->warn = warn;
+  ctx->raw = raw;
 
   ctx->currentForm = NULL;
   return ctx;
@@ -376,6 +378,7 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
     filename = formSchema->type;
   }
 
+  int sawExtraFields = 0;
   // Iterate through rest of the fields
   while (!isParseDone(&parser))
   {
@@ -405,10 +408,27 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
     }
     else
     {
-      ctxWarn(ctx, "Unexpected column in %s (%d): '%.*s'", formSchema->fieldTypes, parser.numFieldsRead, field->length, field->chars);
+      // We have more fields than the form schema specifies
+      if (field->length == 0)
+      {
+        // Empty field, ignore, don't even count as an extra field
+        continue;
+      }
+      sawExtraFields = 1;
+      if (!ctx->raw)
+      {
+        // Don't print the extra field if we're in raw mode
+        continue;
+      }
     }
     writeDelimeter(ctx->writeContext, filename);
     ctxWriteField(ctx, filename, field, fieldType);
+  }
+  int numMissingFields = formSchema->numFields - parser.numFieldsRead;
+  int hadMissingFields = (numMissingFields > 0);
+  if (hadMissingFields || sawExtraFields)
+  {
+    ctxWarn(ctx, "Expected %d columns in form %s, but found %d: '%s'", formSchema->numFields, formSchema->type, parser.numFieldsRead, parser.line->str);
   }
 
   if (parser.numFieldsRead <= 2)
@@ -417,17 +437,21 @@ int parseLine(FEC_CONTEXT *ctx, const char *filename, int headerRow)
     return 0;
   }
 
+  if (hadMissingFields && !ctx->raw)
+  {
+    for (int i = 0; i < numMissingFields; i++)
+    {
+      writeDelimeter(ctx->writeContext, filename);
+    }
+  }
+
   if (parser.numFieldsRead != formSchema->numFields && !headerRow)
   {
-    // Try to read F99 text
     if (!parseF99Text(ctx, filename))
     {
-      ctxWarn(ctx, "mismatched number of fields (%d vs %d) (%s):", parser.numFieldsRead, formSchema->numFields, formSchema->type);
-      ctxWarn(ctx, "'%s'", parser.line->str);
-      // 2 indicates we won't grab the line again
       writeNewline(ctx->writeContext, filename);
       endLine(ctx->writeContext, formSchema->fieldTypes);
-      return 2;
+      return 2; // 2 indicates we won't grab the line again
     }
   }
 

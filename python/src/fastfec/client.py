@@ -41,6 +41,7 @@ class LibFastFEC:
         file_handle: io.BinaryIO,
         include_filing_id: str | None = None,
         should_parse_date: bool = True,
+        raw: bool = False,
     ) -> Generator[tuple[str, dict[str, Any]], None, None]:
         """Parses the input file line-by-line.
 
@@ -53,6 +54,10 @@ class LibFastFEC:
                                  If False, date fields are returned as raw YYYY-MM-DD
                                  strings. This would mainly be set to false for
                                  performance reasons.
+            raw -- If True, if there are fewer or more fields in a row than we
+                   expect, the row will be written to the output file as-is.
+                   If False, we will add empty fields, or skip extra fields,
+                   to the row to make it the correct length.
 
         Returns:
         -------
@@ -85,6 +90,7 @@ class LibFastFEC:
             filing_id,  # filingId
             1,  # silent
             0,  # warn
+            raw,  # raw
         )
 
         # Run the parsing in a separate thread. It's essentially still single-threaded
@@ -113,6 +119,7 @@ class LibFastFEC:
         file_handle: io.BinaryIO,
         output_directory: str | pathlib.Path,
         include_filing_id: str | None = None,
+        raw: bool = False,
     ) -> int:
         """Parses the input file into output files in the output directory.
 
@@ -124,6 +131,10 @@ class LibFastFEC:
             output_directory -- A directory in which to place output parsed .csv files
             include_filing_id -- If set, prepend a column `filing_id` into each
                                  outputted csv filled with the specified value.
+            raw -- If True, if there are fewer or more fields in a row than we
+                   expect, the row will be written to the output file as-is.
+                   If False, we will add empty fields, or skip extra fields,
+                   to the row to make it the correct length.
 
         Returns:
         -------
@@ -143,6 +154,7 @@ class LibFastFEC:
             file_handle,
             open_output_file,
             include_filing_id=include_filing_id,
+            raw=raw,
         )
 
     def parse_as_files_custom(
@@ -150,6 +162,7 @@ class LibFastFEC:
         file_handle: io.BinaryIO,
         open_function,
         include_filing_id: str | None = None,
+        raw: bool = False,
     ) -> int:
         """Parses the input file into output files.
 
@@ -161,6 +174,10 @@ class LibFastFEC:
                              stream for each parsed .csv file
             include_filing_id -- If set, prepend a column `filing_id` into each
                                  outputted csv filled with the specified value.
+            raw -- If True, if there are fewer or more fields in a row than we
+                   expect, the row will be written to the output file as-is.
+                   If False, we will add empty fields, or skip extra fields,
+                   to the row to make it the correct length.
 
         Returns:
         -------
@@ -187,6 +204,7 @@ class LibFastFEC:
             filing_id,  # filingId
             1,  # silent
             0,  # warn
+            raw,  # raw
         )
 
         # Parse
@@ -223,6 +241,7 @@ class LibFastFEC:
             c_char_p,  # filingId
             c_int,  # silent
             c_int,  # warn
+            c_int,  # raw
         ]
         self.libfastfec.newFecContext.restype = c_void_p
         self.libfastfec.parseFec.argtypes = [c_void_p]
