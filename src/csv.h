@@ -10,42 +10,56 @@ struct field_info
 };
 typedef struct field_info FIELD_INFO;
 
-struct parse_context
+struct csv_field
+{
+  char *chars;   // Not necessarily null-terminated. Pointer into the owning CSV_LINE_PARSER.line
+  size_t length; // number of chars
+  FIELD_INFO info;
+};
+typedef struct csv_field CSV_FIELD;
+
+struct csv_line_parser
 {
   STRING *line;
-  FIELD_INFO *fieldInfo;
   int position;
-  int start;
-  int end;
-  int columnIndex;
+  int numFieldsRead;
+  CSV_FIELD currentField;
 };
-typedef struct parse_context PARSE_CONTEXT;
+typedef struct csv_line_parser CSV_LINE_PARSER;
 
-void processFieldChar(char c, FIELD_INFO *info);
+// ========== Parser API ============
 
-void writeDelimeter(WRITE_CONTEXT *context, char *filename, const char *extension);
-
-void writeNewline(WRITE_CONTEXT *context, char *filename, const char *extension);
-
-static inline int endOfField(char c);
-
-// Read a field from a file delimited by the character with the
-// ascii code 28. If both the start and end of the field are `"`
+// Parses a single line of comma (or ascii28) separated data
+void csvParserInit(CSV_LINE_PARSER *parser, STRING *line);
+// Read the next field, either delimited by ascii28 or comma.
+//
+// You should only use this when isParseDone() is false. Otherwise behavior is undefined.
+//
+// For ascii28:
+// If both the start and end of the field are `"`
 // then return the field contents inside the quotes.
-void readAscii28Field(PARSE_CONTEXT *parseContext);
-
+//
+// For comma::
 // Read a CSV field in-place, modifying line and returning start and
 // end positions of the unescaped field. Since CSV fields are always
 // longer escaped than not, this will always work in-place.
-void readCsvField(PARSE_CONTEXT *parseContext);
+CSV_FIELD *nextField(CSV_LINE_PARSER *parser, int useAscii28);
+// The parse is done if a newline or NULL is encountered
+int isParseDone(CSV_LINE_PARSER *parser);
 
-// Advance past the delimeter and increase the column index
-void advanceField(PARSE_CONTEXT *parseContext);
+// ========== Field API ============
 
-void writeField(WRITE_CONTEXT *context, char *filename, const char *extension, STRING *line, int start, int end, FIELD_INFO *info);
+// Trim whitespace in place
+void stripWhitespace(CSV_FIELD *field);
+void processFieldChar(char c, FIELD_INFO *info);
 
-int isWhitespaceChar(char c);
+// ========== Write API ============
 
-// Trim whitespace by adjusting start and end pointers in
-// write context
-void stripWhitespace(PARSE_CONTEXT *context);
+void writeDelimeter(WRITE_CONTEXT *context, const char *filename);
+void writeNewline(WRITE_CONTEXT *context, const char *filename);
+void writeField(WRITE_CONTEXT *context, const char *filename, const CSV_FIELD *field);
+// Prints a string in the form YYYYMMDD to the form YYYY-MM-DD
+// Returns 1 for success, 0 for failure to parse
+int writeFieldDate(WRITE_CONTEXT *wctx, const char *filename, const CSV_FIELD *field);
+// 1 for success, 0 for warning
+int writeFieldFloat(WRITE_CONTEXT *wctx, const char *filename, const CSV_FIELD *field);

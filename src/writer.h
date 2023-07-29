@@ -2,7 +2,7 @@
 
 #include "memory.h"
 
-static const char csvExtension[] = ".csv";
+static const char CSV_EXTENSION[] = ".csv";
 
 typedef void (*CustomWriteFunction)(char *filename, char *extension, char *contents, int numBytes);
 
@@ -45,23 +45,23 @@ BUFFER_FILE *newBufferFile(int bufferSize);
 
 void freeBufferFile(BUFFER_FILE *bufferFile);
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction);
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction);
 
 void initializeLocalWriteContext(WRITE_CONTEXT *writeContext, STRING *line);
 
 void initializeCustomWriteContext(WRITE_CONTEXT *writeContext);
 
-void endLine(WRITE_CONTEXT *writeContext, char *types);
+void endLine(WRITE_CONTEXT *writeContext, const char *types);
 
 // Return 0 if file is cached, or 1 if it is newly created for writing
-int getFile(WRITE_CONTEXT *context, char *filename, const char *extension);
+int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension);
 
-void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char *string, int nchars);
+void writeN(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *string, int nchars);
 
-void writeString(WRITE_CONTEXT *context, char *filename, const char *extension, char *string);
+void writeString(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *string);
 
-void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, char c);
+void writeChar(WRITE_CONTEXT *context, const char *filename, const char *extension, char c);
 
-void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, double d);
+void writeDouble(WRITE_CONTEXT *context, const char *filename, double d);
 
 void freeWriteContext(WRITE_CONTEXT *context);

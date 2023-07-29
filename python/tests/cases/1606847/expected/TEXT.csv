@@ -1,0 +1,4 @@
+rec_type,filer_committee_id_number,transaction_id_number,back_reference_tran_id_number,back_reference_sched_form_name,text
+TEXT,C00042366,X0,,F3XA,"Please be advised that all expenditures on schedule B, Line 21 (b) are to support committee activities, and are not made on behalf of specifically identified federal candidates."
+TEXT,C00042366,X1,,F3XA,Please be advised that all contributors aggregating under $200.01 for Schedule 17 have been included in an unitemized transaction within said schedule.
+TEXT,C00042366,X2,,F3XA,"Please be advised that all donors with an international address have be contacted in regards to citizenship confirmation.  Those who are unable to provide documentation will be refunded, and those refunds will appear on future reports. "

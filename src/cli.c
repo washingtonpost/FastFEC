@@ -12,9 +12,9 @@ const char FLAG_DISABLE_STDIN_SHORT = 'x';
 const char *FLAG_URL = "--print-url";
 const char FLAG_URL_SHORT = 'p';
 
-CLI_CONTEXT *newCliContext()
+CLI_CONTEXT *newCliContext(void)
 {
-  CLI_CONTEXT *ctx = (CLI_CONTEXT *)malloc(sizeof(CLI_CONTEXT));
+  CLI_CONTEXT *ctx = malloc(sizeof(CLI_CONTEXT));
   ctx->piped = 0;
   ctx->includeFilingId = 0;
   ctx->silent = 0;

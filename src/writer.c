@@ -1,77 +1,10 @@
-#include "memory.h"
-#include "writer.h"
 #include <string.h>
-#include <limits.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include "compat.h"
-
-#ifndef PATH_MAX_LENGTH
-#define PATH_MAX_LENGTH 4096 /* # chars in a path name including nul */
-#endif
-#ifndef EEXIST
-#define EEXIST 17
-#endif
-#ifndef ENAMETOOLONG
-#define ENAMETOOLONG 63
-#endif
+#include "memory.h"
+#include "path.h"
+#include "writer.h"
 
 const char *NUMBER_FORMAT = "%.2f";
-
-// From https://gist.github.com/JonathonReinhart/8c0d90191c38af2dcadb102c4e202950
-int mkdir_p(const char *path)
-{
-  /* Adapted from http://stackoverflow.com/a/2336245/119527 */
-  const size_t len = strlen(path);
-  char _path[PATH_MAX_LENGTH];
-  char *p;
-
-  errno = 0;
-
-  /* Copy string so its mutable */
-  if (len > sizeof(_path) - 1)
-  {
-    errno = ENAMETOOLONG;
-    return -1;
-  }
-  strcpy(_path, path);
-
-  /* Iterate the string */
-  for (p = _path + 1; *p; p++)
-  {
-    if (*p == DIR_SEPARATOR_CHAR)
-    {
-      /* Temporarily truncate */
-      *p = '\0';
-
-#if defined(_WIN32)
-      int mkdirResult = mkdir(_path);
-#else
-      int mkdirResult = mkdir(_path, S_IRWXU);
-#endif
-      if (mkdirResult != 0)
-      {
-        if (errno != EEXIST)
-          return -1;
-      }
-
-      *p = DIR_SEPARATOR_CHAR;
-    }
-  }
-
-#if defined(_WIN32)
-  int mkdirResult = mkdir(_path);
-#else
-  int mkdirResult = mkdir(_path, S_IRWXU);
-#endif
-  if (mkdirResult != 0)
-  {
-    if (errno != EEXIST)
-      return -1;
-  }
-
-  return 0;
-}
 
 // Normalize a file name by converting slashes to dashes
 // Adapted from https://stackoverflow.com/a/32496721
@@ -87,7 +20,7 @@ void normalize_filename(char *filename)
 
 BUFFER_FILE *newBufferFile(int bufferSize)
 {
-  BUFFER_FILE *bufferFile = (BUFFER_FILE *)malloc(sizeof(BUFFER_FILE));
+  BUFFER_FILE *bufferFile = malloc(sizeof(BUFFER_FILE));
   bufferFile->buffer = malloc(bufferSize);
   bufferFile->bufferPos = 0;
   bufferFile->bufferSize = bufferSize;
@@ -100,11 +33,10 @@ void freeBufferFile(BUFFER_FILE *bufferFile)
   free(bufferFile);
 }
 
-WRITE_CONTEXT *newWriteContext(char *outputDirectory, char *filingId, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction)
+WRITE_CONTEXT *newWriteContext(char *outputDirectory, int writeToFile, int bufferSize, CustomWriteFunction customWriteFunction, CustomLineFunction customLineFunction)
 {
-  WRITE_CONTEXT *context = (WRITE_CONTEXT *)malloc(sizeof(WRITE_CONTEXT));
+  WRITE_CONTEXT *context = malloc(sizeof(WRITE_CONTEXT));
   context->outputDirectory = outputDirectory;
-  context->filingId = filingId;
   context->writeToFile = writeToFile;
   context->bufferSize = bufferSize;
   context->filenames = NULL;
@@ -146,7 +78,7 @@ void initializeCustomWriteContext(WRITE_CONTEXT *writeContext)
   writeContext->customLineBuffer->str[0] = 0;
 }
 
-void endLine(WRITE_CONTEXT *writeContext, char *types)
+void endLine(WRITE_CONTEXT *writeContext, const char *types)
 {
   if (!writeContext->useCustomLine)
   {
@@ -159,7 +91,7 @@ void endLine(WRITE_CONTEXT *writeContext, char *types)
   writeContext->customLineBuffer->str[0] = 0;
 }
 
-int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
+int getFile(WRITE_CONTEXT *context, const char *filename, const char *extension)
 {
   if ((context->lastname != NULL) && (strcmp(context->lastname, filename) == 0))
   {
@@ -171,12 +103,12 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   if (context->filenames == NULL)
   {
     // No files open, so open the file
-    context->filenames = (char **)malloc(sizeof(char *));
-    context->extensions = (char **)malloc(sizeof(char *));
-    context->bufferFiles = (BUFFER_FILE **)malloc(sizeof(BUFFER_FILE *));
+    context->filenames = malloc(sizeof(char *));
+    context->extensions = malloc(sizeof(char *));
+    context->bufferFiles = malloc(sizeof(BUFFER_FILE *));
     if (context->writeToFile)
     {
-      context->files = (FILE **)malloc(sizeof(FILE *));
+      context->files = malloc(sizeof(FILE *));
     }
   }
   else
@@ -212,28 +144,23 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   context->bufferFiles[context->nfiles] = newBufferFile(context->bufferSize);
   strcpy(context->filenames[context->nfiles], filename);
   strcpy(context->extensions[context->nfiles], extension);
-  // Derive the full path to the file
 
   if (context->writeToFile)
   {
-    // Ensure the directory exists (will silently fail if it does)
-    char *fullpath = (char *)malloc(sizeof(char) * (strlen(context->outputDirectory) + strlen(filename) + 1 + strlen(context->filingId) + strlen(extension) + 1));
-    strcpy(fullpath, context->outputDirectory);
-    strcat(fullpath, context->filingId);
-    mkdir_p(fullpath);
+    mkdir_safe(context->outputDirectory);
 
     // Add the normalized filename to path
-    strcat(fullpath, DIR_SEPARATOR);
-    char *normalizedFilename = malloc(strlen(filename) + 1);
+    int nchars = strlen(filename) + strlen(extension); // "F3", ".csv"
+    char *normalizedFilename = malloc(nchars + 1);     // +1 for null terminator
     strcpy(normalizedFilename, filename);
     normalize_filename(normalizedFilename);
-    strcat(fullpath, normalizedFilename);
-    strcat(fullpath, extension);
+    strcat(normalizedFilename, extension);
+    const char *fullpath = pathJoin(context->outputDirectory, normalizedFilename);
 
     context->files[context->nfiles] = fopen(fullpath, "w");
     // Free the derived file paths
-    free(normalizedFilename);
     free(fullpath);
+    free(normalizedFilename);
   }
   context->lastname = context->filenames[context->nfiles];
   context->lastBufferFile = context->bufferFiles[context->nfiles];
@@ -245,7 +172,7 @@ int getFile(WRITE_CONTEXT *context, char *filename, const char *extension)
   return 1;
 }
 
-void bufferFlush(WRITE_CONTEXT *context, char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile)
+void bufferFlush(WRITE_CONTEXT *context, const char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile)
 {
   if (bufferFile->bufferPos == 0)
   {
@@ -263,7 +190,7 @@ void bufferFlush(WRITE_CONTEXT *context, char *filename, const char *extension, 
   bufferFile->bufferPos = 0;
 }
 
-void bufferWrite(WRITE_CONTEXT *context, char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile, char *string, int nchars)
+void bufferWrite(WRITE_CONTEXT *context, const char *filename, const char *extension, FILE *file, BUFFER_FILE *bufferFile, const char *string, int nchars)
 {
   int offset = 0;
   while (nchars > 0)
@@ -289,7 +216,7 @@ void bufferWrite(WRITE_CONTEXT *context, char *filename, const char *extension, 
   }
 }
 
-void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char *string, int nchars)
+void writeN(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *string, int nchars)
 {
   if (context->local == 0)
   {
@@ -300,7 +227,7 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
     if (context->useCustomLine)
     {
       // Write to custom line function
-      int newPosition = context->customLineBufferPosition + nchars;
+      size_t newPosition = context->customLineBufferPosition + nchars;
       if (newPosition + 1 > context->customLineBuffer->n)
       {
         growStringTo(context->customLineBuffer, newPosition + 1);
@@ -314,7 +241,7 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
   else
   {
     // Write to local buffer
-    int newPosition = context->localBufferPosition + nchars;
+    size_t newPosition = context->localBufferPosition + nchars;
     if (newPosition + 1 > context->localBuffer->n)
     {
       growStringTo(context->localBuffer, newPosition + 1);
@@ -326,12 +253,12 @@ void writeN(WRITE_CONTEXT *context, char *filename, const char *extension, char 
   }
 }
 
-void writeString(WRITE_CONTEXT *context, char *filename, const char *extension, char *string)
+void writeString(WRITE_CONTEXT *context, const char *filename, const char *extension, const char *string)
 {
   writeN(context, filename, extension, string, strlen(string));
 }
 
-void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, char c)
+void writeChar(WRITE_CONTEXT *context, const char *filename, const char *extension, char c)
 {
   if (context->local == 0 && (!context->useCustomLine))
   {
@@ -347,12 +274,12 @@ void writeChar(WRITE_CONTEXT *context, char *filename, const char *extension, ch
   }
 }
 
-void writeDouble(WRITE_CONTEXT *context, char *filename, const char *extension, double d)
+void writeDouble(WRITE_CONTEXT *context, const char *filename, double d)
 {
   // Write to local buffer
   char str[100]; // should be able to fit any double
   sprintf(str, NUMBER_FORMAT, d);
-  writeString(context, filename, extension, str);
+  writeString(context, filename, CSV_EXTENSION, str);
 }
 
 void freeWriteContext(WRITE_CONTEXT *context)
@@ -387,9 +314,6 @@ void freeWriteContext(WRITE_CONTEXT *context)
   {
     free(context->extensions);
   }
-  if (context->customLineBuffer != NULL)
-  {
-    freeString(context->customLineBuffer);
-  }
+  freeString(context->customLineBuffer);
   free(context);
 }

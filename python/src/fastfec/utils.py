@@ -9,16 +9,24 @@ This library provides methods to
 import csv
 import datetime
 import logging
-import os
-import pathlib
-from ctypes import CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_size_t, c_void_p, memmove
-from glob import glob
+from ctypes import (
+    CFUNCTYPE,
+    POINTER,
+    c_char,
+    c_char_p,
+    c_int,
+    c_size_t,
+    c_void_p,
+    memmove,
+)
+from pathlib import Path
 
 logger = logging.getLogger("fastfec")
 
 # Directories used for locating the shared library
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-PARENT_DIR = pathlib.Path(SCRIPT_DIR).parent.absolute()
+SCRIPT_DIR = Path(__file__).parent.absolute()
+REPO_DIR = SCRIPT_DIR.parent.parent.parent  # REPO_DIR/python/src/fastfec/utils.py
+assert REPO_DIR.name == "FastFEC"
 
 # Buffer constants
 BUFFER_SIZE = 1024 * 1024
@@ -54,27 +62,26 @@ def find_fastfec_lib():
     """
     Scans for the fastfec shared library and returns the path of the found library
 
-    This method tries searching in package directories, with a fallback to the local
+    This method tries searching in package directories, with a priority to the local
     zig build directory for development work.
     """
     prefixes = ["fastfec", "libfastfec"]
-
     suffixes = ["so", "dylib", "dll"]
+    patterns = [f"{prefix}*.{suffix}" for prefix in prefixes for suffix in suffixes]
     directories = [
+        REPO_DIR / "zig-out/lib",  # prioritize local dev
         SCRIPT_DIR,
-        PARENT_DIR,
-        os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
+        SCRIPT_DIR.parent,
     ]
 
-    # Search in parent directory
     for root_dir in directories:
-        for prefix in prefixes:
-            for suffix in suffixes:
-                files = glob(os.path.join(root_dir, f"{prefix}*.{suffix}"))
-                if files:
-                    if len(files) > 1:
-                        logger.warning("Expected just one library file")
-                    return os.path.join(PARENT_DIR, files[0])
+        files = []
+        for pattern in patterns:
+            files.extend(root_dir.glob(pattern))
+        if files:
+            if len(files) > 1:
+                logger.warning("Expected just one library file")
+            return files[0]
 
     raise LookupError("Unable to find libfastfec")
 
@@ -89,26 +96,20 @@ def as_bytes(text):
     return text
 
 
-class WriteCache:  # pylint: disable=too-few-public-methods
-    """
-    Class to store cache information for the custom write function
-    """
+class WriterCache:
+    def __init__(self, open_function):
+        self._open_function = open_function
+        self._writers = {}
 
-    def __init__(self):
-        self.file_descriptors = {}  # Store all open file descriptors
-        self.last_filename = None  # The last opened filename
-        self.last_fd = None  # The last file descriptor
+    def get_writer(self, filename: bytes, extension: bytes):
+        path = filename + extension
+        if path not in self._writers:
+            self._writers[path] = self._open_function(path.decode("utf8"), mode="wb")
+        return self._writers[path]
 
-
-class LineCache:  # pylint: disable=too-few-public-methods
-    """
-    Class to store cache information for the custom line function
-    """
-
-    def __init__(self):
-        self.headers = {}  # Store all headers given form type
-        self.last_form_type = None  # The last opened form type
-        self.last_headers = None  # The last headers used
+    def close(self) -> None:
+        for writers in self._writers.values():
+            writers.close()
 
 
 def parse_csv_line(line):
@@ -204,30 +205,13 @@ def provide_write_callback(open_function):
     Provides a C callback to write to file given a function to open file streams
     """
     # Initialize parsing cache
-    write_cache = WriteCache()
+    cache = WriterCache(open_function)
 
     def write_callback(filename, extension, contents, num_bytes):
-        if filename == write_cache.last_filename:
-            # Same filename as last call? Reuse file handle
-            write_cache.last_fd.write(contents[:num_bytes])
-        else:
-            path = filename + extension
-            # Grab the file descriptor from the cache if possible
-            file_descriptor = write_cache.file_descriptors.get(path)
-            if not file_descriptor:
-                # Open the file
-                write_cache.file_descriptors[path] = open_function(path.decode("utf8"), mode="wb")
-                file_descriptor = write_cache.file_descriptors[path]
-            write_cache.last_filename = filename
-            write_cache.last_fd = file_descriptor
-            # Write to the file descriptor
-            file_descriptor.write(contents[:num_bytes])
+        writer = cache.get_writer(filename, extension)
+        writer.write(contents[:num_bytes])
 
-    def free_file_descriptors():
-        for file_descriptor in write_cache.file_descriptors.values():
-            file_descriptor.close()
-
-    return [CUSTOM_WRITE(write_callback), free_file_descriptors]
+    return (CUSTOM_WRITE(write_callback), cache.close)
 
 
 def provide_line_callback(queue, filing_id_included, should_parse_date):
@@ -237,55 +221,31 @@ def provide_line_callback(queue, filing_id_included, should_parse_date):
     The threading allows the parent caller to yield result lines as they are returned.
     See https://stackoverflow.com/a/9968886 for more context
     """
-    # Initialize parsing cache
-    line_cache = LineCache()
+    # Given a form type, this tells you the fields that are included in the CSV
+    header_cache: dict[str, list[str]] = {}
 
-    def line_callback(form_type, line, types):
-        def yield_result(result):
-            # Yield in parent function by utilizing the passed in queue
-            queue.put(result)
-            queue.join()
+    def line_callback(
+        form_type_bytes: bytes, line_bytes: bytes, types_bytes: bytes | None
+    ):
+        form_type = form_type_bytes.decode("utf8")
+        line_items = parse_csv_line(line_bytes.decode("utf8"))
 
-        if form_type == line_cache.last_form_type:
-            # Same form type as past form — return immediately
-            yield_result(
-                (
-                    form_type.decode("utf8"),
-                    line_result(
-                        line_cache.last_headers,
-                        parse_csv_line(line.decode("utf8")),
-                        types,
-                        filing_id_included,
-                        should_parse_date,
-                    ),
-                )
-            )
-        else:
-            # Grab the headers from the cache if possible
-            headers = line_cache.headers.get(form_type)
-            first_line = False
-            if not headers:
-                # The headers have not yet encountered. They
-                # are always in the first line, so this line
-                # will contain them.
-                line_cache.headers[form_type] = parse_csv_line(line.decode("utf8"))
-                headers = line_cache.headers[form_type]
-                first_line = True
-            line_cache.last_form_type = form_type
-            line_cache.last_headers = headers
-            if not first_line:
-                # Format the result and return it (if not a header)
-                yield_result(
-                    (
-                        form_type.decode("utf8"),
-                        line_result(
-                            headers,
-                            parse_csv_line(line.decode("utf8")),
-                            types,
-                            filing_id_included,
-                            should_parse_date,
-                        ),
-                    )
-                )
+        if form_type not in header_cache:
+            # This was the first line, so it contains the headers
+            header_cache[form_type] = line_items
+            # We only return data, not the headers
+            return
+
+        header = header_cache[form_type]
+        record_dict = line_result(
+            header,
+            line_items,
+            types_bytes,
+            filing_id_included,
+            should_parse_date,
+        )
+        result = (form_type, record_dict)
+        queue.put(result)
+        queue.join()
 
     return line_callback

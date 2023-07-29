@@ -1,0 +1,169 @@
+/* Header
+FEC_Ver_# = 2.02
+Soft_Name = FECfile
+Soft_Ver# = 3
+Dec/NoDec = DEC
+Date_Fmat = CCYYMMDD
+NameDelim = ^
+Form_Name = F3XA
+FEC_IDnum = C00101766
+Committee = CONTINENTAL AIRLINES INC EMPLOYEE FUND FOR A BETTER AMERICA (FKA CONTINENTAL HOLDINGS PAC)
+Control_# = K245592Q
+Schedule_Counts:
+SA11A1    = 00139
+SA17      = 00001
+SB23      = 00008
+SB29      = 00003
+/* End Header
+F3XA,C00101766,CONTINENTAL AIRLINES INC EMPLOYEE FUND FOR A BETTER AMERICA (FKA CONTINENTAL HOLDINGS PAC),"1600 Smith Street, 19th Floor",,Houston,TX,77002,,,M6,,,,20000501,20000531,151948.01,16345.33,168293.34,10650.00,157643.34,0.00,0.00,14285.95,1279.84,15565.79,0.00,0.00,15565.79,0.00,0.00,0.00,0.00,0.00,779.54,0.00,16345.33,16345.33,0.00,0.00,0.00,0.00,0.00,8650.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,2000.00,10650.00,10650.00,15565.79,0.00,15565.79,0.00,0.00,0.00,137676.65,2000,61076.69,198753.34,41110.00,157643.34,41820.76,15796.45,57617.21,0.00,0.00,57617.21,0.00,0.00,0.00,0.00,0.00,3459.48,0.00,61076.69,61076.69,0.00,0.00,1960.00,1960.00,0.00,31150.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,8000.00,41110.00,41110.00,57617.21,0.00,57617.21,1960.00,0.00,1960.00,Cox^Rebecca,20010411
+SA11A1,C00101766,IND,Kellner^Lawrence,10915 Pifer Way,,Houston,TX,77024,,,"Continental Airlines, Inc.",Exec. V.P. & CFO,5000.00,20000510,5000.00,,,,,,,,,,,,,,,,,A,SA11A1.7430
+SA11A1,C00101766,IND,Abbott^Fred,27945 Hardin Store Road,,Magnolia,TX,77355,,,"Continental Airlines, Inc.",Vice President,820.00,20000501,20.00,,,,,,,,,,,,,,,,,N,SA11A1.4855
+SA11A1,C00101766,IND,Anderson^Tom,1710 Westshore Drive,,Houston,TX,77094,,,"Continental Airlines, Inc.",Staff Vice President,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4859
+SA11A1,C00101766,IND,Barber^Tom,2611 Ben's Branch Drive,Apt. 3004,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Vice President,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.4864
+SA11A1,C00101766,IND,Bennett^June,3807 Colony Woods Drive,,Sugarland,TX,77479,,,"Continental Airlines, Inc.",Staff Vice President,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.4869
+SA11A1,C00101766,IND,Boisen^Jack,51 Creek Forest Lane,,Conroe,TX,77384,,,"Continental Airlines, Inc.",Staff Vice President,1125.00,20000501,125.00,,,,,,,,,,,,,,,,,N,SA11A1.4873
+SA11A1,C00101766,IND,Bonds^Mike,30 Greenway View Trail,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Vice President,1800.00,20000501,200.00,,,,,,,,,,,,,,,,,N,SA11A1.4875
+SA11A1,C00101766,IND,Bradell^Marc,1382 South Monroe,,Denver,CO,80210,,,"Continental Airlines, Inc.",General Manager,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4877
+SA11A1,C00101766,IND,Brandenburg^David,11943 Dorrance,,Meadows Place,TX,77477,,,"Continental Airlines, Inc.",Program Principal,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4879
+SA11A1,C00101766,IND,Brunger^Bill,3901 Amherst Street,,Houston,TX,77005,,,"Continental Airlines, Inc.",Vice President,562.50,20000501,62.50,,,,,,,,,,,,,,,,,N,SA11A1.4883
+SA11A1,C00101766,IND,Burtt^Kenneth,234 Split Rock Road,,The Woodlans,TX,77381,,,"Continental Airlines, Inc.",Staff Vice President,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4887
+SA11A1,C00101766,IND,Campbell^Mike,6 Twin Greens Court,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Sr.Vice President,900.00,20000501,100.00,,,,,,,,,,,,,,,,,N,SA11A1.4889
+SA11A1,C00101766,IND,Carr^Dianne,20411 Weald Way,,Spring,TX,77388,,,"Continental Airlines, Inc.",Director,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4891
+SA11A1,C00101766,IND,Coble^Chuck,3822 Wildwood Valley Court,,Kingwood,TX,77345,,,Continental Express Airline,Vice President,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4896
+SA11A1,C00101766,IND,Compton^Jim,2619 Albans,,Houston,TX,77005,,,"Continental Airlines, Inc.",Senior Vice President,393.75,20000501,43.75,,,,,,,,,,,,,,,,,N,SA11A1.4898
+SA11A1,C00101766,IND,Cortelyou^Robert,2403 Lexford,,Houston,TX,77080,,,"Continental Airlines, Inc.",Managing Director,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4904
+SA11A1,C00101766,IND,Cox^Rebecca,"1350 Eye Street, N.W.",Suite 1250,Washington,DC,20005,,,"Continental Airlines, Inc.",Vice President,1125.00,20000501,125.00,,,,,,,,,,,,,,,,,N,SA11A1.4906
+SA11A1,C00101766,IND,Crouch^William,7902 Braes Meadow Drive,,Houston,TX,77071,,,"Continental Airlines, Inc.",Managing Director es,304.00,20000501,38.00,,,,,,,,,,,,,,,,,N,SA11A1.4908
+SA11A1,C00101766,IND,Cruzen^Jeffery,12811 Marron Court,,Cypress,TX,77429,,,"Continental Airlines, Inc.",Senior Manager,248.00,20000501,31.00,,,,,,,,,,,,,,,,,N,SA11A1.4910
+SA11A1,C00101766,IND,Davis^Brian,2100 Welch Drive,Apt. 102-B,Houston,TX,77019,,,"Continental Airlines, Inc.",Vice President,900.00,20000501,100.00,,,,,,,,,,,,,,,,,N,SA11A1.4912
+SA11A1,C00101766,IND,Davis^Samuel,41 Edgewood Road,,Bedminster,NJ,07921,,,"Continental Airlines, Inc.",General Manager,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4914
+SA11A1,C00101766,IND,Duncombe^Denelle,14307 Harvest Glen Court,,Houston,TX,77062,,,"Continental Airlines, Inc.",Sr. Director,280.00,20000501,35.00,,,,,,,,,,,,,,,,,N,SA11A1.4917
+SA11A1,C00101766,IND,Erwin^Mark,3019 Woodland View Drive,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",Sr. V.P.,1500.03,20000501,166.67,,,,,,,,,,,,,,,,,N,SA11A1.4919
+SA11A1,C00101766,IND,Fontaine^Diedra,3903 Southmore Circle,,Houston,TX,77004,,,"Continental Airlines, Inc.",Sr. Manager,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4921
+SA11A1,C00101766,IND,Foxhall^Irene,1111 Herman Drive,#14B,Houston,TX,77004,,,"Continental Airlines, Inc.",Vice President,1800.00,20000501,200.00,,,,,,,,,,,,,,,,,N,SA11A1.4923
+SA11A1,C00101766,IND,Freeman^Ralph^^Jr.,P. O. Box 8778-P,,Tamuning,GU,96931,,,"Continental Airlines, Inc.",Chief Pilot,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4925
+SA11A1,C00101766,IND,Goodwin^Larry,51 Palmer Woods Drive,,The Woodlands,TX,77381,,,"Continental Airlines, Inc.",Vice President,1125.00,20000501,125.00,,,,,,,,,,,,,,,,,N,SA11A1.4939
+SA11A1,C00101766,IND,Grizzle^David,2316 Steele,,Houston,TX,77098,,,"Continental Airlines, Inc.",Sr. V.P.,1728.00,20000501,192.00,,,,,,,,,,,,,,,,,N,SA11A1.4941
+SA11A1,C00101766,IND,Hand^Martin,18718 Tranquility Drive,,Humble,TX,77346,,,Continental Airlines,Senior Director,280.00,20000501,35.00,,,,,,,,,,,,,,,,,N,SA11A1.4943
+SA11A1,C00101766,IND,Hartford^Greg,9111 Bonhomme,,Houston,TX,77074,,,"Continental Airlines, Inc.",V.P.,630.00,20000501,70.00,,,,,,,,,,,,,,,,,N,SA11A1.4946
+SA11A1,C00101766,IND,Hauenstein^Glen,2126 Pine Valley Drive,,Houston,TX,77019,,,"Continental Airlines, Inc.",Senior Vice President,412.47,20000501,45.83,,,,,,,,,,,,,,,,,N,SA11A1.4948
+SA11A1,C00101766,IND,Hilfman^David,3131 Woodcreek Glen Lane,,Houston,TX,77073,,,"Continental Airlines, Inc.",Staff V.P.,250.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4950
+SA11A1,C00101766,IND,Howard^Ron,56 Briar Hollow,#5,Houston,TX,77027,,,"Continental Airlines, Inc.",Vice President,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4954
+SA11A1,C00101766,IND,Junek^Fred,3862 Laura Leigh,,Friendswood,TX,77546,,,Continental Express Airline,Vice President,900.00,20000501,100.00,,,,,,,,,,,,,,,,,N,SA11A1.4958
+SA11A1,C00101766,IND,Kamen^Hershel,5602 Yarwell,,Houston,TX,77096,,,"Continental Airlines, Inc.",Staff Vice President,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.4960
+SA11A1,C00101766,IND,Kelly^Doug,7531 Ashton Drive,,Houston,TX,77095,,,"Continental Airlines, Inc.",Senior Attorney,216.00,20000501,27.00,,,,,,,,,,,,,,,,,N,SA11A1.4964
+SA11A1,C00101766,IND,King^Robert B.,7 Wintercorn Place,,The Woodlands,TX,77382,,,"Continental Airlines, Inc.",Staff Vice President,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5115
+SA11A1,C00101766,IND,Laderman^Gerry,11410 Calico Lane,,Houston,TX,77024,,,"Continental Airlines, Inc.",Senior Vice President,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4980
+SA11A1,C00101766,IND,Larza^Deborah,11 Wintercorn,,The Woodlands,TX,77382,,,"Continental Airlines, Inc.",Staff Vice President,280.00,20000501,20.00,,,,,,,,,,,,,,,,,N,SA11A1.4987
+SA11A1,C00101766,IND,Liang^Shen,14310 Split Cedar,,Houston,TX,77015,,,"Continental Airlines, Inc.",Director,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4991
+SA11A1,C00101766,IND,Lossness^Jerry,9702 Appin Falls Court,,Spring,TX,77379,,,Continental Express Airlines,V.P. & COO,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4995
+SA11A1,C00101766,IND,Martin^Glen,618 Stanford,,Houston,TX,77019,,,"Continental Airlines, Inc.",Director,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4997
+SA11A1,C00101766,IND,Mason^George,3464 Overbrook Lane,,Houston,TX,77027,,,"Continental Airlines, Inc.",Senior Vice President,900.00,20000501,100.00,,,,,,,,,,,,,,,,,N,SA11A1.4999
+SA11A1,C00101766,IND,McLean^C.D.,1111 Caroline Lane,#2602,Houston,TX,77010,,,"Continental Airlines, Inc.",Exec. V.P.,1800.00,20000501,200.00,,,,,,,,,,,,,,,,,N,SA11A1.5005
+SA11A1,C00101766,IND,Megna^Joe,3011 Elm Canyon Court,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",Managing Director,400.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5007
+SA11A1,C00101766,IND,Messing^David,3 Bough Leaf Place,,The Woodlands,TX,77381,,,"Continental Airlines, Inc.",Managing Director,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5009
+SA11A1,C00101766,IND,Miller^Bill,29 Bayou Shadows,,Houston,TX,77024,,,"Continental Airlines, Inc.",Senior Director,474.09,20000501,63.14,,,,,,,,,,,,,,,,,N,SA11A1.5011
+SA11A1,C00101766,IND,Misner^Jeff,42 Meadow Brook Place,,The Woodlands,TX,77382,,,"Continental Airlines, Inc.",Vice President,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5013
+SA11A1,C00101766,IND,Moran^Mark,19 Chancery Place,,The Woodlands,TX,77381,,,"Continental Airlines, Inc.",Vice President,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5015
+SA11A1,C00101766,IND,Naeem^Munum,5518 Maple Square Drive,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Sr. Director,240.00,20000501,30.00,,,,,,,,,,,,,,,,,N,SA11A1.5023
+SA11A1,C00101766,IND,Paprocki^Sabrina,1501 Walnut Lane,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Manager,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5033
+SA11A1,C00101766,IND,Prestifilippo^John,1731 Palomino Lane,,Kingwood,TX,77339,,,Continental Express Airline,Vice President,225.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5035
+SA11A1,C00101766,IND,Ream^Jim,83 Northgate Drive,,Houston,TX,77380,,,Continental Express Airline,President Continental Express,2380.00,20000501,238.00,,,,,,,,,,,,,,,,,N,SA11A1.5041
+SA11A1,C00101766,IND,Reitz^Bonnie,99 N. Post Oak Lane,#9101,Houston,TX,77024,,,"Continental Airlines, Inc.",Sr. V.P.,1800.00,20000501,200.00,,,,,,,,,,,,,,,,,N,SA11A1.5043
+SA11A1,C00101766,IND,Roberts^Tiara,P. O. Box 20220,,Barrigada,GU,96921,,,"Continental Airlines, Inc.",Sr. Director,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5049
+SA11A1,C00101766,IND,Salter^Jay,18915 Relay Road,,Humble,TX,77346,,,"Continental Airlines, Inc.",Staff V.P.,375.03,20000501,41.67,,,,,,,,,,,,,,,,,N,SA11A1.5054
+SA11A1,C00101766,IND,Scully^Charles,11 Smokerise Lane,,Annandale,NJ,08801,,,"Continental Airlines, Inc.",Vice President,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5058
+SA11A1,C00101766,IND,Shannon^Holden,2012 Sunset Boulevard,,Houston,TX,77005,,,"Continental Airlines, Inc.",V.P.,900.00,20000501,100.00,,,,,,,,,,,,,,,,,N,SA11A1.5060
+SA11A1,C00101766,IND,Sifford^James C.,721 Lichfield Road,,Winston-Salem,NC,27104,,,Continental Express Airline,Vice President,187.56,20000501,20.84,,,,,,,,,,,,,,,,,N,SA11A1.5062
+SA11A1,C00101766,IND,Simon^Barry,2003 Dunston,,Houston,TX,77005,,,"Continental Airlines, Inc.",Sr. V.P.,1800.00,20000501,200.00,,,,,,,,,,,,,,,,,N,SA11A1.5064
+SA11A1,C00101766,IND,Stevens^Jim,8818 Ashridge Park Drive,,Spring,TX,77379,,,"Continental Airlines, Inc.",Staff V.P.,900.00,20000501,100.00,,,,,,,,,,,,,,,,,N,SA11A1.5075
+SA11A1,C00101766,IND,Summerford^Jim,2422 Watts,,Houston,TX,77030,,,"Continental Airlines, Inc.",Staff V.P.,1012.50,20000501,112.50,,,,,,,,,,,,,,,,,N,SA11A1.5081
+SA11A1,C00101766,IND,Taylor^Leslie,23 Taylor Drive,,Franklin Park,NJ,08823,,,"Continental Airlines, Inc.",Senior Manager,300.00,20000501,40.00,,,,,,,,,,,,,,,,,N,SA11A1.5085
+SA11A1,C00101766,IND,Thistle^James,5507 Evergreen Valley Drive,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",Sr. Director,280.00,20000501,35.00,,,,,,,,,,,,,,,,,N,SA11A1.5087
+SA11A1,C00101766,IND,Tsuruta^Jun,4800 Southwind Drive,,Winston-Salem,NC,27004,,,"Continental Airlines, Inc.",Sr. V.P.,1350.00,20000501,150.00,,,,,,,,,,,,,,,,,N,SA11A1.5091
+SA11A1,C00101766,IND,Van Duyne^Nancy,"4822 17th Street, N.",,Arlington,VA,22207,,,"Continental Airlines, Inc.",Staff V.P.,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5093
+SA11A1,C00101766,IND,Vogel^Jennifer,3015 Nottingham,,Houston,TX,77005,,,"Continental Airlines, Inc.",Vice President,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5099
+SA11A1,C00101766,IND,Walker^Ned,2007 Forest Garden,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",V.P.,450.00,20000501,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5101
+SA11A1,C00101766,IND,Wejman^Janet,4126 Blake Lane,,Glenview,IL,60025,,,"Continental Airlines, Inc.",Sr. V.P. & C.I.O.,900.00,20000501,100.00,,,,,,,,,,,,,,,,,N,SA11A1.5106
+SA11A1,C00101766,IND,Whitney^Curtis,64 Clear Water Drive,,Brunswick,OH,44212,,,"Continental Airlines, Inc.",Sr. Director,200.00,20000501,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5108
+SA11A1,C00101766,IND,Abbott^Fred,27945 Hardin Store Road,,Magnolia,TX,77355,,,"Continental Airlines, Inc.",Vice President,840.00,20000516,20.00,,,,,,,,,,,,,,,,,N,SA11A1.4856
+SA11A1,C00101766,IND,Anderson^Tom,1710 Westshore Drive,,Houston,TX,77094,,,"Continental Airlines, Inc.",Staff Vice President,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4860
+SA11A1,C00101766,IND,Barber^Tom,2611 Ben's Branch Drive,Apt. 3004,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Vice President,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.4865
+SA11A1,C00101766,IND,Bennett^June,3807 Colony Woods Drive,,Sugarland,TX,77479,,,"Continental Airlines, Inc.",Staff Vice President,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.4870
+SA11A1,C00101766,IND,Boisen^Jack,51 Creek Forest Lane,,Conroe,TX,77384,,,"Continental Airlines, Inc.",Staff Vice President,1250.00,20000516,125.00,,,,,,,,,,,,,,,,,N,SA11A1.4874
+SA11A1,C00101766,IND,Bonds^Mike,30 Greenway View Trail,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Vice President,2000.00,20000516,200.00,,,,,,,,,,,,,,,,,N,SA11A1.4876
+SA11A1,C00101766,IND,Bradell^Marc,1382 South Monroe,,Denver,CO,80210,,,"Continental Airlines, Inc.",General Manager,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4878
+SA11A1,C00101766,IND,Brandenburg^David,11943 Dorrance,,Meadows Place,TX,77477,,,"Continental Airlines, Inc.",Program Principal,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4880
+SA11A1,C00101766,IND,Brunger^Bill,3901 Amherst Street,,Houston,TX,77005,,,"Continental Airlines, Inc.",Vice President,625.00,20000516,62.50,,,,,,,,,,,,,,,,,N,SA11A1.4884
+SA11A1,C00101766,IND,Burtt^Kenneth,234 Split Rock Road,,The Woodlans,TX,77381,,,"Continental Airlines, Inc.",Staff Vice President,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4888
+SA11A1,C00101766,IND,Campbell^Mike,6 Twin Greens Court,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Sr.Vice President,1000.00,20000516,100.00,,,,,,,,,,,,,,,,,N,SA11A1.4890
+SA11A1,C00101766,IND,Carr^Dianne,20411 Weald Way,,Spring,TX,77388,,,"Continental Airlines, Inc.",Director,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4892
+SA11A1,C00101766,IND,Coble^Chuck,3822 Wildwood Valley Court,,Kingwood,TX,77345,,,Continental Express Airline,Vice President,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4897
+SA11A1,C00101766,IND,Compton^Jim,2619 Albans,,Houston,TX,77005,,,"Continental Airlines, Inc.",Senior Vice President,437.50,20000516,43.75,,,,,,,,,,,,,,,,,N,SA11A1.4899
+SA11A1,C00101766,IND,Cortelyou^Robert,2403 Lexford,,Houston,TX,77080,,,"Continental Airlines, Inc.",Managing Director,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4905
+SA11A1,C00101766,IND,Cox^Rebecca,"1350 Eye Street, N.W.",Suite 1250,Washington,DC,20005,,,"Continental Airlines, Inc.",Vice President,1250.00,20000516,125.00,,,,,,,,,,,,,,,,,N,SA11A1.4907
+SA11A1,C00101766,IND,Crouch^William,7902 Braes Meadow Drive,,Houston,TX,77071,,,"Continental Airlines, Inc.",Managing Director es,342.00,20000516,38.00,,,,,,,,,,,,,,,,,N,SA11A1.4909
+SA11A1,C00101766,IND,Cruzen^Jeffery,12811 Marron Court,,Cypress,TX,77429,,,"Continental Airlines, Inc.",Senior Manager,279.00,20000516,31.00,,,,,,,,,,,,,,,,,N,SA11A1.4911
+SA11A1,C00101766,IND,Davis^Brian,2100 Welch Drive,Apt. 102-B,Houston,TX,77019,,,"Continental Airlines, Inc.",Vice President,1000.00,20000516,100.00,,,,,,,,,,,,,,,,,N,SA11A1.4913
+SA11A1,C00101766,IND,Davis^Samuel,41 Edgewood Road,,Bedminster,NJ,07921,,,"Continental Airlines, Inc.",General Manager,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4915
+SA11A1,C00101766,IND,Duncombe^Denelle,14307 Harvest Glen Court,,Houston,TX,77062,,,"Continental Airlines, Inc.",Sr. Director,315.00,20000516,35.00,,,,,,,,,,,,,,,,,N,SA11A1.4918
+SA11A1,C00101766,IND,Erwin^Mark,3019 Woodland View Drive,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",Sr. V.P.,1666.70,20000516,166.67,,,,,,,,,,,,,,,,,N,SA11A1.4920
+SA11A1,C00101766,IND,Fontaine^Diedra,3903 Southmore Circle,,Houston,TX,77004,,,"Continental Airlines, Inc.",Sr. Manager,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4922
+SA11A1,C00101766,IND,Foxhall^Irene,1111 Herman Drive,#14B,Houston,TX,77004,,,"Continental Airlines, Inc.",Vice President,2000.00,20000516,200.00,,,,,,,,,,,,,,,,,N,SA11A1.4924
+SA11A1,C00101766,IND,Freeman^Ralph^^Jr.,P. O. Box 8778-P,,Tamuning,GU,96931,,,"Continental Airlines, Inc.",Chief Pilot,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4926
+SA11A1,C00101766,IND,Goodwin^Larry,51 Palmer Woods Drive,,The Woodlands,TX,77381,,,"Continental Airlines, Inc.",Vice President,1250.00,20000516,125.00,,,,,,,,,,,,,,,,,N,SA11A1.4940
+SA11A1,C00101766,IND,Grizzle^David,2316 Steele,,Houston,TX,77098,,,"Continental Airlines, Inc.",Sr. V.P.,1920.00,20000516,192.00,,,,,,,,,,,,,,,,,N,SA11A1.4942
+SA11A1,C00101766,IND,Hand^Martin,18718 Tranquility Drive,,Humble,TX,77346,,,Continental Airlines,Senior Director,315.00,20000516,35.00,,,,,,,,,,,,,,,,,N,SA11A1.4944
+SA11A1,C00101766,IND,Hartford^Greg,9111 Bonhomme,,Houston,TX,77074,,,"Continental Airlines, Inc.",V.P.,700.00,20000516,70.00,,,,,,,,,,,,,,,,,N,SA11A1.4947
+SA11A1,C00101766,IND,Hauenstein^Glen,2126 Pine Valley Drive,,Houston,TX,77019,,,"Continental Airlines, Inc.",Senior Vice President,458.30,20000516,45.83,,,,,,,,,,,,,,,,,N,SA11A1.4949
+SA11A1,C00101766,IND,Hilfman^David,3131 Woodcreek Glen Lane,,Houston,TX,77073,,,"Continental Airlines, Inc.",Staff V.P.,275.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4951
+SA11A1,C00101766,IND,Howard^Ron,56 Briar Hollow,#5,Houston,TX,77027,,,"Continental Airlines, Inc.",Vice President,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4955
+SA11A1,C00101766,IND,Junek^Fred,3862 Laura Leigh,,Friendswood,TX,77546,,,Continental Express Airline,Vice President,1000.00,20000516,100.00,,,,,,,,,,,,,,,,,N,SA11A1.4959
+SA11A1,C00101766,IND,Kamen^Hershel,5602 Yarwell,,Houston,TX,77096,,,"Continental Airlines, Inc.",Staff Vice President,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.4961
+SA11A1,C00101766,IND,Kelly^Doug,7531 Ashton Drive,,Houston,TX,77095,,,"Continental Airlines, Inc.",Senior Attorney,243.00,20000516,27.00,,,,,,,,,,,,,,,,,N,SA11A1.4965
+SA11A1,C00101766,IND,King^Robert B.,7 Wintercorn Place,,The Woodlands,TX,77382,,,"Continental Airlines, Inc.",Staff Vice President,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.4968
+SA11A1,C00101766,IND,Laderman^Gerry,11410 Calico Lane,,Houston,TX,77024,,,"Continental Airlines, Inc.",Senior Vice President,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4981
+SA11A1,C00101766,IND,Larza^Deborah,11 Wintercorn,,The Woodlands,TX,77382,,,"Continental Airlines, Inc.",Staff Vice President,300.00,20000516,20.00,,,,,,,,,,,,,,,,,N,SA11A1.4988
+SA11A1,C00101766,IND,Liang^Shen,14310 Split Cedar,,Houston,TX,77015,,,"Continental Airlines, Inc.",Director,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4992
+SA11A1,C00101766,IND,Lossness^Jerry,9702 Appin Falls Court,,Spring,TX,77379,,,Continental Express Airlines,V.P. & COO,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4996
+SA11A1,C00101766,IND,Martin^Glen,618 Stanford,,Houston,TX,77019,,,"Continental Airlines, Inc.",Director,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.4998
+SA11A1,C00101766,IND,Mason^George,3464 Overbrook Lane,,Houston,TX,77027,,,"Continental Airlines, Inc.",Senior Vice President,1000.00,20000516,100.00,,,,,,,,,,,,,,,,,N,SA11A1.5000
+SA11A1,C00101766,IND,McLean^C.D.,1111 Caroline Lane,#2602,Houston,TX,77010,,,"Continental Airlines, Inc.",Exec. V.P.,2000.00,20000516,200.00,,,,,,,,,,,,,,,,,N,SA11A1.5006
+SA11A1,C00101766,IND,Megna^Joe,3011 Elm Canyon Court,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",Managing Director,450.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5008
+SA11A1,C00101766,IND,Messing^David,3 Bough Leaf Place,,The Woodlands,TX,77381,,,"Continental Airlines, Inc.",Managing Director,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5010
+SA11A1,C00101766,IND,Miller^Bill,29 Bayou Shadows,,Houston,TX,77024,,,"Continental Airlines, Inc.",Senior Director,537.38,20000516,63.29,,,,,,,,,,,,,,,,,N,SA11A1.5012
+SA11A1,C00101766,IND,Misner^Jeff,42 Meadow Brook Place,,The Woodlands,TX,77382,,,"Continental Airlines, Inc.",Vice President,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5014
+SA11A1,C00101766,IND,Moran^Mark,19 Chancery Place,,The Woodlands,TX,77381,,,"Continental Airlines, Inc.",Vice President,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5016
+SA11A1,C00101766,IND,Naeem^Munum,5518 Maple Square Drive,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Sr. Director,270.00,20000516,30.00,,,,,,,,,,,,,,,,,N,SA11A1.5024
+SA11A1,C00101766,IND,Paprocki^Sabrina,1501 Walnut Lane,,Kingwood,TX,77339,,,"Continental Airlines, Inc.",Manager,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5034
+SA11A1,C00101766,IND,Prestifilippo^John,1731 Palomino Lane,,Kingwood,TX,77339,,,Continental Express Airline,Vice President,250.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5036
+SA11A1,C00101766,IND,Ream^Jim,83 Northgate Drive,,Houston,TX,77380,,,Continental Express Airline,President Continental Express,2618.00,20000516,238.00,,,,,,,,,,,,,,,,,N,SA11A1.5042
+SA11A1,C00101766,IND,Reitz^Bonnie,99 N. Post Oak Lane,#9101,Houston,TX,77024,,,"Continental Airlines, Inc.",Sr. V.P.,2000.00,20000516,200.00,,,,,,,,,,,,,,,,,N,SA11A1.5044
+SA11A1,C00101766,IND,Roberts^Tiara,P. O. Box 20220,,Barrigada,GU,96921,,,"Continental Airlines, Inc.",Sr. Director,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5050
+SA11A1,C00101766,IND,Salter^Jay,18915 Relay Road,,Humble,TX,77346,,,"Continental Airlines, Inc.",Staff V.P.,416.70,20000516,41.67,,,,,,,,,,,,,,,,,N,SA11A1.5055
+SA11A1,C00101766,IND,Scully^Charles,11 Smokerise Lane,,Annandale,NJ,08801,,,"Continental Airlines, Inc.",Vice President,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5059
+SA11A1,C00101766,IND,Shannon^Holden,2012 Sunset Boulevard,,Houston,TX,77005,,,"Continental Airlines, Inc.",V.P.,1000.00,20000516,100.00,,,,,,,,,,,,,,,,,N,SA11A1.5061
+SA11A1,C00101766,IND,Sifford^James C.,721 Lichfield Road,,Winston-Salem,NC,27104,,,Continental Express Airline,Vice President,208.40,20000516,20.84,,,,,,,,,,,,,,,,,N,SA11A1.5063
+SA11A1,C00101766,IND,Simon^Barry,2003 Dunston,,Houston,TX,77005,,,"Continental Airlines, Inc.",Sr. V.P.,2000.00,20000516,200.00,,,,,,,,,,,,,,,,,N,SA11A1.5065
+SA11A1,C00101766,IND,Stevens^Jim,8818 Ashridge Park Drive,,Spring,TX,77379,,,"Continental Airlines, Inc.",Staff V.P.,1000.00,20000516,100.00,,,,,,,,,,,,,,,,,N,SA11A1.5076
+SA11A1,C00101766,IND,Summerford^Jim,2422 Watts,,Houston,TX,77030,,,"Continental Airlines, Inc.",Staff V.P.,1125.00,20000516,112.50,,,,,,,,,,,,,,,,,N,SA11A1.5082
+SA11A1,C00101766,IND,Taylor^Leslie,23 Taylor Drive,,Franklin Park,NJ,08823,,,"Continental Airlines, Inc.",Senior Manager,340.00,20000516,40.00,,,,,,,,,,,,,,,,,N,SA11A1.5086
+SA11A1,C00101766,IND,Thistle^James,5507 Evergreen Valley Drive,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",Sr. Director,315.00,20000516,35.00,,,,,,,,,,,,,,,,,N,SA11A1.5088
+SA11A1,C00101766,IND,Tsuruta^Jun,4800 Southwind Drive,,Winston-Salem,NC,27004,,,"Continental Airlines, Inc.",Sr. V.P.,1500.00,20000516,150.00,,,,,,,,,,,,,,,,,N,SA11A1.5092
+SA11A1,C00101766,IND,Van Duyne^Nancy,"4822 17th Street, N.",,Arlington,VA,22207,,,"Continental Airlines, Inc.",Staff V.P.,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5094
+SA11A1,C00101766,IND,Vogel^Jennifer,3015 Nottingham,,Houston,TX,77005,,,"Continental Airlines, Inc.",Vice President,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5100
+SA11A1,C00101766,IND,Walker^Ned,2007 Forest Garden,,Kingwood,TX,77345,,,"Continental Airlines, Inc.",V.P.,500.00,20000516,50.00,,,,,,,,,,,,,,,,,N,SA11A1.5102
+SA11A1,C00101766,IND,Wejman^Janet,4126 Blake Lane,,Glenview,IL,60025,,,"Continental Airlines, Inc.",Sr. V.P. & C.I.O.,1000.00,20000516,100.00,,,,,,,,,,,,,,,,,N,SA11A1.5107
+SA11A1,C00101766,IND,Whitney^Curtis,64 Clear Water Drive,,Brunswick,OH,44212,,,"Continental Airlines, Inc.",Sr. Director,225.00,20000516,25.00,,,,,,,,,,,,,,,,,N,SA11A1.5109
+SA17,C00101766,ORG,T. Rowe Price,P. O. Box 8900,,Baltimore,MD,212890220,,,,,3459.48,20000531,779.54,,,,,,,,,,,,,,,,,N,SA17.5116
+SB23,C00101766,CCM,MENENDEZ FOR CONGRESS,PO BOX 848,,UNION CITY,NJ,07087,,,P,,20000512,1000.00,C00264564,H2NJ13075,,H,NJ,13,,,,,,,,,N,SB23.5131
+SB23,C00101766,PAC,VICTORY POLITICAL ACTION COMMITTEE (V-PAC),PO BOX 525,,ST PETERSBURG,FL,33731,,,G,,20000512,1000.00,C00344374,,,,,,,,,,,,,,N,SB23.5132
+SB23,C00101766,CCM,FRIENDS OF CONRAD BURNS - 2000,PO BOX 1532,,BILLINGS,MT,59103,,,G,,20000516,1000.00,C00310490,S8MT00119,,S,MT,00,,,,,,,,,N,SB23.5135
+SB23,C00101766,CAN,VOINOVICH FOR SENATE COMMITTEE,865 MACON ALLEY,,COLUMBUS,OH,43206,,,P,,20000518,1000.00,C00309419,S8OH00011,,S,OH,00,,,,,,,,,N,SB23.5136
+SB23,C00101766,CAN,CULBERSON FOR CONGRESS,PO BOX 56489,,HOUSTON,TX,77256,,,P,,20000519,2500.00,C00343236,H0TX07055,,H,TX,07,,,,,,,,,N,SB23.5137
+SB23,C00101766,CCM,LATOURETTE FOR CONGRESS COMMITTEE,1004 MILLRIDGE RD,,HIGHLAND HTS,OH,44143,,,P,,20000524,500.00,C00284174,H4OH19036,,H,OH,19,,,,,,,,,N,SB23.5139
+SB23,C00101766,CCM,DON PAYNE FOR CONGRESS,P O BOX 2406,,NEWARK,NJ,07114,,,P,,20000526,650.00,C00225045,H0NJ10026,,H,NJ,10,,,,,,,,,N,SB23.5140
+SB23,C00101766,CCM,SHUSTER FOR CONGRESS,PO BOX 12,,ORR,MN,55771,,,P,,20000526,1000.00,C00338574,H8MN08027,,H,MN,08,,,,,,,,,N,SB23.5142
+SB29,C00101766,CAN,Junell^Rob,P.O. Box 3362,,San Angelo,TX,76902,,Texas State Representative,P,,20000501,500.00,,,,,,,,,,,,,,,N,SB29.5125
+SB29,C00101766,CAN,Laney^James,"Route 2, Box 115",,Hale Center,TX,79041,,Texas State Representative,P,,20000501,1000.00,,,,,,,,,,,,,,,N,SB29.5144
+SB29,C00101766,CAN,Shapiro^Florence,2901 Dallas Parkway,Suite 322,Plano,TX,75093,,Texas Senate,P,,20000501,500.00,,,,,,,,,,,,,,,N,SB29.5118

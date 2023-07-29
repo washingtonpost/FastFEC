@@ -1,6 +1,7 @@
 #include "encoding.h"
 #include "fec.h"
 #include "cli.h"
+#include "path.h"
 
 #define BUFFERSIZE 65536
 
@@ -88,10 +89,16 @@ int main(int argc, char *argv[])
     return 2;
   }
 
-  // Initialize persistent memory context
+  const char *outputDir = pathJoin(cli->outputDirectory, cli->fecId);
+  const char *filingId = cli->includeFilingId ? cli->fecId : NULL;
   PERSISTENT_MEMORY_CONTEXT *persistentMemory = newPersistentMemoryContext();
-  // Initialize FEC context
-  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&readBuffer)), BUFFERSIZE, NULL, BUFFERSIZE, NULL, 1, handle, cli->fecId, cli->outputDirectory, cli->includeFilingId, cli->silent, cli->warn);
+  int inBufferSize = BUFFERSIZE;
+  int outBufferSize = BUFFERSIZE;
+  CustomWriteFunction customWriteFunction = NULL;
+  CustomLineFunction customLineFunction = NULL;
+  int writeToFile = 1;
+  int raw = 0;
+  FEC_CONTEXT *fec = newFecContext(persistentMemory, ((BufferRead)(&readBuffer)), inBufferSize, customWriteFunction, outBufferSize, customLineFunction, writeToFile, handle, outputDir, filingId, cli->silent, cli->warn, raw);
 
   // Parse the fec file
   int fecParseResult = parseFec(fec);
@@ -100,6 +107,7 @@ int main(int argc, char *argv[])
   freeFecContext(fec);
   freePersistentMemoryContext(persistentMemory);
   freeCliContext(cli);
+  free(outputDir);
 
   // Close file handles
   if (!cli->piped)

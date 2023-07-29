@@ -1,0 +1,9 @@
+form_type,filer_committee_id_number,entity_type,payee_name,payee_street_1,payee_street_2,payee_city,payee_state,payee_zip_code,expenditure_purpose_code,expenditure_purpose_descrip,election_code,election_other_description,expenditure_date,expenditure_amount,beneficiary_committee_fec_id,beneficiary_candidate_fec_id,beneficiary_candidate_name,beneficiary_candidate_office,beneficiary_candidate_state,beneficiary_candidate_district,conduit_name,conduit_street_1,conduit_street_2,conduit_city,conduit_state,conduit_zip_code,memo_code,memo_text_description,amended_cd,transaction_id_number,back_reference_tran_id_number,back_reference_sched_name,reference_to_si_or_sl_system_code_that_identifies_the_account
+SB23,C00101766,CCM,MENENDEZ FOR CONGRESS,PO BOX 848,,UNION CITY,NJ,07087,,,P,,2000-05-12,1000.00,C00264564,H2NJ13075,,H,NJ,13,,,,,,,,,N,SB23.5131,,,
+SB23,C00101766,PAC,VICTORY POLITICAL ACTION COMMITTEE (V-PAC),PO BOX 525,,ST PETERSBURG,FL,33731,,,G,,2000-05-12,1000.00,C00344374,,,,,,,,,,,,,,N,SB23.5132,,,
+SB23,C00101766,CCM,FRIENDS OF CONRAD BURNS - 2000,PO BOX 1532,,BILLINGS,MT,59103,,,G,,2000-05-16,1000.00,C00310490,S8MT00119,,S,MT,00,,,,,,,,,N,SB23.5135,,,
+SB23,C00101766,CAN,VOINOVICH FOR SENATE COMMITTEE,865 MACON ALLEY,,COLUMBUS,OH,43206,,,P,,2000-05-18,1000.00,C00309419,S8OH00011,,S,OH,00,,,,,,,,,N,SB23.5136,,,
+SB23,C00101766,CAN,CULBERSON FOR CONGRESS,PO BOX 56489,,HOUSTON,TX,77256,,,P,,2000-05-19,2500.00,C00343236,H0TX07055,,H,TX,07,,,,,,,,,N,SB23.5137,,,
+SB23,C00101766,CCM,LATOURETTE FOR CONGRESS COMMITTEE,1004 MILLRIDGE RD,,HIGHLAND HTS,OH,44143,,,P,,2000-05-24,500.00,C00284174,H4OH19036,,H,OH,19,,,,,,,,,N,SB23.5139,,,
+SB23,C00101766,CCM,DON PAYNE FOR CONGRESS,P O BOX 2406,,NEWARK,NJ,07114,,,P,,2000-05-26,650.00,C00225045,H0NJ10026,,H,NJ,10,,,,,,,,,N,SB23.5140,,,
+SB23,C00101766,CCM,SHUSTER FOR CONGRESS,PO BOX 12,,ORR,MN,55771,,,P,,2000-05-26,1000.00,C00338574,H8MN08027,,H,MN,08,,,,,,,,,N,SB23.5142,,,
