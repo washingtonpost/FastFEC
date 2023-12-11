@@ -16,7 +16,9 @@ pub fn linkPcre(vendored_pcre: bool, libExe: *std.build.LibExeObjStep) void {
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{
+        .preferred_optimize_mode = .ReleaseFast,
+    });
 
     const lib_only: bool = b.option(bool, "lib-only", "Only compile the library") orelse false;
     const skip_lib: bool = b.option(bool, "skip-lib", "Skip compiling the library") orelse false;
