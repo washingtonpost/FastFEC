@@ -14,10 +14,9 @@ pub fn linkPcre(vendored_pcre: bool, libExe: *std.build.LibExeObjStep) void {
     }
 }
 
-pub fn build(b: *std.build.Builder) !void {
-    b.setPreferredReleaseMode(.ReleaseFast);
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
 
     const lib_only: bool = b.option(bool, "lib-only", "Only compile the library") orelse false;
     const skip_lib: bool = b.option(bool, "skip-lib", "Skip compiling the library") orelse false;
@@ -26,10 +25,11 @@ pub fn build(b: *std.build.Builder) !void {
 
     // Main build step
     if (!lib_only and !wasm) {
-        const fastfec_cli = b.addExecutable("fastfec", null);
-        fastfec_cli.setTarget(target);
-        fastfec_cli.setBuildMode(mode);
-        fastfec_cli.install();
+        const fastfec_cli = b.addExecutable(.{
+            .name = "fastfec",
+            .target = target,
+            .optimize = optimize,
+        });
 
         fastfec_cli.linkLibC();
 
@@ -39,40 +39,54 @@ pub fn build(b: *std.build.Builder) !void {
             "src/cli.c",
             "src/main.c",
         }, &buildOptions);
+        b.installArtifact(fastfec_cli);
     }
 
     if (!wasm and !skip_lib) {
         // Library build step
-        const fastfec_lib = b.addSharedLibrary("fastfec", null, .unversioned);
-        fastfec_lib.setTarget(target);
-        fastfec_lib.setBuildMode(mode);
-        fastfec_lib.install();
+        const fastfec_lib = b.addSharedLibrary(.{
+            .name = "fastfec",
+            .target = target,
+            .optimize = optimize,
+            .version = null,
+        });
         fastfec_lib.linkLibC();
         fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
         linkPcre(vendored_pcre, fastfec_lib);
+        b.installArtifact(fastfec_lib);
     } else if (wasm) {
         // Wasm library build step
-        const fastfec_wasm = b.addSharedLibrary("fastfec", null, .unversioned);
         const wasm_target = CrossTarget{ .cpu_arch = .wasm32, .os_tag = .wasi };
-        fastfec_wasm.setTarget(wasm_target);
-        fastfec_wasm.setBuildMode(mode);
-        fastfec_wasm.install();
+        const fastfec_wasm = b.addSharedLibrary(.{
+            .name = "fastfec",
+            .target = wasm_target,
+            .optimize = optimize,
+            .version = null,
+        });
         fastfec_wasm.linkLibC();
         fastfec_wasm.addCSourceFiles(&libSources, &buildOptions);
         linkPcre(vendored_pcre, fastfec_wasm);
-        fastfec_wasm.addCSourceFile("src/wasm.c", &buildOptions);
+        fastfec_wasm.addCSourceFile(.{ .file = .{
+            .path = "src/wasm.c",
+        }, .flags = &buildOptions });
+        b.installArtifact(fastfec_wasm);
     }
 
     // Test step
     var prev_test_step: ?*std.build.Step = null;
     for (tests) |test_file| {
         const base_file = std.fs.path.basename(test_file);
-        const subtest_exe = b.addExecutable(base_file, null);
+        const subtest_exe = b.addExecutable(.{
+            .name = base_file,
+        });
         subtest_exe.linkLibC();
         subtest_exe.addCSourceFiles(&testIncludes, &buildOptions);
         linkPcre(vendored_pcre, subtest_exe);
-        subtest_exe.addCSourceFile(test_file, &buildOptions);
-        const subtest_cmd = subtest_exe.run();
+        subtest_exe.addCSourceFile(.{
+            .file = .{ .path = test_file },
+            .flags = &buildOptions,
+        });
+        const subtest_cmd = b.addRunArtifact(subtest_exe);
         if (prev_test_step != null) {
             subtest_cmd.step.dependOn(prev_test_step.?);
         }
