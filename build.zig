@@ -58,7 +58,7 @@ pub fn build(b: *std.Build) !void {
         b.installArtifact(fastfec_lib);
     } else if (wasm) {
         // Wasm library build step
-        const wasm_target = CrossTarget{ .cpu_arch = .wasm32, .os_tag = .wasi };
+        const wasm_target = CrossTarget{ .cpu_arch = .wasm32, .os_tag = .freestanding };
         const fastfec_wasm = b.addSharedLibrary(.{
             .name = "fastfec",
             .target = wasm_target,
