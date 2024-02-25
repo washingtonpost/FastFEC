@@ -47,20 +47,6 @@ with open(os.path.join(PARENT_DIR, "VERSION"), "r") as f:
     version = f.read().strip()
 
 
-class ReproducibleWheelFile(WheelFile):
-    # Copied from Zig make_wheels.py
-    def writestr(self, zinfo, *args, **kwargs):
-        if isinstance(zinfo, str):
-            # arcname provided
-            return self.writestr(ZipInfo(filename=zinfo, *args, **kwargs))
-
-        if not isinstance(zinfo, ZipInfo):
-            raise ValueError("ZipInfo required")
-        zinfo.date_time = time.gmtime(time.time())[0:6]  # Current time
-        zinfo.create_system = 3
-        super().writestr(zinfo, *args, **kwargs)
-
-
 def make_message(headers, payload=None):
     # Copied from Zig make_wheels.py
     msg = EmailMessage()
@@ -77,7 +63,7 @@ def make_message(headers, payload=None):
 
 def write_wheel_file(filename, contents):
     # Copied from Zig make_wheels.py
-    with ReproducibleWheelFile(filename, "w") as wheel:
+    with WheelFile(filename, "w") as wheel:
         for member_info, member_source in contents.items():
             if not isinstance(member_info, ZipInfo):
                 member_info = ZipInfo(member_info)
