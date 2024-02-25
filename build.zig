@@ -57,6 +57,11 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
             .version = null,
         });
+        if (fastfec_lib.target.isDarwin()) {
+            // useful for package maintainers
+            // see https://github.com/ziglang/zig/issues/13388
+            fastfec_lib.headerpad_max_install_names = true;
+        }
         fastfec_lib.linkLibC();
         fastfec_lib.addCSourceFiles(&libSources, &buildOptions);
         linkPcre(vendored_pcre, fastfec_lib);
@@ -140,6 +145,7 @@ const testIncludes = [_][]const u8{ "src/buffer.c", "src/memory.c", "src/encodin
 const buildOptions = [_][]const u8{
     "-std=c11",
     "-pedantic",
+    "-std=gnu99",
     "-Wall",
     "-W",
     "-Wno-missing-field-initializers",
