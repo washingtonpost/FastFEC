@@ -12,6 +12,11 @@ pub fn linkPcre(vendored_pcre: bool, libExe: *std.build.LibExeObjStep) void {
             libExe.linkSystemLibrary("libpcre");
         }
     }
+    if (libExe.target.isDarwin()) {
+        // useful for package maintainers
+        // see https://github.com/ziglang/zig/issues/13388
+        libExe.headerpad_max_install_names = true;
+    }
 }
 
 pub fn build(b: *std.Build) !void {
