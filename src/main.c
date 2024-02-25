@@ -1,10 +1,7 @@
 #include "encoding.h"
 #include "fec.h"
 #include "cli.h"
-
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #define BUFFERSIZE 65536
 
