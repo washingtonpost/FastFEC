@@ -50,6 +50,10 @@ with open(os.path.join(PARENT_DIR, "VERSION"), "r") as f:
 class ReproducibleWheelFile(WheelFile):
     # Copied from Zig make_wheels.py
     def writestr(self, zinfo, *args, **kwargs):
+        if isinstance(zinfo, str):
+            # arcname provided
+            return self.writestr(ZipInfo(filename=zinfo, *args, **kwargs))
+
         if not isinstance(zinfo, ZipInfo):
             raise ValueError("ZipInfo required")
         zinfo.date_time = time.gmtime(time.time())[0:6]  # Current time
@@ -118,9 +122,9 @@ base_contents = {}
 for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
     with open(path, "rb") as f:
         file_contents = f.read()
-    base_contents[
-        os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))
-    ] = file_contents
+    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = (
+        file_contents
+    )
 
 current_platform = platform.system()
 for target_platform, zig_target, wheel_platform in matrix:
