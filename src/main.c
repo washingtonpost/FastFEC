@@ -2,6 +2,10 @@
 #include "fec.h"
 #include "cli.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #define BUFFERSIZE 65536
 
 void printUsage(char *argv[])
