@@ -28,8 +28,8 @@ jobs:
         run: python scripts/generate_mappings.py test
       - name: Install Python dependencies
         working-directory: python
-        run: pip install -r requirements-dev.txt
-      - run: ls zig-cache
+        run: pip install -v -r requirements-dev.txt
+      - run: ls
       - name: Run Python Tests
         working-directory: python
         run: tox -e py
