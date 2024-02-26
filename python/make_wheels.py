@@ -62,7 +62,6 @@ def make_message(headers, payload=None):
 
 
 def write_wheel_file(filename, contents):
-    # Copied from Zig make_wheels.py
     with WheelFile(filename, "w") as wheel:
         for member_info, member_source in contents.items():
             if not isinstance(member_info, ZipInfo):

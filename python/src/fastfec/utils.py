@@ -11,7 +11,17 @@ import datetime
 import logging
 import os
 import pathlib
-from ctypes import CFUNCTYPE, POINTER, c_char, c_char_p, c_int, c_size_t, c_void_p, memmove
+import platform
+from ctypes import (
+    CFUNCTYPE,
+    POINTER,
+    c_char,
+    c_char_p,
+    c_int,
+    c_size_t,
+    c_void_p,
+    memmove,
+)
 from glob import glob
 
 logger = logging.getLogger("fastfec")
@@ -59,17 +69,20 @@ def find_fastfec_lib():
     """
     prefixes = ["fastfec", "libfastfec"]
 
-    suffixes = ["so", "dylib", "dll"]
+    suffixes = [("Linux", "so"), ("Darwin", "dylib"), ("Windows", "dll")]
     directories = [
         SCRIPT_DIR,
         PARENT_DIR,
         os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
     ]
+    current_platform = platform.system()
 
     # Search in parent directory
     for root_dir in directories:
         for prefix in prefixes:
-            for suffix in suffixes:
+            for suffix in [
+                s for platform, s in suffixes if platform == current_platform
+            ]:
                 files = glob(os.path.join(root_dir, f"{prefix}*.{suffix}"))
                 if files:
                     if len(files) > 1:
@@ -216,7 +229,9 @@ def provide_write_callback(open_function):
             file_descriptor = write_cache.file_descriptors.get(path)
             if not file_descriptor:
                 # Open the file
-                write_cache.file_descriptors[path] = open_function(path.decode("utf8"), mode="wb")
+                write_cache.file_descriptors[path] = open_function(
+                    path.decode("utf8"), mode="wb"
+                )
                 file_descriptor = write_cache.file_descriptors[path]
             write_cache.last_filename = filename
             write_cache.last_fd = file_descriptor
