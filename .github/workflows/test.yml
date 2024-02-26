@@ -29,6 +29,7 @@ jobs:
       - name: Install Python dependencies
         working-directory: python
         run: pip install -r requirements-dev.txt
+      - run: ls zig-out/lib
       - name: Run Python Tests
         working-directory: python
         run: tox -e py
