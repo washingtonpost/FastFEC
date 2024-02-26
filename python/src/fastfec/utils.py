@@ -11,7 +11,6 @@ import datetime
 import logging
 import os
 import pathlib
-import platform
 from ctypes import (
     CFUNCTYPE,
     POINTER,
@@ -69,20 +68,17 @@ def find_fastfec_lib():
     """
     prefixes = ["fastfec", "libfastfec"]
 
-    suffixes = [("Linux", "so"), ("Darwin", "dylib"), ("Windows", "dll")]
+    suffixes = ["so", "dylib", "dll"]
     directories = [
         SCRIPT_DIR,
         PARENT_DIR,
         os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
     ]
-    current_platform = platform.system()
 
     # Search in parent directory
     for root_dir in directories:
         for prefix in prefixes:
-            for suffix in [
-                s for platform, s in suffixes if platform == current_platform
-            ]:
+            for suffix in suffixes:
                 files = glob(os.path.join(root_dir, f"{prefix}*.{suffix}"))
                 if files:
                     if len(files) > 1:
