@@ -47,16 +47,6 @@ with open(os.path.join(PARENT_DIR, "VERSION"), "r") as f:
     version = f.read().strip()
 
 
-class ReproducibleWheelFile(WheelFile):
-    # Copied from Zig make_wheels.py
-    def writestr(self, zinfo, *args, **kwargs):
-        if not isinstance(zinfo, ZipInfo):
-            raise ValueError("ZipInfo required")
-        zinfo.date_time = time.gmtime(time.time())[0:6]  # Current time
-        zinfo.create_system = 3
-        super().writestr(zinfo, *args, **kwargs)
-
-
 def make_message(headers, payload=None):
     # Copied from Zig make_wheels.py
     msg = EmailMessage()
@@ -72,8 +62,7 @@ def make_message(headers, payload=None):
 
 
 def write_wheel_file(filename, contents):
-    # Copied from Zig make_wheels.py
-    with ReproducibleWheelFile(filename, "w") as wheel:
+    with WheelFile(filename, "w") as wheel:
         for member_info, member_source in contents.items():
             if not isinstance(member_info, ZipInfo):
                 member_info = ZipInfo(member_info)
@@ -118,9 +107,9 @@ base_contents = {}
 for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
     with open(path, "rb") as f:
         file_contents = f.read()
-    base_contents[
-        os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))
-    ] = file_contents
+    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = (
+        file_contents
+    )
 
 current_platform = platform.system()
 for target_platform, zig_target, wheel_platform in matrix:
@@ -129,7 +118,7 @@ for target_platform, zig_target, wheel_platform in matrix:
     # First clear the target directory of any stray files
     if os.path.exists(LIBRARY_DIR):
         shutil.rmtree(LIBRARY_DIR)
-    # Compile! Requires ziglang==0.9.1 to be installed
+    # Compile! Requires ziglang==0.11.0 to be installed
     subprocess.call(
         [
             sys.executable,
