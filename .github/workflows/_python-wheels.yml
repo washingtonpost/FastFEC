@@ -24,10 +24,10 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.x"
+          python-version: "3.11"
 
       - name: Install Zig
-        run: python -m pip install ziglang==0.9.1 wheel==0.37.1
+        run: python -m pip install ziglang==0.11.0 wheel
 
       - name: Build wheels
         run: python python/make_wheels.py ${{ matrix.architecture }}-${{ matrix.os }}
