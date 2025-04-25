@@ -74,6 +74,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: matrix.os != 'wasm'
         with:
+          overwrite: true
           path: |
             fastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.zip
             libfastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
@@ -81,6 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: matrix.os == 'wasm'
         with:
+          overwrite: true
           path: |
             libfastfec-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
       - name: GitHub release
