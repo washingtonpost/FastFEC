@@ -21,8 +21,8 @@ jobs:
         os: [linux-gnu, macos, windows]
         architecture: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
@@ -32,7 +32,7 @@ jobs:
       - name: Build wheels
         run: python python/make_wheels.py ${{ matrix.architecture }}-${{ matrix.os }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: ./wheelhouse/*.whl
@@ -43,7 +43,7 @@ jobs:
     needs: [build-wheels]
     if: inputs.publishToPyPI || inputs.publishToTestPyPI
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: dist
