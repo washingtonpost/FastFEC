@@ -126,4 +126,3 @@ See the [GitHub test workflow](./.github/workflows/test.yml) for more info
 ### Scripts
 
 `python scripts/generate_mappings.py`: A Python script to auto-generate C header files containing column header and type mappings
-
