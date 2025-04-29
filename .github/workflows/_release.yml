@@ -75,6 +75,7 @@ jobs:
         if: matrix.os != 'wasm'
         with:
           overwrite: true
+          name: fastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}
           path: |
             fastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.zip
             libfastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
@@ -83,6 +84,7 @@ jobs:
         if: matrix.os == 'wasm'
         with:
           overwrite: true
+          name: libfastfec-${{ matrix.os }}-${{ inputs.version }}
           path: |
             libfastfec-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
       - name: GitHub release
