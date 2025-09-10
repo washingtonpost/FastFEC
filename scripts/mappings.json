@@ -419,7 +419,7 @@
       "bank_zip_code",
       "beginning_image_number"
     ],
-    "^8.4": [
+    "^8.5|8.4": [
       "form_type",
       "filer_committee_id_number",
       "change_of_committee_name",
@@ -969,7 +969,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "committee_name",
@@ -1060,7 +1060,7 @@
       "memo_text_description",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -1148,7 +1148,7 @@
       "memo_text_description",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -1335,7 +1335,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "committee_name",
@@ -1558,6 +1558,45 @@
       "bank_state",
       "bank_zip_code",
       "beginning_image_number"
+    ],
+    "^8.5": [
+      "form_type",
+      "filer_committee_id_number",
+      "joint_fund_participant_committee_name",
+      "joint_fund_participant_committee_id_number",
+      "joint_fund_participant_committee_type",
+      "affiliated_committee_id_number",
+      "affiliated_committee_name",
+      "affiliated_candidate_id_number",
+      "affiliated_last_name",
+      "affiliated_first_name",
+      "affiliated_middle_name",
+      "affiliated_prefix",
+      "affiliated_suffix",
+      "affiliated_street_1",
+      "affiliated_street_2",
+      "affiliated_city",
+      "affiliated_state",
+      "affiliated_zip_code",
+      "affiliated_relationship_code",
+      "agent_last_name",
+      "agent_first_name",
+      "agent_middle_name",
+      "agent_prefix",
+      "agent_suffix",
+      "agent_street_1",
+      "agent_street_2",
+      "agent_city",
+      "agent_state",
+      "agent_zip_code",
+      "agent_title",
+      "agent_telephone",
+      "bank_name",
+      "bank_street_1",
+      "bank_street_2",
+      "bank_city",
+      "bank_state",
+      "bank_zip_code"
     ],
     "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2": [
       "form_type",
@@ -1799,7 +1838,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2": [
+    "^8.5|8.4|8.3|8.2": [
       "form_type",
       "candidate_id_number",
       "candidate_last_name",
@@ -2040,7 +2079,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "report_type",
@@ -2402,7 +2441,7 @@
       "col_b_gross_receipts_minus_personal_funds_general",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4": [
       "form_type",
       "filer_committee_id_number",
       "committee_name",
@@ -2653,7 +2692,7 @@
       "col_a_operating_expenditures",
       "col_a_transfers_to_authorized",
       "col_a_candidate_loan_repayments",
-      "",
+      "col_a_other_loan_repayments",
       "col_a_total_loan_repayments",
       "col_a_refunds_to_individuals",
       "col_a_refunds_to_party_committees",
@@ -2689,11 +2728,11 @@
       "col_b_operating_expenditures",
       "col_b_transfers_to_authorized",
       "col_b_candidate_loan_repayments",
-      "",
+      "col_b_other_loan_repayments",
       "col_b_total_loan_repayments",
       "col_b_refunds_to_individuals",
-      "",
-      "",
+      "col_b_refunds_to_party_committees",
+      "col_b_refunds_to_other_committees",
       "col_b_total_refunds",
       "col_b_other_disbursements",
       "col_b_total_disbursements",
@@ -2868,7 +2907,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4": [
       "form_type",
       "filer_committee_id_number",
       "committee_name",
@@ -2898,7 +2937,7 @@
       "date_signed"
     ]
   },
-  "(^f3p$)|(^f3p[^s|3])": {
+  "(^f3p$)|(^f3p[^s|3|z])": {
     "^P3.2|^P3.3|^P3.4": [
       "form_type",
       "filer_committee_id_number",
@@ -3109,7 +3148,7 @@
       "end_image_number",
       "receipt_date"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0": [
       "form_type",
       "filer_committee_id_number",
       "committee_name",
@@ -3923,7 +3962,7 @@
     ]
   },
   "^f3p31": {
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -4018,7 +4057,7 @@
     ]
   },
   "^f3ps": {
-    "^8.4|8.3|8.2|8.1|8.0|7.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0": [
       "form_type",
       "filer_committee_id_number",
       "date_general_election",
@@ -4362,7 +4401,7 @@
       "total_disbursements",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "date_general_election",
@@ -4690,7 +4729,7 @@
       "col_b_net_operating_expenditures",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "committee_name",
@@ -5414,7 +5453,7 @@
       "col_b_total_disbursements",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "committee_name",
@@ -5716,7 +5755,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^(8.4|8.3|8.2|8.1)": [
+    "^(8.5|8.4|8.3|8.2|8.1)": [
       "form_type",
       "filer_committee_id_number",
       "entity_type",
@@ -5886,7 +5925,7 @@
       "contributor_occupation",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -5971,7 +6010,7 @@
       "election_other_description",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1": [
+    "^8.5|8.4|8.3|8.2|8.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -6215,7 +6254,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "original_amendment_date",
@@ -6304,7 +6343,7 @@
       "contribution_amount",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -6409,7 +6448,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "organization_name",
@@ -6475,7 +6514,7 @@
       "communication_cost",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -6864,7 +6903,7 @@
       "date_signed",
       "beginning_image_number"
     ],
-    "^8.4|8.3": [
+    "^8.5|8.4|8.3": [
       "form_type",
       "filer_committee_id_number",
       "entity_type",
@@ -7052,7 +7091,7 @@
       "controller_occupation",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -7118,7 +7157,7 @@
       "memo_text_description",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -7306,7 +7345,7 @@
       "transaction_id",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -7479,7 +7518,7 @@
       "back_reference_tran_id_number",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -7520,6 +7559,26 @@
       "beginning_image_number",
       "end_image_number",
       "receipt_date"
+    ],
+    "^8.5": [
+      "form_type",
+      "filer_committee_id_number",
+      "committee_name",
+      "street_1",
+      "street_2",
+      "city",
+      "state",
+      "zip_code",
+      "treasurer_last_name",
+      "treasurer_first_name",
+      "treasurer_middle_name",
+      "treasurer_prefix",
+      "treasurer_suffix",
+      "date_signed",
+      "text_code",
+      "filing_frequency",
+      "pdf_attachment",
+      "text"
     ],
     "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
@@ -7696,7 +7755,7 @@
       "public_communications_referencing_party_ratio_applies",
       "image_number"
     ],
-    "^8.4|8.3|8.2": [
+    "^8.5|8.4|8.3|8.2": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -7845,7 +7904,7 @@
       "nonfederal_percentage",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -7895,7 +7954,7 @@
       "event_activity_name",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -7998,7 +8057,7 @@
       "total_amount",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -8250,7 +8309,7 @@
       "generic_campaign_amount",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -8333,7 +8392,7 @@
       "total_amount",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -8444,7 +8503,7 @@
       "back_reference_sched_name"
     ]
   },
-  "^sa": {
+  "^sa[^3]": {
     "^P3.2|^P3.3|^P3.4": [
       "form_type",
       "filer_committee_id_number",
@@ -8522,7 +8581,7 @@
       "increased_limit_code",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -9005,7 +9064,7 @@
     ]
   },
   "^sa3l": {
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id",
@@ -9269,7 +9328,7 @@
       "refund_or_disposal_of_excess",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -9736,7 +9795,7 @@
       "secured",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -9998,7 +10057,7 @@
       "authorized_date",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -10235,6 +10294,28 @@
       "guaranteed_amount",
       "image_number"
     ],
+    "^8.5": [
+      "form_type",
+      "filer_committee_id_number",
+      "transaction_id_number",
+      "back_reference_tran_id_number",
+      "guarantor_entity",
+      "guarantor_organization_name",
+      "guarantor_committee_fec_id",
+      "guarantor_last_name",
+      "guarantor_first_name",
+      "guarantor_middle_name",
+      "guarantor_prefix",
+      "guarantor_suffix",
+      "guarantor_street_1",
+      "guarantor_street_2",
+      "guarantor_city",
+      "guarantor_state",
+      "guarantor_zip_code",
+      "guarantor_employer",
+      "guarantor_occupation",
+      "guaranteed_amount"
+    ],
     "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
@@ -10319,7 +10400,7 @@
       "balance_at_close_this_period",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -10537,7 +10618,7 @@
       "date_signed",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1": [
+    "^8.5|8.4|8.3|8.2|8.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -10996,7 +11077,7 @@
       "increased_limit",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -11315,6 +11396,38 @@
     ]
   },
   "^si": {
+    "^(6|7)": [
+      "form_type",
+      "filer_committee_id_number",
+      "transaction_id_number",
+      "record_id_number",
+      "account_name",
+      "bank_account_id",
+      "coverage_from_date",
+      "coverage_through_date",
+      "col_a_total_receipts",
+      "col_a_transfers_to_fed",
+      "col_a_transfers_to_state_local",
+      "col_a_direct_state_local_support",
+      "col_a_other_disbursements",
+      "col_a_total_disbursements",
+      "col_a_cash_on_hand_beginning_period",
+      "col_a_receipts_period",
+      "col_a_subtotal",
+      "col_a_disbursements_period",
+      "col_a_cash_on_hand_close_of_period",
+      "col_b_total_receipts",
+      "col_b_transfers_to_fed",
+      "col_b_transfers_to_state_local",
+      "col_b_direct_state_local_support",
+      "col_b_other_disbursements",
+      "col_b_total_disbursements",
+      "col_b_cash_on_hand_beginning_period",
+      "col_b_receipts_period",
+      "col_b_subtotal",
+      "col_b_disbursements_period",
+      "col_b_cash_on_hand_close_of_period"
+    ],
     "^(3|5)": [
       "form_type",
       "filer_committee_id_number",
@@ -11390,7 +11503,7 @@
       "col_b_cash_on_hand_close_of_period",
       "image_number"
     ],
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "form_type",
       "filer_committee_id_number",
       "transaction_id_number",
@@ -11478,7 +11591,7 @@
     ]
   },
   "^text": {
-    "^8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
+    "^8.5|8.4|8.3|8.2|8.1|8.0|7.0|6.4|6.3|6.2|6.1": [
       "rec_type",
       "filer_committee_id_number",
       "transaction_id_number",
