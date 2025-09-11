@@ -19,5 +19,5 @@ jobs:
     if: github.event.base_ref == 'refs/heads/main'
     uses: ./.github/workflows/_python-wheels.yml
     with:
-      publishToPyPI: true
+      publishToPyPI: false
     secrets: inherit
