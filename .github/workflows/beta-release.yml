@@ -17,5 +17,5 @@ jobs:
   build-and-upload-beta-wheels:
     uses: ./.github/workflows/_python-wheels.yml
     with:
-      publishToTestPyPI: true
+      publishToTestPyPI: false
     secrets: inherit
