@@ -33,6 +33,11 @@ jobs:
           key: "${{ matrix.os }}"
           map: |
             {
+              "linux": {
+                "libExt": "so",
+                "libName": "libfastfec",
+                "exeExt": ""
+              },
               "linux-gnu": {
                 "libExt": "so",
                 "libName": "libfastfec",
