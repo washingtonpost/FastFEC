@@ -14,7 +14,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import time
 from email.message import EmailMessage
 from glob import glob
 from zipfile import ZIP_DEFLATED, ZipInfo
@@ -107,9 +106,7 @@ base_contents = {}
 for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
     with open(path, "rb") as f:
         file_contents = f.read()
-    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = (
-        file_contents
-    )
+    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = file_contents
 
 current_platform = platform.system()
 for target_platform, zig_target, wheel_platform in matrix:
@@ -118,7 +115,7 @@ for target_platform, zig_target, wheel_platform in matrix:
     # First clear the target directory of any stray files
     if os.path.exists(LIBRARY_DIR):
         shutil.rmtree(LIBRARY_DIR)
-    # Compile! Requires ziglang==0.11.0 to be installed
+    # Compile! Requires ziglang==0.15.1 to be installed
     subprocess.call(
         [
             sys.executable,
@@ -139,9 +136,7 @@ for target_platform, zig_target, wheel_platform in matrix:
     # Write the library file to the archive contents
     for library_file in library_files:
         with open(library_file, "rb") as f:
-            contents[
-                os.path.join(PACKAGE_NAME, os.path.relpath(library_file, LIBRARY_DIR))
-            ] = f.read()
+            contents[os.path.join(PACKAGE_NAME, os.path.relpath(library_file, LIBRARY_DIR))] = f.read()
 
     # Create output directory if needed
     if not os.path.exists(OUTPUT_DIR):
