@@ -8,4 +8,4 @@ pytest-mock
 black
 isort
 ziglang==0.11.0
--e ./python
+-e .
