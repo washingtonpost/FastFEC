@@ -34,8 +34,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          overwrite: true
-          name: wheels
+          name: wheels-${{ matrix.os }}-${{ matrix.architecture }}
           path: ./wheelhouse/*.whl
 
   upload-wheels-to-pypi:
@@ -46,8 +45,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: wheels
+          pattern: wheels-*
           path: dist
+          merge-multiple: true
 
       - name: Publish package to PyPI
         if: inputs.publishToPyPI
@@ -63,3 +63,4 @@ jobs:
           user: __token__
           password: ${{ secrets.TEST_PYPI_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
+          verbose: true
