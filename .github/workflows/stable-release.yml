@@ -9,14 +9,14 @@ on:
 
 jobs:
   build-and-upload-stable-release:
-    if: github.event.base_ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/')
     uses: ./.github/workflows/_release.yml
     with:
       version: ${{ github.ref_name }}
       uploadRelease: true
 
   build-and-upload-stable-wheels:
-    if: github.event.base_ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/')
     uses: ./.github/workflows/_python-wheels.yml
     with:
       publishToPyPI: false
