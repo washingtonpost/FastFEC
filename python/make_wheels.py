@@ -148,13 +148,13 @@ for target_platform, zig_target, wheel_platform in matrix:
         version=version,
         tag=f"py3-none-{wheel_platform}",
         metadata={
-            "Summary": "An extremely fast FEC filing parser written in C",
+            "Summary": "An ActBlue fork of WaPo's extremely fast FEC filing parser written in C",
             "Author": "Washington Post News Engineering",
             "License": "MIT",
             "Project-URL": [
-                "Homepage, https://github.com/washingtonpost/FastFEC",
-                "Source Code, https://github.com/washingtonpost/FastFEC",
-                "Bug Tracker, https://github.com/washingtonpost/FastFEC/issues",
+                "Homepage, https://github.com/actblue/FastFEC",
+                "Source Code, https://github.com/actblue/FastFEC",
+                "Bug Tracker, https://github.com/actblue/FastFEC/issues",
             ],
             "Classifier": [
                 "License :: OSI Approved :: MIT License",

@@ -20,9 +20,7 @@ with open(os.path.join(PARENT_DIR, "VERSION"), "r") as f:
 
 
 def compile_library():
-    subprocess.call(
-        [sys.executable, "-m", "ziglang", "build", "-Dlib-only=true"], cwd=PARENT_DIR
-    )
+    subprocess.call([sys.executable, "-m", "ziglang", "build", "-Dlib-only=true"], cwd=PARENT_DIR)
 
 
 compile_library()
@@ -35,8 +33,7 @@ raw_library_files = (
 )
 # Copy them into the Python project src directory and get their relative paths
 library_files = [
-    os.path.basename(shutil.copy(library_file, os.path.join(CURRENT_DIR, "src")))
-    for library_file in raw_library_files
+    os.path.basename(shutil.copy(library_file, os.path.join(CURRENT_DIR, "src"))) for library_file in raw_library_files
 ]
 
 # Force building a non-pure lib wheel
