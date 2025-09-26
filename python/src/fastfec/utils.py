@@ -11,6 +11,7 @@ import datetime
 import logging
 import os
 import pathlib
+import platform
 from ctypes import (
     CFUNCTYPE,
     POINTER,
@@ -28,6 +29,8 @@ logger = logging.getLogger("fastfec")
 # Directories used for locating the shared library
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = pathlib.Path(SCRIPT_DIR).parent.absolute()
+# Repo root is the parent of the Python package directory (python/src)
+REPO_ROOT = pathlib.Path(SCRIPT_DIR).parents[2].absolute()
 
 # Buffer constants
 BUFFER_SIZE = 1024 * 1024
@@ -66,13 +69,26 @@ def find_fastfec_lib():
     This method tries searching in package directories, with a fallback to the local
     zig build directory for development work.
     """
-    prefixes = ["fastfec", "libfastfec"]
+    # Prioritize platform-appropriate suffixes
+    system = platform.system().lower()
+    if system == "darwin":
+        suffixes = ["dylib", "so", "dll"]
+    elif system == "linux":
+        suffixes = ["so", "dylib", "dll"]
+    elif system == "windows":
+        suffixes = ["dll", "so", "dylib"]
+    else:
+        suffixes = ["so", "dylib", "dll"]
 
-    suffixes = ["so", "dylib", "dll"]
+    # Prefer libfastfec prefix for shared libraries
+    prefixes = ["libfastfec", "fastfec"]
+
     directories = [
         SCRIPT_DIR,
         PARENT_DIR,
-        os.path.join(PARENT_DIR, "zig-out/lib"),  # For local dev
+        str(REPO_ROOT),
+        os.path.join(str(REPO_ROOT), "zig-out", "lib"),  # Root zig-out for local/dev/CI
+        os.path.join(str(PARENT_DIR), "zig-out", "lib"),  # Legacy fallback
     ]
 
     # Search in parent directory
@@ -83,7 +99,7 @@ def find_fastfec_lib():
                 if files:
                     if len(files) > 1:
                         logger.warning("Expected just one library file")
-                    return os.path.join(PARENT_DIR, files[0])
+                    return files[0]
 
     raise LookupError("Unable to find libfastfec")
 
