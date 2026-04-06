@@ -91,11 +91,16 @@ The following was performed on an M1 Macbook Air:
 
 ### Build system
 
-[Zig](https://ziglang.org/) is used to build and compile the project. Download and install the latest version of Zig (>=0.11.0) by following the instructions on the website (you can verify it's working by typing `zig` in the terminal and seeing help commands).
+[Zig](https://ziglang.org/) is used to build and compile the project. Download and install Zig 0.14.0 or later by following the instructions on the website (you can verify it's working by typing `zig` in the terminal and seeing help commands).
 
 ### Dependencies
 
-FastFEC has no external C dependencies. [PCRE](./src/pcre/README) is bundled with the library to ensure compatibility with Zig's build system and cross-platform compilation.
+FastFEC vendors PCRE2 (`pcre2-8`) by default in `src/pcre2`, ensuring consistent builds across platforms (including wasm). Packagers may switch to system PCRE2 if desired, but no system dependency is required for normal builds.
+
+### Requirements
+
+- Zig >= 0.14.0 (tested on 0.14.0 and 0.15.1)
+- No external C dependencies required (PCRE2 is vendored)
 
 ### Building
 

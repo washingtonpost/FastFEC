@@ -3,7 +3,7 @@
 #include "encoding.h"
 #include "fec.h"
 #include <stdlib.h>
-#include "pcre/pcre.h"
+#include "regex.h"
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>

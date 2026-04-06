@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: goto-bus-stop/setup-zig@v1
         with:
-          version: 0.11.0
+          version: 0.14.0
       - name: Get output paths
         uses: kanga333/variable-mapper@master
         id: map
@@ -64,8 +64,11 @@ jobs:
       - name: Zip output executable
         if: matrix.os != 'wasm'
         run: zip -j fastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.zip zig-out/bin/fastfec${{ steps.map.outputs.exeExt }}
-      - name: Move output library
-        if: matrix.os != 'wasm'
+      - name: Move output library (windows)
+        if: matrix.os == 'windows'
+        run: mv zig-out/bin/${{ steps.map.outputs.libName }}.${{ steps.map.outputs.libExt }} libfastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
+      - name: Move output library (non-windows)
+        if: matrix.os != 'windows' && matrix.os != 'wasm'
         run: mv zig-out/lib/${{ steps.map.outputs.libName }}.${{ steps.map.outputs.libExt }} libfastfec-${{ matrix.os }}-${{ matrix.architecture }}-${{ inputs.version }}.${{ steps.map.outputs.libExt }}
       - name: Move output library (wasm)
         if: matrix.os == 'wasm'
