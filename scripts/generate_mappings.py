@@ -78,9 +78,7 @@ if __name__ == "__main__":
     headers = []
     for form_type in mappings_json:
         for version in mappings_json[form_type]:
-            headers.append(
-                [version, form_type, list_to_csv(mappings_json[form_type][version])]
-            )
+            headers.append([version, form_type, list_to_csv(mappings_json[form_type][version])])
     header_table = generate_c_array("headers", 3, headers)
 
     types = []
@@ -93,9 +91,7 @@ if __name__ == "__main__":
                     raise ValueError("Expect to get a type")
                 if type_value == "date":
                     if type_mapping.get("format") != "%Y%m%d":
-                        raise ValueError(
-                            f'Unexpected date format: {type_mapping.get("format")}'
-                        )
+                        raise ValueError(f'Unexpected date format: {type_mapping.get("format")}')
                 elif type_value != "float":
                     raise ValueError(f"Unexpected type: {type_value}")
 
@@ -130,9 +126,7 @@ if __name__ == "__main__":
             "r",
             encoding="utf8",
         ) as f:
-            assert (
-                result == f.read()
-            ), "Mappings outdated: Update by running `python scripts/generate_mappings.py`"
+            assert result == f.read(), "Mappings outdated: Update by running `python scripts/generate_mappings.py`"
             print("Mappings are up-to-date")
     else:
         with open(

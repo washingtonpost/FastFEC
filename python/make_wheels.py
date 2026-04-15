@@ -14,7 +14,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import time
 from email.message import EmailMessage
 from glob import glob
 from zipfile import ZIP_DEFLATED, ZipInfo
@@ -39,6 +38,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
 SRC_DIR = os.path.join(CURRENT_DIR, "src", "fastfec")
 LIBRARY_DIR = os.path.join(PARENT_DIR, "zig-out", "lib")
+BIN_DIR = os.path.join(PARENT_DIR, "zig-out", "bin")
 OUTPUT_DIR = "wheelhouse"
 PACKAGE_NAME = "fastfec"
 with open(os.path.join(PARENT_DIR, "README.md"), "r") as f:
@@ -107,9 +107,7 @@ base_contents = {}
 for path in glob(os.path.join(SRC_DIR, "*.py"), recursive=True):
     with open(path, "rb") as f:
         file_contents = f.read()
-    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = (
-        file_contents
-    )
+    base_contents[os.path.join(PACKAGE_NAME, os.path.relpath(path, SRC_DIR))] = file_contents
 
 current_platform = platform.system()
 for target_platform, zig_target, wheel_platform in matrix:
@@ -118,12 +116,11 @@ for target_platform, zig_target, wheel_platform in matrix:
     # First clear the target directory of any stray files
     if os.path.exists(LIBRARY_DIR):
         shutil.rmtree(LIBRARY_DIR)
-    # Compile! Requires ziglang==0.11.0 to be installed
-    subprocess.call(
-        [
-            sys.executable,
-            "-m",
-            "ziglang",
+    # Compile! Requires zig >= 0.15.2 (system or via ziglang pip package)
+    zig_cmd = ["zig"] if shutil.which("zig") else [sys.executable, "-m", "ziglang"]
+    subprocess.check_call(
+        zig_cmd
+        + [
             "build",
             "-Dlib-only=true",
             f"-Dtarget={zig_target}",
@@ -131,17 +128,17 @@ for target_platform, zig_target, wheel_platform in matrix:
         cwd=PARENT_DIR,
     )
     # Collect compiled library files (extension .dylib|.so|.dll)
+    # Zig 0.15 places .dylib/.so in zig-out/lib/ but .dll in zig-out/bin/
     library_files = (
         glob(os.path.join(LIBRARY_DIR, "*.dylib"))
         + glob(os.path.join(LIBRARY_DIR, "*.so"))
         + glob(os.path.join(LIBRARY_DIR, "*.dll"))
+        + glob(os.path.join(BIN_DIR, "*.dll"))
     )
     # Write the library file to the archive contents
     for library_file in library_files:
         with open(library_file, "rb") as f:
-            contents[
-                os.path.join(PACKAGE_NAME, os.path.relpath(library_file, LIBRARY_DIR))
-            ] = f.read()
+            contents[os.path.join(PACKAGE_NAME, os.path.basename(library_file))] = f.read()
 
     # Create output directory if needed
     if not os.path.exists(OUTPUT_DIR):
